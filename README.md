@@ -41,6 +41,13 @@ cannot turn those into an HTTP call. `npm run audit` fetches every registered
 YAML and checks: of 63 live miners, a handful qualify, and each name-hashable
 intent has **one** job-able miner. That is the bottleneck under problem 2.
 
+**What the network actually looks like** (read from `/api/epochs`,
+`/api/validators` and the Diamond, 21 August): epochs run **hourly** on testnet,
+not the 24 hours the docs describe. Each one scores 70 results across 17 intents
+and **29 of the 66 registered miners** — more than half are never scored at all.
+There is **one active validator**, `telegraph-node-1`, so the 43-of-64 BFT
+threshold is a mainnet property, not something running today.
+
 ---
 
 ## Track 1 — the miner
@@ -70,10 +77,25 @@ npm run miner        # http://127.0.0.1:8787
 node miner/test.mjs  # self-check, hits the real upstream
 ```
 
+### Hosting it
+
+The miner has no dependencies, so the image is the runtime plus one file.
+
+```bash
+docker build -t amanat-miner miner/ && docker run -p 8080:8080 amanat-miner
+fly deploy -c miner/fly.toml                    # or
+cd miner && vercel deploy --prod                # serverless, via miner/api/*
+```
+
+Whichever you pick, the host has to be live *before* `registerMiner`: the node
+sandbox-tests every declared endpoint against the real upstream, and a
+registration whose YAML fails validation is rejected terminally rather than
+retried.
+
 ## Track 2 — the scoring module
 
 `scorer/` is a `no_std` Rust module compiled to `wasm32-unknown-unknown`:
-**12.3 KB, zero imports**, exporting `alloc`, `dealloc`, `rank_answer` and
+**14.4 KB, zero imports**, exporting `alloc`, `dealloc`, `rank_answer` and
 `breakdown_answer`.
 
 It reads the *quantities* out of an answer and grades them as measurements:
@@ -96,31 +118,57 @@ exactly, so two validators on different hosts return identical bits.
 npm run build:scorer
 npm run bench      # against the real champion binaries
 npm run attacks
-cd scorer && cargo test    # 18 tests, native
+cd scorer && cargo test    # 24 tests, native
 ```
 
-Measured on `scorer/bench.json` (20 good/bad cases, 9 attacks) against champion
-binaries downloaded from their published `wasm_url`:
+Measured on `scorer/bench.json` (38 good/bad cases across 25 intents, 14
+attacks) against champion binaries downloaded from their published `wasm_url`:
 
 | module | margin | wins | worst self-match | stddev |
 |---|---|---|---|---|
-| **amanat_scorer** | **0.5539** | 17/20 | 1.0000 | 0.3907 |
-| champion-urlscan (reg 28) | 0.5059 | 17/20 | 1.0000 | 0.3382 |
-| champion-weathercheck (reg 134) | 0.4730 | 17/20 | 1.0000 | 0.3264 |
-| champion-financial (reg 122) | 0.4026 | 14/20 | 1.0000 | 0.4163 |
+| **amanat_scorer** | **0.5650** | **37/38** | 1.0000 | 0.3816 |
+| champion-urlscan (reg 28) | 0.5015 | 34/38 | 1.0000 | 0.3320 |
+| champion-weathercheck (reg 134) | 0.4688 | 34/38 | 1.0000 | 0.3228 |
+| champion-financial (reg 122) | 0.3886 | 29/38 | 1.0000 | 0.4191 |
 
-Read that honestly: this corpus is ours and it is measurement-heavy, so it
-flatters a measurement-grounded module. It says the approach works on the cases
-we can see — not that it wins the protocol's 32 hidden fixtures.
+Stage 2 needs both bars — margin **and** ordering wins at least matching the
+champion — so the wins column matters as much as the margin.
 
-**Anti-gaming: 9/9 attacks held.** The last one to fall needed a third
+Read the rest honestly: this corpus is ours, and it says the approach works on
+the cases we can see, not that it wins the protocol's 32 hidden fixtures.
+
+Widening the corpus from 20 cases to 38 is what found the real bugs. It exposed
+that "812.4 million" parsed as 812.4 while "812.4M" parsed correctly, that a
+correct paraphrase omitting a figure scored below a wrong answer that quoted it,
+and that "not a human" was being read as a negative verdict on an AI-detection
+question. Each of those was a wrong rule, not a missing special case.
+
+### The gate nobody talks about
+
+Beating the champion's margin is not sufficient on an intent that carries
+traffic: the node also checks that your module orders *real* miner answers
+roughly the way the champion does, and rejects below about 0.60. That is why a
+0.68-margin module was refused on `WEB_SEARCH` while a 0.388 one went live.
+
+```bash
+node scorer/harness.mjs --agreement <ours.wasm> <champion.wasm>
+node scorer/harness.mjs --diff      <ours.wasm> <champion.wasm>   # where we lose
+```
+
+Against the reigning champion we sit at **0.92** mean rank agreement, and the
+cases where we diverge most are `WEATHER_CHECK` and `WEATHER_FORECAST` — exactly
+where we mean to.
+
+**Anti-gaming: 14/14 attacks held.** The last one to fall needed a third
 signal — a verdict. A negator flips the next verdict word inside its own clause,
 so "no malicious behaviour" reads positive, while "**No,** it is a phishing
 page" is itself the verdict because a clause break ends the negator's reach. An
 answer that commits the other way from the ground truth keeps 15% of its score,
 however much of the right vocabulary it carries. That closed the keyword dump
 (0.84 to 0.13 against an honest 0.53) and raised the benchmark margin at the
-same time, which is the shape of a real signal rather than a patch.
+same time, which is the shape of a real signal rather than a patch. A second
+rule follows from it: an answer that asserts both poles — "valid ... however it
+is invalid" — has hedged rather than answered, and is charged for it.
 
 The champion binary leaks the case this module was built to catch —
 `wrong dimension, same number`, where it scores "12 °C" at 0.80 against an
@@ -179,14 +227,20 @@ built-in WebAssembly, so comparing against a champion needs no extra toolchain.
 
 ## Status
 
-Done: miner (live upstream, 400/404 handled, self-check passing), YAML with full
-on-chain mapping, scoring module built and benchmarked against real champions
-with 18 tests and 9/9 attacks held, contract written, agent loop dry-running
-against the live node.
+Done: miner (live upstream, validation, self-check passing, Docker image built
+and health-checked, Vercel adapter tested), YAML with full on-chain mapping,
+scoring module at 24 tests / 14-of-14 attacks / 37-of-38 ordering wins against
+the reigning champion, rank-agreement and diff tooling, contract written, agent
+loop dry-running against the live node.
 
-Next: host the miner and `registerMiner` on Base Sepolia, deploy `Amanat.sol`,
-`registerWasm` the scoring module, and widen the benchmark — 20 cases is enough
-to steer by and not enough to trust.
+Blocked, not skipped: `fly deploy` fails with `requested machine count exceeds
+organization limit` on an account with zero apps, which is an account-level cap
+rather than anything in this repo. The Docker image runs anywhere, and
+`miner/api/` covers the serverless route.
+
+Next: host the miner, `registerMiner` on Base Sepolia, deploy `Amanat.sol`,
+`registerWasm` the scoring module. Then keep widening the benchmark — 38 cases
+found four real bugs, and the next 38 will find more.
 
 Nothing here has been submitted on-chain yet — no transaction is sent without
 an explicit go-ahead.

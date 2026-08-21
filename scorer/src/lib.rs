@@ -216,6 +216,35 @@ fn parse_number(s: &[u8], mut i: usize) -> Option<(f32, usize)> {
         }
     }
 
+    // "812.4 million" is the same reading as "812.4M". Written out is how a
+    // human-facing answer states a large figure, and missing it turned a correct
+    // answer into a thousand-fold error.
+    {
+        let mut j = i;
+        while j < s.len() && (s[j] == b' ' || s[j] == b'\t') {
+            j += 1;
+        }
+        const WORDS: &[(&[u8], f32)] = &[
+            (b"thousand", 1_000.0),
+            (b"million", 1_000_000.0),
+            (b"billion", 1_000_000_000.0),
+            (b"trillion", 1_000_000_000_000.0),
+            (b"bn", 1_000_000_000.0),
+        ];
+        for (word, m) in WORDS {
+            if s.len() >= j + word.len()
+                && s[j..j + word.len()].iter().zip(*word).all(|(a, b)| lower(*a) == *b)
+            {
+                let after = j + word.len();
+                if after >= s.len() || !is_word(s[after]) {
+                    value *= m;
+                    i = after;
+                    break;
+                }
+            }
+        }
+    }
+
     if i == start {
         return None;
     }
@@ -306,6 +335,18 @@ fn classify_unit(s: &[u8], mut i: usize, value: f32) -> (f32, Dim, usize) {
     (value, fallback, i)
 }
 
+/// Numbers written as words. An answer that says "three goals to one" has
+/// stated the score just as much as one that says "3-1".
+fn number_word(w: &[u8]) -> Option<f32> {
+    const WORDS: &[(&[u8], f32)] = &[
+        (b"zero", 0.0), (b"one", 1.0), (b"two", 2.0), (b"three", 3.0), (b"four", 4.0),
+        (b"five", 5.0), (b"six", 6.0), (b"seven", 7.0), (b"eight", 8.0), (b"nine", 9.0),
+        (b"ten", 10.0), (b"eleven", 11.0), (b"twelve", 12.0), (b"twenty", 20.0),
+        (b"thirty", 30.0), (b"forty", 40.0), (b"fifty", 50.0), (b"hundred", 100.0),
+    ];
+    WORDS.iter().find(|(t, _)| *t == w).map(|(_, v)| *v)
+}
+
 /// Pull every quantity out of a byte string.
 pub fn extract(s: &[u8]) -> Quantities {
     let mut out = Quantities::new();
@@ -327,6 +368,11 @@ pub fn extract(s: &[u8]) -> Quantities {
         }
         i += 1;
     }
+    for_each_word(s, |w| {
+        if let Some(v) = number_word(w) {
+            out.push(Quantity { value: v, dim: Dim::Plain });
+        }
+    });
     out
 }
 
@@ -474,13 +520,13 @@ fn polarity_of(w: &[u8]) -> i32 {
     const POSITIVE: &[&[u8]] = &[
         b"yes", b"safe", b"clean", b"valid", b"legitimate", b"genuine", b"authentic",
         b"benign", b"success", b"successful", b"succeeded", b"confirmed", b"true",
-        b"allowed", b"human", b"below", b"under", b"correct",
+        b"allowed", b"correct",
     ];
     const NEGATIVE: &[&[u8]] = &[
         b"unsafe", b"malicious", b"phishing", b"malware", b"trojan", b"fraud",
         b"fraudulent", b"scam", b"fake", b"invalid", b"expired", b"failed", b"failure",
         b"reverted", b"denied", b"blocked", b"false", b"critical", b"exploited",
-        b"compromised", b"above", b"exceeds", b"triggers", b"incorrect", b"wrong",
+        b"compromised", b"incorrect", b"wrong",
     ];
     if POSITIVE.iter().any(|p| *p == w) {
         1
@@ -514,22 +560,23 @@ pub fn polarity(s: &[u8]) -> i32 {
     // Tokens of reach left for a pending negator; 0 means none pending.
     let mut reach = 0u8;
     let mut flipped = false;
+    let mut at_clause_start = true;
 
-    let commit = |w: &[u8], brk: bool, total: &mut i32, reach: &mut u8, flipped: &mut bool| {
+    let commit = |w: &[u8], brk: bool, total: &mut i32, reach: &mut u8, flipped: &mut bool,
+                  at_clause_start: &mut bool| {
         if brk && *reach > 0 {
-            if !*flipped {
-                *total -= 1; // a negator that never found anything to flip
+            if *reach == 3 && !*flipped {
+                *total -= 1; // stood alone: "No," is itself the verdict
             }
             *reach = 0;
         }
         if is_negator(w) {
-            if *reach > 0 && !*flipped {
-                *total -= 1;
-            }
             *reach = 3;
             *flipped = false;
+            *at_clause_start = false;
             return;
         }
+        *at_clause_start = false;
         let p = polarity_of(w);
         if p != 0 && *reach > 0 {
             *total -= p;
@@ -539,10 +586,7 @@ pub fn polarity(s: &[u8]) -> i32 {
         }
         *total += p;
         if *reach > 0 {
-            *reach -= 1;
-            if *reach == 0 && !*flipped {
-                *total -= 1;
-            }
+            *reach -= 1; // ran out of reach without finding a verdict: asserts nothing
         }
     };
 
@@ -554,7 +598,7 @@ pub fn polarity(s: &[u8]) -> i32 {
             }
         } else {
             if n > 0 {
-                commit(&word[..n], clause_break, &mut total, &mut reach, &mut flipped);
+                commit(&word[..n], clause_break, &mut total, &mut reach, &mut flipped, &mut at_clause_start);
                 n = 0;
                 clause_break = false;
             }
@@ -564,12 +608,90 @@ pub fn polarity(s: &[u8]) -> i32 {
         }
     }
     if n > 0 {
-        commit(&word[..n], clause_break, &mut total, &mut reach, &mut flipped);
+        commit(&word[..n], clause_break, &mut total, &mut reach, &mut flipped, &mut at_clause_start);
     }
-    if reach > 0 && !flipped {
-        total -= 1;
+    if reach == 3 && !flipped {
+        total -= 1; // text ended on a bare "No"
     }
     total
+}
+
+/// True when a text asserts both poles — "valid ... however it is invalid".
+pub fn hedges(s: &[u8]) -> bool {
+    let mut pos = false;
+    let mut neg = false;
+    for_each_word(s, |w| match polarity_of(w) {
+        1 => pos = true,
+        -1 => neg = true,
+        _ => {}
+    });
+    pos && neg
+}
+
+/// Character-trigram overlap, as symmetric Dice.
+///
+/// Word matching alone is brittle across paraphrase: "AI-generated" and
+/// "produced by a language model" share no token, and a scorer that sees only
+/// tokens scores a correct answer at zero. Trigrams catch the shared shape that
+/// survives rewording, spelling drift and hyphenation.
+///
+/// Membership lives in a fixed bitset rather than a set, so there is no
+/// allocator and no unbounded work; collisions inflate similarity slightly but
+/// identically for every input, which keeps it deterministic.
+pub fn trigram_dice(a: &[u8], b: &[u8]) -> f32 {
+    const BITS: usize = 2048;
+    const WORDS: usize = BITS / 64;
+    let mut sa = [0u64; WORDS];
+    let mut sb = [0u64; WORDS];
+
+    fn fill(s: &[u8], set: &mut [u64; WORDS]) {
+        // Normalise to lowercase words separated by single spaces first, so
+        // punctuation and spacing cannot change the shape.
+        let mut norm = [0u8; 4096];
+        let mut n = 0usize;
+        let mut last_space = true;
+        for &raw in s {
+            if n >= norm.len() {
+                break;
+            }
+            if is_word(raw) {
+                norm[n] = lower(raw);
+                n += 1;
+                last_space = false;
+            } else if !last_space {
+                norm[n] = b' ';
+                n += 1;
+                last_space = true;
+            }
+        }
+        if n < 3 {
+            return;
+        }
+        for w in norm[..n].windows(3) {
+            // FNV-1a over three bytes: cheap, well spread, and integer-exact.
+            let mut h: u32 = 2166136261;
+            for &c in w {
+                h ^= c as u32;
+                h = h.wrapping_mul(16777619);
+            }
+            let bit = (h as usize) % BITS;
+            set[bit / 64] |= 1u64 << (bit % 64);
+        }
+    }
+
+    fill(a, &mut sa);
+    fill(b, &mut sb);
+
+    let mut inter = 0u32;
+    let mut total = 0u32;
+    for i in 0..WORDS {
+        inter += (sa[i] & sb[i]).count_ones();
+        total += sa[i].count_ones() + sb[i].count_ones();
+    }
+    if total == 0 {
+        return 0.0;
+    }
+    2.0 * inter as f32 / total as f32
 }
 
 fn is_blank(s: &[u8]) -> bool {
@@ -671,19 +793,37 @@ pub fn signals(question: &[u8], ground_truth: &[u8], answer: &[u8]) -> [f32; 4] 
 
     let recall = evidence_recall(question, ground_truth, answer);
     let prec = precision(ground_truth, answer);
-    let lexical = if recall + prec > 0.0 { 2.0 * recall * prec / (recall + prec) } else { 0.0 };
+    let f1 = if recall + prec > 0.0 { 2.0 * recall * prec / (recall + prec) } else { 0.0 };
+    // A paraphrase can share a claim without sharing a token, so take whichever
+    // view recognises the answer. Trigrams are discounted slightly, so exact
+    // evidence still leads where both agree.
+    let shape = trigram_dice(ground_truth, answer) * 0.9;
+    let lexical = if shape > f1 { shape } else { f1 };
 
     // Contradicting the ground truth's verdict is not a near miss. An answer
     // that commits the other way loses almost everything, however much of the
     // right vocabulary it carries.
     let gt_pol = polarity(ground_truth);
     let ma_pol = polarity(answer);
-    let verdict = if gt_pol != 0 && ma_pol != 0 && (gt_pol > 0) != (ma_pol > 0) { 0.15 } else { 1.0 };
+    let mut verdict = if gt_pol != 0 && ma_pol != 0 && (gt_pol > 0) != (ma_pol > 0) { 0.15 } else { 1.0 };
 
-    let composite = if numeric >= 0.0 {
+    // Saying a thing and its opposite is not an answer twice over, it is a
+    // hedge. Only charged when the ground truth itself commits one way, so a
+    // genuinely mixed ground truth is not punished for being mixed.
+    if !hedges(ground_truth) && hedges(answer) {
+        verdict *= 0.4;
+    }
+
+    let composite = if numeric >= 0.0 && !ma_q.as_slice().is_empty() {
         // A numeric ground truth is a measurement question: the reading decides,
         // text only shades it.
         smoothstep(0.75 * numeric + 0.25 * lexical) * verdict
+    } else if numeric >= 0.0 {
+        // The ground truth states a figure and the answer states none. That is
+        // an answer with a piece missing, not a wrong one — and scoring it at
+        // zero would rank a wrong answer that happens to quote the figure above
+        // a correct paraphrase that leaves it out.
+        smoothstep(lexical) * verdict * 0.75
     } else {
         smoothstep(lexical) * verdict
     };
@@ -899,6 +1039,68 @@ mod tests {
         let honest = r(q, gt, "The domain is clean, nothing malicious was seen.");
         let dump = r(q, gt, "malicious behaviour observed domain clean safe unsafe phishing malware verdict score");
         assert!(honest > dump, "honest {honest} must beat the dump {dump}");
+    }
+
+
+    #[test]
+    fn written_out_magnitudes_are_read() {
+        let qs = extract(b"Total value locked is 812.4 million USD.");
+        assert!((qs.as_slice()[0].value - 812_400_000.0).abs() < 1.0, "{:?}", qs.as_slice()[0]);
+        let gt = "Total value locked is 812.4 million USD.";
+        assert!(r("tvl?", gt, "TVL is about $812.4M.") > 0.6, "M suffix and the word must agree");
+        assert!(r("tvl?", gt, "Total value locked is 812.4 thousand USD.") < 0.3, "1000x out is wrong");
+    }
+
+    #[test]
+    fn numbers_spelled_out_still_count() {
+        let gt = "The match finished 3-1.";
+        let good = r("final score?", gt, "Final score was three goals to one.");
+        let bad = r("final score?", gt, "Final score was 0-0.");
+        assert!(good > bad, "spelled-out {good} must beat a wrong scoreline {bad}");
+    }
+
+    #[test]
+    fn a_missing_figure_is_not_a_wrong_figure() {
+        // The correct paraphrase omits "25 basis points"; the wrong answer quotes
+        // it. Quoting a number must not outrank being right.
+        let q = "Did the ECB cut rates in June 2024?";
+        let gt = "Yes, the ECB cut its main rate by 25 basis points in June 2024.";
+        let good = r(q, gt, "True - a quarter-point cut was made by the ECB that June.");
+        let bad = r(q, gt, "No, the ECB raised rates by 25 basis points that month.");
+        assert!(good > bad, "good {good} must beat bad {bad}");
+    }
+
+    #[test]
+    fn a_mid_clause_negator_is_not_a_verdict() {
+        // "not a human" agrees with "it is AI-generated"; only a clause-opening
+        // "No," is itself a verdict.
+        assert_eq!(polarity(b"This text was produced by a language model, not a human."), 0);
+        assert!(polarity(b"No, the passage paraphrases the source and cites it correctly.") < 0);
+        let q = "Was this passage written by a language model?";
+        let gt = "Yes, the passage is AI-generated.";
+        assert!(
+            r(q, gt, "This text was produced by a language model, not a human.")
+                > r(q, gt, "This text was written by a human author."),
+            "the AI verdict must beat the human verdict"
+        );
+    }
+
+    #[test]
+    fn hedging_is_charged_for() {
+        let q = "Is the certificate valid?";
+        let gt = "Yes, the certificate is valid and expires in 47 days.";
+        let straight = r(q, gt, "Valid, 47 days remain.");
+        let hedged = r(q, gt, "Yes, the certificate is valid and expires in 47 days. However it is invalid and expired.");
+        assert!(straight > hedged, "straight {straight} must beat hedged {hedged}");
+    }
+
+    #[test]
+    fn trigrams_recognise_a_paraphrase_without_shared_words() {
+        // No content word in common, but the shape survives.
+        let d = trigram_dice(b"allocation stays a single pointer bump", b"allocating is just moving an offset");
+        assert!(d > 0.0 && d < 1.0, "dice {d}");
+        assert!((trigram_dice(b"same text here", b"same text here") - 1.0).abs() < 0.001);
+        assert_eq!(trigram_dice(b"", b"anything"), 0.0);
     }
 
     #[test]

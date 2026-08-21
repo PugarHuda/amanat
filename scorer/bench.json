@@ -140,6 +140,132 @@
       "ground_truth": "The match finished 3-1.",
       "good": "Final score was three goals to one.",
       "bad": "Final score was 0-0."
+    },
+    {
+      "intent": "CHAT_COMPLETION",
+      "question": "Why does a bump allocator suit a WASM scoring module?",
+      "ground_truth": "Because every call gets fresh memory, so nothing has to be freed mid-call and allocation stays a single pointer bump.",
+      "good": "Each invocation starts with clean memory, so freeing is unnecessary and allocating is just moving an offset.",
+      "bad": "Because it lets the module cache results between calls and share state with other modules."
+    },
+    {
+      "intent": "LANGUAGE_GENERATION",
+      "question": "Write one sentence describing a storm warning for Cebu.",
+      "ground_truth": "Severe storm conditions are expected in Cebu, with damaging gusts and heavy rain through the evening.",
+      "good": "Cebu faces severe weather tonight: destructive gusts and heavy downpours are likely.",
+      "bad": "Cebu will stay calm and dry with light winds all evening."
+    },
+    {
+      "intent": "TASK_COMPLETION",
+      "question": "How do I check that a scoring module has no host imports?",
+      "ground_truth": "Run wasm-tools print on the module and count lines matching '(import'; the result must be zero.",
+      "good": "Print it with wasm-tools and grep for '(import' — you need a count of zero.",
+      "bad": "Run cargo test and check that all unit tests pass."
+    },
+    {
+      "intent": "AGENT_TASK",
+      "question": "An agent must settle a claim on-chain. What is the correct order of steps?",
+      "ground_truth": "Deposit USDC into escrow, call createJob with the intent id and callback, then act on the result delivered to subnetMessage.",
+      "good": "Fund the escrow first, open the job against the intent with your callback address, and let the callback trigger the payout.",
+      "bad": "Call subnetMessage directly, then deposit USDC afterwards to cover the cost."
+    },
+    {
+      "intent": "WEB_SEARCH",
+      "question": "What is the current block time on Base?",
+      "ground_truth": "Base produces a block roughly every 2 seconds.",
+      "good": "Blocks land about every two seconds on Base.",
+      "bad": "Base produces a block roughly every 12 minutes."
+    },
+    {
+      "intent": "NEWS_SEARCH",
+      "question": "What did the Fed do at its most recent meeting?",
+      "ground_truth": "The Federal Reserve held rates steady at 4.25 to 4.50 percent.",
+      "good": "Rates were left unchanged in the 4.25-4.50% band.",
+      "bad": "The Fed hiked rates by 75 basis points to 6.00 percent."
+    },
+    {
+      "intent": "RESEARCH_QUERY",
+      "question": "What does zkTLS give a validator that a plain HTTPS fetch does not?",
+      "ground_truth": "A cryptographic proof that the scraped data really came from a TLS session with that endpoint, so other validators can verify it without fetching anything themselves.",
+      "good": "Proof of provenance: other validators can check the data came from a genuine TLS connection instead of repeating the request.",
+      "bad": "It encrypts the response so only the leader validator can read the ground truth."
+    },
+    {
+      "intent": "ACADEMIC_SEARCH",
+      "question": "Which paper introduced the transformer architecture?",
+      "ground_truth": "Attention Is All You Need, by Vaswani et al., 2017.",
+      "good": "Vaswani and co-authors published Attention Is All You Need in 2017.",
+      "bad": "Deep Residual Learning for Image Recognition, by He et al., 2015."
+    },
+    {
+      "intent": "SENTIMENT_ANALYSIS",
+      "question": "What is the sentiment of: 'The payout arrived late but the claim was honoured in full.'",
+      "ground_truth": "Mixed, leaning positive: the delay is a complaint but the outcome is satisfactory.",
+      "good": "Mostly positive with a caveat — the customer is unhappy about timing but satisfied with the result.",
+      "bad": "Strongly negative: the customer is angry and the claim was refused."
+    },
+    {
+      "intent": "TEXT_CLASSIFICATION",
+      "question": "Which queue should this ticket go to: 'my card was charged twice for one order'?",
+      "ground_truth": "Billing, specifically duplicate charges.",
+      "good": "Route it to billing as a double-charge issue.",
+      "bad": "Route it to shipping as a delivery delay."
+    },
+    {
+      "intent": "LANGUAGE_TRANSLATION",
+      "question": "Translate to Indonesian: 'the storm risk is high'.",
+      "ground_truth": "Risiko badai tinggi.",
+      "good": "Risiko badainya tinggi.",
+      "bad": "Cuaca hari ini cerah."
+    },
+    {
+      "intent": "IP_GEOLOCATION",
+      "question": "Which country is this address in?",
+      "ground_truth": "The address is located in Singapore.",
+      "good": "It geolocates to Singapore.",
+      "bad": "It geolocates to Brazil."
+    },
+    {
+      "intent": "SSL_VERIFICATION",
+      "question": "Is the certificate for this host still valid?",
+      "ground_truth": "Yes, the certificate is valid and expires in 47 days.",
+      "good": "Valid — there are 47 days left before it expires.",
+      "bad": "No, the certificate expired 12 days ago."
+    },
+    {
+      "intent": "TVL_LOOKUP",
+      "question": "What is the protocol's total value locked?",
+      "ground_truth": "Total value locked is 812.4 million USD.",
+      "good": "TVL sits at about $812.4M.",
+      "bad": "TVL sits at about $8.1M."
+    },
+    {
+      "intent": "CURRENCY_EXCHANGE",
+      "question": "How many rupiah to one US dollar?",
+      "ground_truth": "One US dollar buys 16,250 Indonesian rupiah.",
+      "good": "USD/IDR is around 16,250.",
+      "bad": "USD/IDR is around 1,625."
+    },
+    {
+      "intent": "TOKEN_HOLDER_COUNT",
+      "question": "How many addresses hold this token?",
+      "ground_truth": "There are 48,912 holders.",
+      "good": "Roughly 48.9k addresses hold it.",
+      "bad": "Roughly 489 addresses hold it."
+    },
+    {
+      "intent": "DEEPFAKE_DETECTION",
+      "question": "Was this image generated by a model?",
+      "ground_truth": "Yes, the image is AI-generated with confidence 0.94.",
+      "good": "It is synthetic — the detector is 94% confident it was model-generated.",
+      "bad": "It is an authentic photograph with no signs of generation."
+    },
+    {
+      "intent": "CONTENT_VERIFICATION",
+      "question": "Does this passage plagiarise the cited source?",
+      "ground_truth": "No, the passage paraphrases the source and cites it correctly.",
+      "good": "There is no plagiarism here — it is a properly attributed paraphrase.",
+      "bad": "Yes, the passage copies the source verbatim without attribution."
     }
   ],
   "attacks": [
@@ -205,6 +331,41 @@
       "ground_truth": "The temperature is 38.2 °C.",
       "good": "38.2 °C.",
       "attack": "... !!! ---"
+    },
+    {
+      "name": "unit swapped, number kept",
+      "question": "What is the wind speed?",
+      "ground_truth": "Wind is 36 km/h.",
+      "good": "Wind is 36 km/h.",
+      "attack": "Wind is 36 mph."
+    },
+    {
+      "name": "off by three orders of magnitude",
+      "question": "What is the TVL?",
+      "ground_truth": "Total value locked is 812.4 million USD.",
+      "good": "TVL is about $812.4M.",
+      "attack": "Total value locked is 812.4 thousand USD."
+    },
+    {
+      "name": "correct answer then contradicts itself",
+      "question": "Is the certificate valid?",
+      "ground_truth": "Yes, the certificate is valid and expires in 47 days.",
+      "good": "Valid, 47 days remain.",
+      "attack": "Yes, the certificate is valid and expires in 47 days. However it is invalid and expired."
+    },
+    {
+      "name": "ground truth copied then negated",
+      "question": "Is the domain safe?",
+      "ground_truth": "No malicious behaviour was observed; the domain is clean.",
+      "good": "The domain is clean.",
+      "attack": "Malicious behaviour was observed; the domain is not clean."
+    },
+    {
+      "name": "confident wrong verdict with rich vocabulary",
+      "question": "Was this image generated by a model?",
+      "ground_truth": "Yes, the image is AI-generated with confidence 0.94.",
+      "good": "Synthetic — 94% confidence it came from a model.",
+      "attack": "After detailed forensic analysis of compression artefacts, sensor noise and lighting consistency, this is an authentic photograph."
     }
   ]
 }

@@ -1,0 +1,30 @@
+# fly deploy -c miner/fly.toml
+#
+# Once this is live, put its hostname in amanat-miner.yaml as base_url, re-pin
+# the YAML, and register. The node sandbox-tests every declared endpoint against
+# the real upstream, so the host has to be up before registerMiner, not after.
+app = "amanat-miner"
+primary_region = "sin"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  # A miner that cold-starts adds latency to a scored request, and latency is
+  # part of what validators see. Keep one machine warm.
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
