@@ -17,7 +17,11 @@ crate-type = ["cdylib", "rlib"]
 default = []
 # Tighter tolerance bands for the weather intents, where the ground truth is an
 # instrument reading rather than a figure quoted in prose.
-weather = []
+weather  = []   # a current reading: tight bands
+forecast = []   # a prediction: honest uncertainty
+finance  = []   # a price or count is exact
+verdict  = []   # the answer is the call, not the figure
+prose    = []   # no figure to check
 
 [dependencies]
 

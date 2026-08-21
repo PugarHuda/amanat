@@ -65,6 +65,49 @@ unsafe fn read_bytes<'a>(ptr: i32, len: i32) -> &'a [u8] {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Profiles
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// One scoring approach, tuned per family of intents. These are compile-time,
+// because the module is handed three strings and never told which intent it is
+// scoring — the registry binds a binary to one intent, so the binary is where
+// the domain knowledge has to live.
+//
+//   default   general purpose
+//   weather   a current reading: tight bands, 39 is not 38.2
+//   forecast  a prediction: the same shape with honest uncertainty
+//   finance   a price or a count is exact; 5% out is a different number
+//   verdict   the answer IS the call — safe or not, real or not
+//   prose     no figure to check; wording carries the whole answer
+
+/// What contradicting the ground truth's verdict costs.
+#[cfg(feature = "verdict")]
+const VERDICT_PENALTY: f32 = 0.05;
+#[cfg(not(feature = "verdict"))]
+const VERDICT_PENALTY: f32 = 0.15;
+
+/// What asserting both poles costs.
+#[cfg(feature = "verdict")]
+const HEDGE_PENALTY: f32 = 0.25;
+#[cfg(not(feature = "verdict"))]
+const HEDGE_PENALTY: f32 = 0.4;
+
+/// How much of the score the reading decides, when there is a reading.
+#[cfg(feature = "prose")]
+const W_NUMERIC: f32 = 0.40;
+#[cfg(feature = "verdict")]
+const W_NUMERIC: f32 = 0.50;
+#[cfg(not(any(feature = "prose", feature = "verdict")))]
+const W_NUMERIC: f32 = 0.75;
+
+/// Trigram shape is discounted against exact word evidence — except where
+/// wording is all there is.
+#[cfg(feature = "prose")]
+const SHAPE_WEIGHT: f32 = 1.0;
+#[cfg(not(feature = "prose"))]
+const SHAPE_WEIGHT: f32 = 0.9;
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Quantities
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -84,7 +127,7 @@ impl Dim {
     /// (full-credit band, zero-credit band) in canonical units. Inside the first
     /// the answer is simply right; past the second it is a different reading.
     /// `Plain` is relative, everything else absolute.
-    #[cfg(not(feature = "weather"))]
+    #[cfg(not(any(feature = "weather", feature = "forecast", feature = "finance")))]
     fn tolerance(self) -> (f32, f32) {
         match self {
             Dim::Temperature => (1.0, 8.0),
@@ -113,6 +156,36 @@ impl Dim {
             Dim::Pressure => (1.0, 15.0),
             Dim::Ratio => (0.01, 0.20),
             Dim::Plain => (0.005, 0.35),
+        }
+    }
+
+    /// A forecast is a prediction, not a reading. Being 2 °C out three hours
+    /// ahead is a good forecast; the same error on a current temperature is a
+    /// broken sensor. Wider than `weather`, still far tighter than prose.
+    #[cfg(feature = "forecast")]
+    fn tolerance(self) -> (f32, f32) {
+        match self {
+            Dim::Temperature => (2.0, 10.0),
+            Dim::Speed => (8.0, 45.0),
+            Dim::Length => (2.0, 20.0),
+            Dim::Pressure => (3.0, 30.0),
+            Dim::Ratio => (0.05, 0.35),
+            Dim::Plain => (0.02, 0.50),
+        }
+    }
+
+    /// A price, a balance or a holder count is exact. Quoting ETH at 4,100 when
+    /// it is 4,310 is not a near miss, it is the wrong number, and a scorer that
+    /// treats it as close is why a bad market feed can hold a leaderboard slot.
+    #[cfg(feature = "finance")]
+    fn tolerance(self) -> (f32, f32) {
+        match self {
+            Dim::Temperature => (1.0, 8.0),
+            Dim::Speed => (5.0, 40.0),
+            Dim::Length => (1.0, 15.0),
+            Dim::Pressure => (2.0, 25.0),
+            Dim::Ratio => (0.005, 0.10),
+            Dim::Plain => (0.002, 0.15), // relative: 0.2% exact, 15% out is wrong
         }
     }
 }
@@ -825,7 +898,7 @@ pub fn signals(question: &[u8], ground_truth: &[u8], answer: &[u8]) -> [f32; 4] 
     // A paraphrase can share a claim without sharing a token, so take whichever
     // view recognises the answer. Trigrams are discounted slightly, so exact
     // evidence still leads where both agree.
-    let shape = trigram_dice(ground_truth, answer) * 0.9;
+    let shape = trigram_dice(ground_truth, answer) * SHAPE_WEIGHT;
     let lexical = if shape > f1 { shape } else { f1 };
 
     // Contradicting the ground truth's verdict is not a near miss. An answer
@@ -833,19 +906,19 @@ pub fn signals(question: &[u8], ground_truth: &[u8], answer: &[u8]) -> [f32; 4] 
     // right vocabulary it carries.
     let gt_pol = polarity(ground_truth);
     let ma_pol = polarity(answer);
-    let mut verdict = if gt_pol != 0 && ma_pol != 0 && (gt_pol > 0) != (ma_pol > 0) { 0.15 } else { 1.0 };
+    let mut verdict = if gt_pol != 0 && ma_pol != 0 && (gt_pol > 0) != (ma_pol > 0) { VERDICT_PENALTY } else { 1.0 };
 
     // Saying a thing and its opposite is not an answer twice over, it is a
     // hedge. Only charged when the ground truth itself commits one way, so a
     // genuinely mixed ground truth is not punished for being mixed.
     if !hedges(ground_truth) && hedges(answer) {
-        verdict *= 0.4;
+        verdict *= HEDGE_PENALTY;
     }
 
     let composite = if numeric >= 0.0 && !ma_q.as_slice().is_empty() {
         // A numeric ground truth is a measurement question: the reading decides,
         // text only shades it.
-        smoothstep(0.75 * numeric + 0.25 * lexical) * verdict
+        smoothstep(W_NUMERIC * numeric + (1.0 - W_NUMERIC) * lexical) * verdict
     } else if numeric >= 0.0 {
         // The ground truth states a figure and the answer states none. That is
         // an answer with a piece missing, not a wrong one — and scoring it at
