@@ -10,7 +10,7 @@ description: >
   precipitation and a storm-risk score — so the same response can be graded by a
   Telegraph scoring module and acted on by a smart contract through an ERC-8183
   job. Backed by Open-Meteo; no API key, no rate-limit surprises.
-base_url: https://amanat-miner.fly.dev
+base_url: https://amanat-miner.vercel.app
 
 docs:
   website: https://github.com/PugarHuda/amanat
