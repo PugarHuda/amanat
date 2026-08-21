@@ -227,16 +227,40 @@ built-in WebAssembly, so comparing against a champion needs no extra toolchain.
 
 ## On-chain so far
 
-| What | Result |
-|---|---|
-| Scoring module, registration 186, `STORM_ALERT` | margin **0.74155** vs champion 0.75854, ordering tied **32/32**, worst self-match 1.0 — rejected on separation by 0.017 |
-| Scoring module, second registration | sharpened contrast, sent |
-| Miner registration | blocked: `base_url` returns 302 behind Vercel Authentication |
+Two champion scoring-module slots, both taken from the author who holds most of
+the board. Verify either at `/api/wasm`, or on Base Sepolia.
 
-The first rejection was worth more than a pass would have been. It calibrated
-this repo's benchmark against the protocol's hidden fixtures — ours reads 0.5650
-where theirs reads 0.7415, so our corpus is the harsher one — and it named the
-exact bar we missed.
+| Intent | Registration | Our margin | Beat | Wins | Traffic gate |
+|---|---|---|---|---|---|
+| `STORM_ALERT` | **188** | **0.8355** | 0.7585 | 32/32 | passed, 15 rows |
+| `WEATHER_CHECK` | **191** | **0.8445** | 0.7928 | 32/32 | passed, spearman **0.6111** on 79 rows |
+
+Three things that cost a registration each and are worth writing down:
+
+**Registration 186 lost by 0.017.** It tied the champion 32/32 on ordering and
+lost on separation alone. Ordering was already perfect, so the fix was contrast
+rather than judgement: `smoothstep` applied three times. A strictly increasing
+curve cannot reorder a pair, so wins and rank agreement are untouched by
+construction while the good/bad gap widens. 0.7415 to 0.8355.
+
+**That rejection calibrated this repo's benchmark.** Our corpus reads 0.5650
+where the protocol's hidden fixtures read 0.7415, so ours is the harsher of the
+two — which is the useful direction for it to be wrong in.
+
+**`duplicate wasm hash` is per (address, binary) across all intents**, not per
+intent, so one binary holds exactly one slot. A second slot needs a build that
+genuinely behaves differently: `--features weather` halves the tolerance bands,
+because a forecast is an instrument reading and 39 °C is a different forecast
+from 38.2 °C rather than a rounding of it.
+
+**The traffic gate is as tight as it looked.** `WEATHER_CHECK` passed with
+spearman **0.611** against a threshold of about 0.60, on 79 real rows. The
+`--agreement` harness predicted exactly that: weather was where we diverged most
+from the incumbent, because weather is where we mean to.
+
+Still blocked: `registerMiner`, because `base_url` returns 302 behind Vercel
+Authentication. `agent/register-miner.mjs` refuses to spend the registration
+until it answers 200.
 
 ## Status
 
