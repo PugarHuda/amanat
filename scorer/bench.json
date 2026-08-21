@@ -1,0 +1,210 @@
+{
+  "_note": "Benchmark for Telegraph scoring modules. `good` is a correct answer worded differently from the ground truth; `bad` is plausible but wrong. Cases span the intents Amanat targets plus prose intents, so a module tuned for measurements cannot quietly break text scoring. Attacks must each score below the honest answer.",
+  "cases": [
+    {
+      "intent": "WEATHER_CHECK",
+      "question": "What is the current temperature in Riyadh?",
+      "ground_truth": "The temperature in Riyadh is 38.2 °C.",
+      "good": "It is currently 100.8 F in Riyadh.",
+      "bad": "It is currently 12.0 °C in Riyadh."
+    },
+    {
+      "intent": "WEATHER_CHECK",
+      "question": "How humid is it in Jakarta right now?",
+      "ground_truth": "Relative humidity in Jakarta is 78 percent.",
+      "good": "Humidity is running at 78% in Jakarta.",
+      "bad": "Humidity is running at 31% in Jakarta."
+    },
+    {
+      "intent": "WEATHER_FORECAST",
+      "question": "What wind speed is forecast for Rotterdam tomorrow?",
+      "ground_truth": "Wind is forecast at 36 km/h.",
+      "good": "Expect winds around 10 m/s.",
+      "bad": "Expect winds around 3 km/h."
+    },
+    {
+      "intent": "WEATHER_FORECAST",
+      "question": "How much rain will fall in Manila in the next hour?",
+      "ground_truth": "Precipitation of 12 mm is expected.",
+      "good": "About 1.2 cm of rain is expected.",
+      "bad": "About 0.1 mm of rain is expected."
+    },
+    {
+      "intent": "STORM_ALERT",
+      "question": "Is there a storm risk at 14.6 N, 121.0 E in the next six hours?",
+      "ground_truth": "Yes. Gusts reach 95 km/h and storm risk is 0.86, above the alert threshold.",
+      "good": "Yes, storm conditions are likely: gusts near 95 km/h put risk at 0.86.",
+      "bad": "No, conditions are calm with gusts of 8 km/h and risk of 0.05."
+    },
+    {
+      "intent": "STORM_ALERT",
+      "question": "Should the parametric policy at Cebu pay out this hour?",
+      "ground_truth": "No. Storm risk is 0.31, below the 0.75 payout threshold.",
+      "good": "No payout: risk sits at 0.31, under the trigger.",
+      "bad": "Yes, risk is 0.92 and the policy triggers."
+    },
+    {
+      "intent": "CRYPTO_PRICE",
+      "question": "What is the price of ETH in USD?",
+      "ground_truth": "ETH is trading at 4310.50 USD.",
+      "good": "Ether is around $4,310.50.",
+      "bad": "Ether is around $431.05."
+    },
+    {
+      "intent": "FINANCIAL_DATA",
+      "question": "What was NVIDIA's revenue last quarter?",
+      "ground_truth": "Revenue was 30.04 billion USD.",
+      "good": "They reported 30.04B in revenue.",
+      "bad": "They reported 3.4B in revenue."
+    },
+    {
+      "intent": "GAS_PRICE",
+      "question": "What is the current Base gas price in gwei?",
+      "ground_truth": "Base gas price is 0.042 gwei.",
+      "good": "Gas on Base is about 0.042 gwei right now.",
+      "bad": "Gas on Base is about 41 gwei right now."
+    },
+    {
+      "intent": "CVE_LOOKUP",
+      "question": "What is the CVSS score of CVE-2021-44228?",
+      "ground_truth": "CVE-2021-44228 has a CVSS v3 base score of 10.0, critical.",
+      "good": "Log4Shell scores the maximum 10.0 on CVSS v3 and is rated critical.",
+      "bad": "It scores 4.3 on CVSS v3 and is rated medium."
+    },
+    {
+      "intent": "WALLET_BALANCE_CHECK",
+      "question": "What is the USDC balance of that treasury address?",
+      "ground_truth": "The address holds 1,250,000 USDC.",
+      "good": "It holds 1.25M USDC.",
+      "bad": "It holds 12,500 USDC."
+    },
+    {
+      "intent": "URL_SCAN",
+      "question": "Is https://example-login-secure.top safe to open?",
+      "ground_truth": "No, it is a phishing page impersonating a bank login and should be blocked.",
+      "good": "Unsafe — the page is a credential-harvesting clone of a bank sign-in. Do not open it.",
+      "bad": "Safe — this is a legitimate site with no malicious behaviour detected."
+    },
+    {
+      "intent": "URL_SCAN",
+      "question": "Does this domain serve malware?",
+      "ground_truth": "No malicious behaviour was observed; the domain is clean.",
+      "good": "The domain is safe — nothing malicious found.",
+      "bad": "The domain is actively distributing a trojan dropper."
+    },
+    {
+      "intent": "FACT_CHECK",
+      "question": "Did the European Central Bank cut rates in June 2024?",
+      "ground_truth": "Yes, the ECB cut its main rate by 25 basis points in June 2024.",
+      "good": "True — a quarter-point cut was made by the ECB that June.",
+      "bad": "No, the ECB raised rates by 25 basis points that month."
+    },
+    {
+      "intent": "CHAT_COMPLETION",
+      "question": "What is the capital of France?",
+      "ground_truth": "Paris is the capital of France.",
+      "good": "France's capital city is Paris.",
+      "bad": "France's capital city is Marseille."
+    },
+    {
+      "intent": "CHAT_COMPLETION",
+      "question": "Explain what an ERC-8183 job is in one sentence.",
+      "ground_truth": "It is an on-chain AI inference request where a contract escrows USDC, names an intent, and receives the result through a callback.",
+      "good": "A contract funds a request on-chain for a given intent and the answer comes back to it via a callback function.",
+      "bad": "It is a token standard for transferring non-fungible assets between chains."
+    },
+    {
+      "intent": "AI_TEXT_DETECTION",
+      "question": "Was this passage written by a language model?",
+      "ground_truth": "Yes, the passage is AI-generated.",
+      "good": "This text was produced by a language model, not a human.",
+      "bad": "This text was written by a human author."
+    },
+    {
+      "intent": "ONCHAIN_TX_LOOKUP",
+      "question": "Did that transaction succeed and how much did it move?",
+      "ground_truth": "Yes, it succeeded and transferred 500 USDC.",
+      "good": "The transaction confirmed successfully, moving 500 USDC.",
+      "bad": "The transaction reverted and moved nothing."
+    },
+    {
+      "intent": "NEWS_SEARCH",
+      "question": "What happened to the Rust crate arrayref?",
+      "ground_truth": "A malicious version of the arrayref crate was published containing build-time malware, and it was yanked.",
+      "good": "The crate was compromised: a release shipped malware that ran at build time, and it has since been yanked.",
+      "bad": "The crate was renamed after its maintainer transferred ownership; no security issue was involved."
+    },
+    {
+      "intent": "SPORTS_SCORE",
+      "question": "What was the final score of the match?",
+      "ground_truth": "The match finished 3-1.",
+      "good": "Final score was three goals to one.",
+      "bad": "Final score was 0-0."
+    }
+  ],
+  "attacks": [
+    {
+      "name": "echo the question back",
+      "question": "Will Riyadh exceed 40 degrees in the next 24 hours?",
+      "ground_truth": "No. The forecast peak is 38.2 °C, below the threshold.",
+      "good": "No, the peak will only reach 38.2 °C.",
+      "attack": "Will Riyadh exceed 40 degrees in the next 24 hours?"
+    },
+    {
+      "name": "shotgun every candidate value",
+      "question": "What is the temperature in Riyadh?",
+      "ground_truth": "The temperature is 38.2 °C.",
+      "good": "It is 38.2 °C.",
+      "attack": "It could be 10 °C, 20 °C, 30 °C, 35 °C, 38.2 °C, 40 °C, 45 °C or 50 °C."
+    },
+    {
+      "name": "assistant boilerplate padding",
+      "question": "What is the wind speed?",
+      "ground_truth": "Wind is 36 km/h.",
+      "good": "Wind is 36 km/h.",
+      "attack": "Sure! Happy to help with that. Based on the question you asked, and according to the information available, I would say that overall, in conclusion, the answer here is that the wind is 36 km/h. Hope this helps, let me know if there is anything else!"
+    },
+    {
+      "name": "right shape, wrong figure",
+      "question": "What is the CVSS score?",
+      "ground_truth": "The CVSS v3 base score is 10.0, rated critical.",
+      "good": "It scores the maximum 10.0 and is critical.",
+      "attack": "The CVSS v3 base score is 2.0, rated critical."
+    },
+    {
+      "name": "keyword dump from the ground truth",
+      "question": "Is the domain safe?",
+      "ground_truth": "No malicious behaviour was observed; the domain is clean.",
+      "good": "The domain is clean, nothing malicious was seen.",
+      "attack": "malicious behaviour observed domain clean safe unsafe phishing malware verdict score"
+    },
+    {
+      "name": "wrong dimension, same number",
+      "question": "How much rain fell?",
+      "ground_truth": "Rainfall was 12 mm.",
+      "good": "12 millimetres of rain fell.",
+      "attack": "It was 12 °C."
+    },
+    {
+      "name": "restate the question's threshold as the answer",
+      "question": "Is storm risk above the 0.75 payout threshold?",
+      "ground_truth": "No, storm risk is 0.31.",
+      "good": "No — risk is only 0.31.",
+      "attack": "The storm risk is 0.75."
+    },
+    {
+      "name": "empty answer",
+      "question": "What is the temperature?",
+      "ground_truth": "The temperature is 38.2 °C.",
+      "good": "38.2 °C.",
+      "attack": ""
+    },
+    {
+      "name": "punctuation only",
+      "question": "What is the temperature?",
+      "ground_truth": "The temperature is 38.2 °C.",
+      "good": "38.2 °C.",
+      "attack": "... !!! ---"
+    }
+  ]
+}

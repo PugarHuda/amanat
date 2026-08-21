@@ -1,0 +1,192 @@
+# Amanat
+
+**Verified weather intelligence that a contract acts on by itself.**
+
+An *amanat* is a message entrusted to be carried — and, in the language of the
+old telegraph offices, the dispatch itself. That is the whole shape of this
+project: a miner sends the amanat, a scoring module tests it, and a contract
+carries it out without anyone deciding anything by hand.
+
+Built for Telegraph Hackathon Season I. One codebase, three entries:
+
+| Track | What | Where |
+|---|---|---|
+| **1 — Miner** | Weather and storm-risk miner, answers legible to *both* a text scorer and a smart contract | [`miner/`](miner/) |
+| **2 — Script Author** | Measurement-grounded WASM scoring module for Tier A intents | [`scorer/`](scorer/) |
+| **3 — Application** | Parametric cover settled through ERC-8183 on-chain jobs | [`onchain/`](onchain/), [`agent/`](agent/) |
+
+---
+
+## The three problems this is built around
+
+Everything here comes from measuring the live network rather than guessing at
+it. The numbers below are reproducible with the scripts in this repo.
+
+**1. Deterministic intents are scored as if they were prose.** In epoch 240 the
+rank-1 miner on `WEATHER_CHECK` scored **0.0206** and on `STORM_ALERT`
+**0.0067**. The miners are not bad; every scoring module on the network compares
+text, and those miners answer with numbers. A leaderboard built from those
+scores is noise — and routing follows the leaderboard.
+
+**2. The on-chain rail is real but unused.** The Diamond answers
+`getJobBasePrice()` with `1000000` and has **139 miner registrations**, but only
+**6 ERC-8183 jobs have ever been created** — the last two by a single
+participant, on 17 August. In a 77-hour window there were 44 `MinerRegistered`
+events and 2 `JobCreated`. Meanwhile the organisers name on-chain intelligence
+pipelines as the highest-value thing to build.
+
+**3. Almost no miner can receive a job at all.** A job hands the node raw
+`OnChainData` arrays; without an `on_chain.request` block in its YAML the node
+cannot turn those into an HTTP call. `npm run audit` fetches every registered
+YAML and checks: of 63 live miners, a handful qualify, and each name-hashable
+intent has **one** job-able miner. That is the bottleneck under problem 2.
+
+---
+
+## Track 1 — the miner
+
+`miner/server.mjs` wraps Open-Meteo (free, no key) and returns every answer in
+two shapes at once:
+
+```json
+{
+  "summary": "At 2026-08-21T06:00Z the forecast for -6.20, 106.85 is 26.2 °C with wind 2.7 km/h, gusts 5.0 km/h and 0.0 mm precipitation. Storm risk is low (0.056).",
+  "temp_c": 26.2, "wind_kmh": 2.7, "gust_kmh": 5.0, "precip_mm": 0.0,
+  "risk": 0.056, "breach": false, "valid_at": "2026-08-21T06:00Z", "source": "open-meteo"
+}
+```
+
+The sentence is what a text-comparing scorer can grade. The scalars are what
+[`Amanat.sol`](onchain/Amanat.sol) acts on, mapped through `on_chain.fields` in
+[`amanat-miner.yaml`](miner/amanat-miner.yaml). Serving only one of the two is
+why the network currently has the gap it does.
+
+The YAML also carries a complete `on_chain.request` block, which is what makes
+the miner reachable from a job at all, and declares Open-Meteo's real quota so
+the node refuses a request that would exhaust it *before* charging the caller.
+
+```bash
+npm run miner        # http://127.0.0.1:8787
+node miner/test.mjs  # self-check, hits the real upstream
+```
+
+## Track 2 — the scoring module
+
+`scorer/` is a `no_std` Rust module compiled to `wasm32-unknown-unknown`:
+**12.3 KB, zero imports**, exporting `alloc`, `dealloc`, `rank_answer` and
+`breakdown_answer`.
+
+It reads the *quantities* out of an answer and grades them as measurements:
+`38.2 °C`, `100.8 F` and `311.35 K` are one reading; `10 m/s` and `36 km/h` are
+one wind speed; being 0.3° out is right and 30° out is wrong. Text overlap
+stays, but only to carry the non-numeric part of an answer.
+
+Two rules do most of the anti-gaming work:
+
+- **A number the question already stated earns nothing when it comes back.**
+  "Will it exceed 40 °C?" answered with "40 °C" is the prompt, not a reading —
+  unless the ground truth also says 40.
+- **Committing beats covering.** Listing every candidate value is charged for,
+  so a hedged answer cannot outscore a decision.
+
+Every float operation is `+ - * /` and comparison, which IEEE-754 defines
+exactly, so two validators on different hosts return identical bits.
+
+```bash
+npm run build:scorer
+npm run bench      # against the real champion binaries
+npm run attacks
+cd scorer && cargo test    # 18 tests, native
+```
+
+Measured on `scorer/bench.json` (20 good/bad cases, 9 attacks) against champion
+binaries downloaded from their published `wasm_url`:
+
+| module | margin | wins | worst self-match | stddev |
+|---|---|---|---|---|
+| **amanat_scorer** | **0.5539** | 17/20 | 1.0000 | 0.3907 |
+| champion-urlscan (reg 28) | 0.5059 | 17/20 | 1.0000 | 0.3382 |
+| champion-weathercheck (reg 134) | 0.4730 | 17/20 | 1.0000 | 0.3264 |
+| champion-financial (reg 122) | 0.4026 | 14/20 | 1.0000 | 0.4163 |
+
+Read that honestly: this corpus is ours and it is measurement-heavy, so it
+flatters a measurement-grounded module. It says the approach works on the cases
+we can see — not that it wins the protocol's 32 hidden fixtures.
+
+**Anti-gaming: 9/9 attacks held.** The last one to fall needed a third
+signal — a verdict. A negator flips the next verdict word inside its own clause,
+so "no malicious behaviour" reads positive, while "**No,** it is a phishing
+page" is itself the verdict because a clause break ends the negator's reach. An
+answer that commits the other way from the ground truth keeps 15% of its score,
+however much of the right vocabulary it carries. That closed the keyword dump
+(0.84 to 0.13 against an honest 0.53) and raised the benchmark margin at the
+same time, which is the shape of a real signal rather than a patch.
+
+The champion binary leaks the case this module was built to catch —
+`wrong dimension, same number`, where it scores "12 °C" at 0.80 against an
+honest "12 millimetres" at 0.66.
+
+## Track 3 — the application
+
+[`onchain/Amanat.sol`](onchain/Amanat.sol) is a parametric weather cover where
+**the contract is the customer of the intelligence**, not a front end calling an
+API:
+
+```
+openPolicy()  →  requestCheck()  →  createJob(keccak256("STORM_ALERT"), params, this)
+                                      ↓  protocol routes to the best-ranked miner
+                                      ↓  validators finalise
+                              subnetMessage()  →  pay the holder, or decline
+```
+
+Two design constraints drove it, and neither has a workaround:
+
+- **The answer arrives from a miner nobody here chose.** `OnChainData` is packed
+  according to *that* miner's YAML, so the contract validates what arrived and
+  declines a claim whose shape it cannot read. It never guesses at a payout.
+- **Delivery is asynchronous and not guaranteed.** Funds stay escrowed against
+  the policy, and `expire()` releases them after 24 hours if no answer lands, so
+  a silent rail cannot hold the book hostage.
+
+`agent/` is the loop that feeds it, cheapest rail first — the daemon feed is
+free, an Engine call is $0.01, a job is $1.00, so nothing goes on-chain until
+the cheap rails say a policy is worth settling.
+
+```bash
+npm run agent:dry    # read-only: no wallet, no funds, no spend
+npm run agent        # opens jobs for policies that pass screening
+```
+
+`agent/run.mjs` deliberately targets **name-hashed intents only**
+(`keccak256("STORM_ALERT")`), so the protocol picks the miner. Using a
+registration-derived intentId would pin the job to our own miner, which is
+exactly the self-dealing loop the organisers warned against.
+
+---
+
+## Layout
+
+```
+miner/     server.mjs, amanat-miner.yaml, test.mjs
+scorer/    src/lib.rs, harness.mjs, bench.json, champions/
+onchain/   Amanat.sol
+agent/     telegraph.mjs, run.mjs, audit-jobable.mjs
+```
+
+`scorer/harness.mjs` loads any Telegraph scoring module the way a validator does
+— no imports, strings written through the module's own `alloc` — using Node's
+built-in WebAssembly, so comparing against a champion needs no extra toolchain.
+
+## Status
+
+Done: miner (live upstream, 400/404 handled, self-check passing), YAML with full
+on-chain mapping, scoring module built and benchmarked against real champions
+with 18 tests and 9/9 attacks held, contract written, agent loop dry-running
+against the live node.
+
+Next: host the miner and `registerMiner` on Base Sepolia, deploy `Amanat.sol`,
+`registerWasm` the scoring module, and widen the benchmark — 20 cases is enough
+to steer by and not enough to trust.
+
+Nothing here has been submitted on-chain yet — no transaction is sent without
+an explicit go-ahead.

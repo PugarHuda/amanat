@@ -1,0 +1,23 @@
+[package]
+name    = "amanat-scorer"
+version = "0.1.0"
+edition = "2021"
+
+# cargo build --release --target wasm32-unknown-unknown
+# -> target/wasm32-unknown-unknown/release/amanat_scorer.wasm
+[lib]
+name       = "amanat_scorer"
+crate-type = ["cdylib", "rlib"]
+
+# No dependencies at all. Every float operation here is +, -, *, / and
+# comparison, which IEEE-754 defines exactly, so two validators on different
+# hosts return identical bits. Pulling in libm would buy transcendentals we do
+# not need and a rounding surface we would have to trust.
+[dependencies]
+
+[profile.release]
+opt-level     = "z"
+lto           = true
+codegen-units = 1
+panic         = "abort"
+strip         = true

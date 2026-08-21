@@ -1,0 +1,5 @@
+node_modules/
+scorer/target/
+.yaml-cache.json
+.env
+scorer/champions/*.wasm

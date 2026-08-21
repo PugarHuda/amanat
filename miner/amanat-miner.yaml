@@ -1,0 +1,124 @@
+version: "1"
+kind: miner
+id: 20260821
+slug: amanat-weather-risk
+protocol: generic
+name: Amanat Weather Risk
+description: >
+  Parametric weather-risk signals for autonomous systems. Every answer carries a
+  plain-language summary and the scalars behind it — temperature, wind, gusts,
+  precipitation and a storm-risk score — so the same response can be graded by a
+  Telegraph scoring module and acted on by a smart contract through an ERC-8183
+  job. Backed by Open-Meteo; no API key, no rate-limit surprises.
+base_url: https://amanat-miner.fly.dev
+
+docs:
+  website: https://github.com/PugarHuda/amanat
+  documentation: https://github.com/PugarHuda/amanat/blob/main/miner/README.md
+  repository: https://github.com/PugarHuda/amanat
+
+# Open-Meteo's free tier is 10k calls/day. Declaring it means the node refuses a
+# request that would blow the quota BEFORE charging the caller, instead of
+# letting a runaway agent burn it and fail every later request.
+limitations:
+  - code: ACCOUNT_QUOTA
+    message: Open-Meteo free tier allows 10000 requests per day
+    property: rate
+    value_num: 10000
+    window_seconds: 86400
+  - code: MAX_PARAM_VALUE
+    message: hours must be an integer offset between 0 and 168
+    param: hours
+    property: value
+    value_num: 168
+    operator: lte
+
+# Failures come back as real HTTP status codes, so there is no status_path to
+# declare — a 4xx/5xx already tells the node not to charge for the call.
+errors:
+  message_path: error
+
+rate_limit_per_sec: 5
+cache_ttl_sec: 300
+circuit_threshold: 5
+circuit_cooldown_seconds: 30
+
+endpoints:
+  - path: /forecast
+    external_path: /forecast
+    method: POST
+    description: Weather and storm-risk forecast for a point, at an hour offset.
+
+input_schema:
+  type: object
+  required: [lat, lon]
+  properties:
+    lat: { type: number, minimum: -90, maximum: 90, description: Latitude in decimal degrees. }
+    lon: { type: number, minimum: -180, maximum: 180, description: Longitude in decimal degrees. }
+    hours: { type: integer, minimum: 0, maximum: 168, description: Hours ahead of now. 0 is the current hour. }
+
+output_schema:
+  type: object
+  properties:
+    summary: { type: string, description: One-sentence plain-language forecast. }
+    temp_c: { type: number, description: Temperature in degrees Celsius. }
+    wind_kmh: { type: number, description: Sustained wind speed in km/h. }
+    gust_kmh: { type: number, description: Wind gust speed in km/h. }
+    precip_mm: { type: number, description: Precipitation in mm for the hour. }
+    risk: { type: number, description: Storm risk between 0 and 1. }
+    breach: { type: boolean, description: True when risk is at or above the 0.75 payout threshold. }
+    valid_at: { type: string, description: UTC timestamp the forecast applies to. }
+    source: { type: string }
+
+semantics:
+  signal_mapping:
+    confidence_field: risk
+    label_field: breach
+    reason_field: summary
+  supported_intents:
+    - WEATHER_FORECAST
+    - WEATHER_CHECK
+    - STORM_ALERT
+
+# This block is what makes the miner reachable from an ERC-8183 job. Most
+# registered miners omit it, which is why the on-chain rail has served 6 jobs in
+# its lifetime: a job carries OnChainData arrays, and without a request mapping
+# the node cannot turn them into an HTTP call.
+on_chain:
+  transform: direct
+  min_price_usdc: 0.01
+  fields:
+    strings:
+      - index: 0
+        name: summary
+        source_path: summary
+    integers:
+      - index: 0
+        name: temp_c_x100
+        source_path: temp_c
+        multiplier: 100
+      - index: 1
+        name: wind_kmh_x100
+        source_path: wind_kmh
+        multiplier: 100
+      - index: 2
+        name: precip_mm_x100
+        source_path: precip_mm
+        multiplier: 100
+      - index: 3
+        name: risk_x10000
+        source_path: risk
+        multiplier: 10000
+    bools:
+      - index: 0
+        name: breach
+        source_path: breach
+        transform_rule: bool_from_eq:true
+  request:
+    - endpoint: forecast
+      method: POST
+      content_type: application/json
+      body:
+        lat: { source: strings.0, type: float }
+        lon: { source: strings.1, type: float }
+        hours: { source: numbers.0, type: int, optional: true }
