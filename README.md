@@ -227,36 +227,74 @@ built-in WebAssembly, so comparing against a champion needs no extra toolchain.
 
 ## On-chain so far
 
-Two champion scoring-module slots, both taken from the author who holds most of
-the board. Verify either at `/api/wasm`, or on Base Sepolia.
+Four champion scoring-module slots. Verify any of them at `/api/wasm`, or on
+Base Sepolia.
 
 | Intent | Registration | Our margin | Beat | Wins | Traffic gate |
 |---|---|---|---|---|---|
+| `CRYPTO_PRICE` | **201** | **0.8449** | 0.7961 | 32/32 | no traffic |
+| `WEATHER_CHECK` | **191** | **0.8445** | 0.7928 | 32/32 | passed, spearman 0.6111 / 79 rows |
 | `STORM_ALERT` | **188** | **0.8355** | 0.7585 | 32/32 | passed, 15 rows |
-| `WEATHER_CHECK` | **191** | **0.8445** | 0.7928 | 32/32 | passed, spearman **0.6111** on 79 rows |
+| `URL_SCAN` | **202** | **0.8257** | 0.7892 | 32/32 | no traffic |
 
-Three things that cost a registration each and are worth writing down:
+### What the rejections taught, which is more than the passes
 
-**Registration 186 lost by 0.017.** It tied the champion 32/32 on ordering and
-lost on separation alone. Ordering was already perfect, so the fix was contrast
-rather than judgement: `smoothstep` applied three times. A strictly increasing
-curve cannot reorder a pair, so wins and rank agreement are untouched by
-construction while the good/bad gap widens. 0.7415 to 0.8355.
+**186 lost by 0.017 on `STORM_ALERT`.** It tied 32/32 on ordering and lost on
+separation alone. Ordering was already perfect, so the fix was contrast rather
+than judgement: `smoothstep` three times. A strictly increasing curve cannot
+reorder a pair, so wins and rank agreement are untouched by construction while
+the good/bad gap widens. 0.7415 to 0.8355.
 
-**That rejection calibrated this repo's benchmark.** Our corpus reads 0.5650
+That rejection also calibrated this repo's benchmark: our corpus reads 0.5650
 where the protocol's hidden fixtures read 0.7415, so ours is the harsher of the
-two — which is the useful direction for it to be wrong in.
+two — the useful direction for it to be wrong in.
 
-**`duplicate wasm hash` is per (address, binary) across all intents**, not per
-intent, so one binary holds exactly one slot. A second slot needs a build that
-genuinely behaves differently: `--features weather` halves the tolerance bands,
-because a forecast is an instrument reading and 39 °C is a different forecast
-from 38.2 °C rather than a rounding of it.
+**`duplicate wasm hash` is per (address, binary) across every intent**, not per
+intent, so one binary holds exactly one slot. Hence the profile family below.
 
-**The traffic gate is as tight as it looked.** `WEATHER_CHECK` passed with
-spearman **0.611** against a threshold of about 0.60, on 79 real rows. The
-`--agreement` harness predicted exactly that: weather was where we diverged most
-from the incumbent, because weather is where we mean to.
+**203 was rejected on `WEATHER_FORECAST`, and it is the most interesting result
+here.** It beat the champion comfortably on the fixtures — margin 0.8349 against
+0.7859, ordering 32/32 — and was refused anyway:
+
+```
+disagreed with the champion on real traffic: agreement -0.2585, need at least 0.60
+```
+
+Negative correlation with the incumbent across 90 real miner answers. That is
+the point, not a defect: the incumbent scores weather answers near zero — rank 1
+on `WEATHER_CHECK` scored 0.0206 in epoch 240 — so its ordering of real answers
+is close to noise, and a scorer that ranks by measurement accuracy necessarily
+disagrees with noise.
+
+The consequence is structural, and worth stating plainly: **on an intent that
+carries traffic, a scorer cannot replace the incumbent by being right if being
+right means disagreeing with it.** `WEATHER_CHECK` squeaked through at 0.6111
+against a 0.60 threshold; `WEATHER_FORECAST`, same domain and a different
+incumbent, could not. The gate rewards conformity with whatever is already
+seated, which is the opposite of what a quality flywheel needs at exactly the
+moment the seated module is the weak one.
+
+We have not tried to defeat that by making the module agree more, because a
+scorer tuned to match a scorer that scores real answers near zero is a worse
+scorer. The finding is worth more than the slot.
+
+### Profiles
+
+One approach, tuned per family of intents, compiled per binary — the module is
+handed three strings and never told which intent it is scoring, so the domain
+knowledge has to live in the build.
+
+| Profile | Why it differs | Bench margin |
+|---|---|---|
+| `finance` | a price or a holder count is exact: 0.2% full credit, 15% out is the wrong number | 0.6088 |
+| `weather` | a current reading: 39 °C is not a rounding of 38.2 °C | 0.6084 |
+| `forecast` | a prediction carries honest uncertainty: 2 °C out three hours ahead is a good forecast | 0.5924 |
+| `verdict` | the answer is the call, so contradicting it costs 95% and the figure decides less | 0.5760 |
+| `prose` | nothing to measure; wording carries the answer | 0.5397 — not registered, 36/38 and one attack leak |
+
+```bash
+npm run build:profiles   # builds all six, fails if any two produce identical bytes
+```
 
 Still blocked: `registerMiner`, because `base_url` returns 302 behind Vercel
 Authentication. `agent/register-miner.mjs` refuses to spend the registration
