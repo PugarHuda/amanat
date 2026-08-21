@@ -225,6 +225,19 @@ agent/     telegraph.mjs, run.mjs, audit-jobable.mjs
 — no imports, strings written through the module's own `alloc` — using Node's
 built-in WebAssembly, so comparing against a champion needs no extra toolchain.
 
+## On-chain so far
+
+| What | Result |
+|---|---|
+| Scoring module, registration 186, `STORM_ALERT` | margin **0.74155** vs champion 0.75854, ordering tied **32/32**, worst self-match 1.0 — rejected on separation by 0.017 |
+| Scoring module, second registration | sharpened contrast, sent |
+| Miner registration | blocked: `base_url` returns 302 behind Vercel Authentication |
+
+The first rejection was worth more than a pass would have been. It calibrated
+this repo's benchmark against the protocol's hidden fixtures — ours reads 0.5650
+where theirs reads 0.7415, so our corpus is the harsher one — and it named the
+exact bar we missed.
+
 ## Status
 
 Done: miner (live upstream, validation, self-check passing, Docker image built
