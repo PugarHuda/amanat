@@ -4,16 +4,19 @@
   "private": true,
   "type": "module",
   "description": "Verified weather intelligence that a contract acts on: a Telegraph miner, a scoring module, and an on-chain agent.",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "miner": "node miner/server.mjs",
     "test": "node miner/test.mjs && cd scorer && cargo test",
     "audit": "node agent/audit-jobable.mjs",
     "build:scorer": "cd scorer && cargo build --release --target wasm32-unknown-unknown",
-    "bench": "node scorer/harness.mjs scorer/target/wasm32-unknown-unknown/release/amanat_scorer.wasm scorer/champions/*.wasm",
+    "bench": "node scorer/harness.mjs scorer/dist/*.wasm scorer/champions/*.wasm",
     "attacks": "node scorer/harness.mjs --attacks scorer/target/wasm32-unknown-unknown/release/amanat_scorer.wasm",
     "agent:dry": "node agent/run.mjs --dry",
-    "agent": "node agent/run.mjs"
+    "agent": "node agent/run.mjs",
+    "build:profiles": "node scorer/build-profiles.mjs"
   },
   "dependencies": {
     "ethers": "^6.13.0"
