@@ -16,7 +16,11 @@
     "attacks": "node scorer/harness.mjs --attacks scorer/target/wasm32-unknown-unknown/release/amanat_scorer.wasm",
     "agent:dry": "node agent/run.mjs --dry",
     "agent": "node agent/run.mjs",
-    "build:profiles": "node scorer/build-profiles.mjs"
+    "build:profiles": "node scorer/build-profiles.mjs",
+    "wallet": "node --env-file=.env agent/wallet-status.mjs",
+    "miner:check": "node agent/miner-check.mjs",
+    "register:miner": "node --env-file=.env agent/register-miner.mjs",
+    "register:wasm": "node --env-file=.env agent/register-wasm.mjs"
   },
   "dependencies": {
     "ethers": "^6.13.0"
