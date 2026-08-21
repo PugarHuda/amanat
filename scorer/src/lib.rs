@@ -84,6 +84,7 @@ impl Dim {
     /// (full-credit band, zero-credit band) in canonical units. Inside the first
     /// the answer is simply right; past the second it is a different reading.
     /// `Plain` is relative, everything else absolute.
+    #[cfg(not(feature = "weather"))]
     fn tolerance(self) -> (f32, f32) {
         match self {
             Dim::Temperature => (1.0, 8.0),
@@ -92,6 +93,26 @@ impl Dim {
             Dim::Pressure => (2.0, 25.0),
             Dim::Ratio => (0.02, 0.30),
             Dim::Plain => (0.01, 0.50), // relative: 1% is exact, 50% out is wrong
+        }
+    }
+
+    /// Bands for the weather intents, built with `--features weather`.
+    ///
+    /// A forecast is a measurement with a known precision: reporting 38.2 °C as
+    /// 39 °C is a different forecast, not a rounding. The general profile has to
+    /// stay loose enough for prose answers that quote a figure approximately,
+    /// which makes it too forgiving where the ground truth is an instrument
+    /// reading. Halving the bands is the whole difference — and it is a real
+    /// behavioural difference, which is what a second registration requires.
+    #[cfg(feature = "weather")]
+    fn tolerance(self) -> (f32, f32) {
+        match self {
+            Dim::Temperature => (0.5, 5.0),
+            Dim::Speed => (3.0, 25.0),
+            Dim::Length => (0.5, 10.0),
+            Dim::Pressure => (1.0, 15.0),
+            Dim::Ratio => (0.01, 0.20),
+            Dim::Plain => (0.005, 0.35),
         }
     }
 }

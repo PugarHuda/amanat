@@ -13,6 +13,12 @@ crate-type = ["cdylib", "rlib"]
 # comparison, which IEEE-754 defines exactly, so two validators on different
 # hosts return identical bits. Pulling in libm would buy transcendentals we do
 # not need and a rounding surface we would have to trust.
+[features]
+default = []
+# Tighter tolerance bands for the weather intents, where the ground truth is an
+# instrument reading rather than a figure quoted in prose.
+weather = []
+
 [dependencies]
 
 [profile.release]
