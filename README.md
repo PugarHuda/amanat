@@ -227,56 +227,71 @@ built-in WebAssembly, so comparing against a champion needs no extra toolchain.
 
 ## On-chain so far
 
-Four champion scoring-module slots. Verify any of them at `/api/wasm`, or on
-Base Sepolia.
+**Miner: registration 179, `amanat-weather-risk`, active.** Serving
+`WEATHER_FORECAST`, `WEATHER_CHECK` and `STORM_ALERT` from
+https://amanat-miner.vercel.app, floor 0.01 USDC. Grace period runs seven days
+from 24 August.
 
-| Intent | Registration | Our margin | Beat | Wins | Traffic gate |
-|---|---|---|---|---|---|
-| `CRYPTO_PRICE` | **201** | **0.8449** | 0.7961 | 32/32 | no traffic |
-| `WEATHER_CHECK` | **191** | **0.8445** | 0.7928 | 32/32 | passed, spearman 0.6111 / 79 rows |
-| `STORM_ALERT` | **188** | **0.8355** | 0.7585 | 32/32 | passed, 15 rows |
-| `URL_SCAN` | **202** | **0.8257** | 0.7892 | 32/32 | no traffic |
+Getting there cost one terminal rejection worth writing down: **every
+`on_chain.fields` entry requires a `description`**. The schema enforces it, the
+docs' own direct-transform example omits it, and a miner rejected for it is not
+retried — the repair is `updateMiner`, not a fresh `registerMiner`. The
+pre-flight in `agent/register-miner.mjs` now refuses to spend a registration on
+a YAML missing one.
 
-### What the rejections taught, which is more than the passes
+Three Vercel failures preceded that, each different: every `.mjs` at the deploy
+root is treated as a function entry point, so a helper module crashes the
+deployment; ignoring it removes the entrypoint entirely, because this is a Node
+server project and `server.mjs` is exactly what Vercel looks for; and it wants
+that file's *default* export to be the server.
 
-**186 lost by 0.017 on `STORM_ALERT`.** It tied 32/32 on ordering and lost on
-separation alone. Ordering was already perfect, so the fix was contrast rather
-than judgement: `smoothstep` three times. A strictly increasing curve cannot
-reorder a pair, so wins and rank agreement are untouched by construction while
-the good/bad gap widens. 0.7415 to 0.8355.
+**Scoring modules: four champion slots held, then lost to a protocol change.**
 
-That rejection also calibrated this repo's benchmark: our corpus reads 0.5650
-where the protocol's hidden fixtures read 0.7415, so ours is the harsher of the
-two — the useful direction for it to be wrong in.
+| Intent | Reg | Our margin | Beat |
+|---|---|---|---|
+| `CRYPTO_PRICE` | 201 | 0.8449 | 0.7961 |
+| `WEATHER_CHECK` | 191 | 0.8445 | 0.7928 |
+| `STORM_ALERT` | 188 | 0.8355 | 0.7585 |
+| `URL_SCAN` | 202 | 0.8257 | 0.7892 |
 
-**`duplicate wasm hash` is per (address, binary) across every intent**, not per
-intent, so one binary holds exactly one slot. Hence the profile family below.
+On 23 August the protocol shipped a fix so each module is evaluated against its
+own registered intent rather than one shared fixture set. Registrations across
+the network went from 187 to 574 as everyone re-registered, and all four of our
+slots were superseded. The fixture sets are visibly per-intent now:
+`WEATHER_CHECK` reports 12 cases and `WEATHER_FORECAST` 14, where everything
+used to report 32.
 
-**203 was rejected on `WEATHER_FORECAST`, and it is the most interesting result
-here.** It beat the champion comfortably on the fixtures — margin 0.8349 against
-0.7859, ordering 32/32 — and was refused anyway:
+That is the right change, and it invalidates the finding this repo previously
+recorded — that one fixture set was shared across all 45 intents, proven at the
+time by identical scores to seven decimal places for one binary across different
+intents. It was true, and it is no longer.
+
+### What the rejections taught
+
+**186 lost by 0.017 on `STORM_ALERT`.** It tied the champion on ordering and
+lost on separation alone, so the fix was contrast rather than judgement:
+`smoothstep` repeated. A strictly increasing curve cannot reorder a pair, so
+ordering and rank agreement are untouched by construction while the good/bad gap
+widens. 0.7415 to 0.8355.
+
+**A binary is burned for the address that registered it.** Re-registering bytes
+we had already used reverts with `duplicate wasm hash` even after that entry is
+superseded or rejected. A new slot needs a new build.
+
+**203 was rejected on `WEATHER_FORECAST` for being right.** It beat the champion
+on the fixtures — 0.8349 against 0.7859 — and was refused for ranking 90 real
+miner answers differently:
 
 ```
 disagreed with the champion on real traffic: agreement -0.2585, need at least 0.60
 ```
 
-Negative correlation with the incumbent across 90 real miner answers. That is
-the point, not a defect: the incumbent scores weather answers near zero — rank 1
-on `WEATHER_CHECK` scored 0.0206 in epoch 240 — so its ordering of real answers
-is close to noise, and a scorer that ranks by measurement accuracy necessarily
-disagrees with noise.
-
-The consequence is structural, and worth stating plainly: **on an intent that
-carries traffic, a scorer cannot replace the incumbent by being right if being
-right means disagreeing with it.** `WEATHER_CHECK` squeaked through at 0.6111
-against a 0.60 threshold; `WEATHER_FORECAST`, same domain and a different
-incumbent, could not. The gate rewards conformity with whatever is already
-seated, which is the opposite of what a quality flywheel needs at exactly the
-moment the seated module is the weak one.
-
-We have not tried to defeat that by making the module agree more, because a
-scorer tuned to match a scorer that scores real answers near zero is a worse
-scorer. The finding is worth more than the slot.
+Negatively correlated with an incumbent whose scores for weather answers sit
+near zero — rank 1 on `WEATHER_CHECK` scored 0.0206 in epoch 240. Disagreeing
+with noise produces a negative correlation with it. `WEATHER_CHECK` squeaked
+through at 0.6111 against a 0.60 threshold; `WEATHER_FORECAST`, same domain,
+different incumbent, could not. The gate rewards conformity with whatever is
+seated, which is backwards precisely when the seated module is the weak one.
 
 ### Profiles
 
