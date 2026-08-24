@@ -229,41 +229,48 @@ built-in WebAssembly, so comparing against a champion needs no extra toolchain.
 
 **The loop closes.** `Amanat.sol` is deployed at
 [`0x1649ce04…Bc6e`](https://sepolia.basescan.org/address/0x1649ce04B8b9D56285a62Afb2b442602EE0bBc6e)
-and has settled two claims without anyone deciding anything:
+and settles claims with nobody in the loop:
 
 ```
 openPolicy -> requestCheck -> createJob(keccak256("STORM_ALERT"))
   -> protocol routes, validators finalise -> job Terminal
-  -> subnetMessage -> risk 0.382, below the 0.75 trigger -> Declined
+  -> subnetMessage -> risk below the 0.75 trigger -> Declined
 ```
 
-Jobs 7 and 8. Before these, the chain had seen six ERC-8183 jobs in its entire
-lifetime.
+Jobs 7, 8, 9 and 10. Before these, the chain had seen six ERC-8183 jobs in its
+entire lifetime.
+
+**All three rails run, cheapest first.** That ordering is the cost design, not a
+description: the daemon feed is free, an Engine call over x402 is $0.01 and a
+job is $1.00, so the agent asks a hundred cheap questions before it asks one
+expensive one. It screens every open policy the contract still owes on, and goes
+on-chain only for a policy the cheap answer puts near its trigger. One run: 42
+paid Engine calls, one escalation, $1.42.
 
 ### A finding the second job proved
 
 Policy 2 was written at latitude `1` and policy 3 at `10.32`. Both came back
-with **risk 0.382 and a forecast for `0.00, 0.00`**. The contract stored the
-coordinates correctly and passed them in `strings[0]` and `strings[1]`; the YAML
-maps `lat` and `lon` from `strings.0` and `strings.1` with `type: float`. They
-do not survive the node's `on_chain.request` mapping — the miner is called with
-zeros regardless of what the job carried.
+**risk 0.382, forecast for `0.00, 0.00`**. The contract stored the coordinates
+correctly and passed them in `strings[0..1]`; the YAML maps them from
+`strings.0` and `strings.1`. They do not survive the node's `on_chain.request`
+mapping.
 
-Two different inputs producing byte-identical output is what makes this a bug
-report rather than a suspicion. Filed for the team; the settlement path itself
-is unaffected, since the contract acts on whatever reading it is given.
+On job 9 it changed the outcome. The Engine screen for Manila read risk
+**0.488**, above the escalation threshold; the job opened for that same policy
+came back **0.361**, the value for Null Island, and the contract declined the
+claim. A contract that paid a dollar for a signal acted on a reading of
+somewhere else. Written up in [`docs/bug-report.md`](docs/bug-report.md).
 
 ### Two things that cost a transaction to learn
 
 **`createJob` draws on the escrow of whoever calls it** — the contract, not the
-wallet that deployed it. Funding the deployer's escrow leaves the contract
-unable to open a single job. Hence `fundEscrow()` and `jobBudget()`.
+wallet that deployed it. Hence `fundEscrow()` and `jobBudget()`.
 
-**The public Base Sepolia RPC serves its own writes back stale**, often enough
-to break a script: a confirmed transfer read as a zero balance, a confirmed
-`approve` simulated as `exceeds allowance`, and a `requestCheck` that reverted
-on `estimateGas` while the same call returned `jobId 7` when simulated directly
-one command later. `BASE_SEPOLIA_RPC` now points at publicnode.
+**The public Base Sepolia RPC serves its own writes back stale.** A confirmed
+transfer read as a zero balance, a confirmed `approve` simulated as
+`exceeds allowance`, and a `requestCheck` that reverted on `estimateGas` while
+the same call returned `jobId 7` when simulated directly one command later.
+`BASE_SEPOLIA_RPC` points at publicnode now.
 
 ## Miner and scoring modules
 
