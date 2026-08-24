@@ -23,7 +23,6 @@ finance  = []   # a price or count is exact
 verdict  = []   # the answer is the call, not the figure
 prose    = []   # no figure to check
 authenticity = []   # a verdict on text with nothing to measure
-meteo    = []   # forecast bands, gentler contrast for a small fixture set
 
 [dependencies]
 

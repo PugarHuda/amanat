@@ -352,7 +352,6 @@ knowledge has to live in the build.
 | `weather` | a current reading: 39 °C is not a rounding of 38.2 °C | 0.5988 | 37/38 |
 | *(default)* | general purpose | 0.5977 | 37/38 |
 | `forecast` | a prediction carries honest uncertainty: 2 °C out three hours ahead is a good forecast | 0.5828 | 37/38 |
-| `meteo` | forecast bands with gentler contrast, for the smaller fixture sets the weather intents now carry | 0.5819 | 37/38 |
 | `verdict` | the answer is the call, so contradicting it costs 95% and the figure decides less | 0.5782 | 37/38 |
 | `prose` | nothing to measure; wording carries the answer | 0.5512 | 37/38 |
 | `authenticity` | a verdict on text with no figure at all | 0.5066 | 37/38 |
@@ -361,7 +360,28 @@ Every profile: 37 of 38 ordering wins, worst self-match 1.0, and **14 of 14
 attacks held**. For comparison the reigning champion binary scores 0.5015 at
 34/38 on the same corpus.
 
-Three signals got them there, each added because a specific case failed:
+### The contrast trick has a ceiling
+
+Repeating a strictly increasing curve widens the gap between a good answer and a
+bad one and cannot reorder them — that is what took registration 186 to champion
+at 188. Registration 676 then ordered all 15 `WEATHER_FORECAST` fixtures
+correctly and lost on separation alone, 0.4625 against 0.5955, which reads like
+an invitation to turn the same handle further.
+
+It is not. At five passes the corpus dropped from 37 ordering wins to 34 and an
+attack started leaking; at four, 35 and still leaking. Monotone preserves order
+in arithmetic, not in floats: repeated application saturates values toward 0 and
+1, and answers that were distinguishable become *equal*. The padding attack
+leaked because it tied the honest answer at 1.0000 exactly.
+
+Three passes is the ceiling here, and that killed a profile. `meteo` existed to
+be gentler than `forecast` on small fixture sets; gentler cost ordering wins,
+sharper saturated, and at three passes it compiled to bytes identical to
+`forecast` — which the registry refuses anyway. The justification was wrong, so
+the profile is gone rather than kept and explained.
+
+Three signals got the remaining seven there, each added because a specific case
+failed:
 
 - **Order.** "Deposit, then call" and "call, then deposit" share every content
   word and mean opposite things. A quarter of the lexical score rides on how

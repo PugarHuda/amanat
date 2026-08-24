@@ -109,9 +109,7 @@ const W_NUMERIC: f32 = 0.75;
 /// small and the interesting cases sit in the middle.
 #[cfg(feature = "authenticity")]
 const CONTRAST_PASSES: u8 = 4;
-#[cfg(feature = "meteo")]
-const CONTRAST_PASSES: u8 = 2;
-#[cfg(not(any(feature = "authenticity", feature = "meteo")))]
+#[cfg(not(feature = "authenticity"))]
 const CONTRAST_PASSES: u8 = 3;
 
 /// Trigram shape is discounted against exact word evidence — except where
@@ -141,7 +139,7 @@ impl Dim {
     /// (full-credit band, zero-credit band) in canonical units. Inside the first
     /// the answer is simply right; past the second it is a different reading.
     /// `Plain` is relative, everything else absolute.
-    #[cfg(not(any(feature = "weather", feature = "forecast", feature = "meteo", feature = "finance")))]
+    #[cfg(not(any(feature = "weather", feature = "forecast", feature = "finance")))]
     fn tolerance(self) -> (f32, f32) {
         match self {
             Dim::Temperature => (1.0, 8.0),
@@ -176,7 +174,7 @@ impl Dim {
     /// A forecast is a prediction, not a reading. Being 2 °C out three hours
     /// ahead is a good forecast; the same error on a current temperature is a
     /// broken sensor. Wider than `weather`, still far tighter than prose.
-    #[cfg(any(feature = "forecast", feature = "meteo"))]
+    #[cfg(feature = "forecast")]
     fn tolerance(self) -> (f32, f32) {
         match self {
             Dim::Temperature => (2.0, 10.0),
