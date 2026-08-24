@@ -13,10 +13,13 @@ interface ITelegraph {
     function createJob(bytes32 intentId, OnChainData memory params, address callback)
         external
         returns (uint256 jobId);
+    function depositUSDC(uint256 amount) external;
+    function escrowBalance(address account) external view returns (uint256);
 }
 
 interface IERC20 {
     function transfer(address to, uint256 amount) external returns (bool);
+    function approve(address spender, uint256 amount) external returns (bool);
     function balanceOf(address account) external view returns (uint256);
 }
 
@@ -228,6 +231,28 @@ contract Amanat {
             return (true, r.bools[0] ? PAYOUT_THRESHOLD : 0);
         }
         return (false, 0);
+    }
+
+    // ── Escrow ──────────────────────────────────────────────────────────────
+
+    /// Move USDC from the book into this contract's escrow on the Diamond.
+    ///
+    /// `createJob` draws on the escrow of whoever calls it, and the caller here
+    /// is this contract — not the wallet that deployed it. Funding the deployer's
+    /// escrow instead leaves the contract unable to open a single job, which is
+    /// the kind of thing you find out one transaction too late.
+    function fundEscrow(uint256 amount) external {
+        if (msg.sender != underwriter) revert NotUnderwriter();
+        // Escrowed funds are spent on jobs, so they must not also be counted as
+        // backing a policy.
+        require(payoutToken.balanceOf(address(this)) >= _outstandingTotal + amount, "would strand a policy");
+        payoutToken.approve(telegraph, amount);
+        ITelegraph(telegraph).depositUSDC(amount);
+    }
+
+    /// What this contract can still spend on jobs.
+    function jobBudget() external view returns (uint256) {
+        return ITelegraph(telegraph).escrowBalance(address(this));
     }
 
     // ── Book management ─────────────────────────────────────────────────────
