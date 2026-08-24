@@ -22,6 +22,7 @@ import { wallet, provider, DIAMOND } from "./telegraph.mjs";
 
 const ABI = [
   "function registerMiner(string yamlUrl, bytes32 yamlHash, address feeAddress, uint256 minPriceUsdc, string[] supportedIntents) returns (uint256)",
+  "function updateMiner(uint256 oldRegistrationId, string yamlUrl, bytes32 yamlHash, address feeAddress, uint256 minPriceUsdc, string[] supportedIntents) returns (uint256)",
   "function isCanonicalIntent(string) view returns (bool)",
 ];
 
@@ -51,6 +52,18 @@ async function main() {
   const yamlHash = ethers.sha256(bytes); // SHA-256, not keccak — the node verifies with SHA-256
   const local = await readFile(new URL("../miner/amanat-miner.yaml", import.meta.url));
   const same = Buffer.compare(Buffer.from(bytes), local) === 0;
+
+  // Every on_chain.fields entry needs a `description`. The schema requires it,
+  // the docs' own direct-transform example omits it, and leaving it out cost
+  // registration 178 — rejected terminally, fixable only with updateMiner.
+  const fieldNames = [...text.matchAll(/^\s+- index:[\s\S]*?(?=^\s+- index:|^\s{2}\w|\Z)/gm)].map((m) => m[0]);
+  const undescribed = fieldNames.filter((b) => /name:/.test(b) && !/description:/.test(b));
+  if (undescribed.length) {
+    throw new Error(
+      `${undescribed.length} on_chain.fields entr${undescribed.length === 1 ? "y is" : "ies are"} missing a description — ` +
+      `the schema requires one on every field and rejects the registration terminally`
+    );
+  }
 
   const y = readYaml(text);
   console.log(`yaml       ${YAML_URL}`);
@@ -93,12 +106,20 @@ async function main() {
   }
 
   const d = new ethers.Contract(DIAMOND, ABI, signer);
-  const args = [YAML_URL, yamlHash, FEE_ADDRESS, MIN_PRICE, y.intents];
-  const gas = await d.registerMiner.estimateGas(...args);
+  // A rejected registration is fixed with updateMiner, not a fresh register:
+  // it swaps the entry atomically and keeps the slug bound to this wallet.
+  const updateIdx = process.argv.indexOf("--update");
+  const updateId = updateIdx === -1 ? null : BigInt(process.argv[updateIdx + 1]);
+  const method = updateId === null ? "registerMiner" : "updateMiner";
+  const args = updateId === null
+    ? [YAML_URL, yamlHash, FEE_ADDRESS, MIN_PRICE, y.intents]
+    : [updateId, YAML_URL, yamlHash, FEE_ADDRESS, MIN_PRICE, y.intents];
+  const gas = await d[method].estimateGas(...args);
   const fee = await provider().getFeeData();
   console.log(`\nsigner     ${address}`);
   console.log(`fee addr   ${FEE_ADDRESS}`);
   console.log(`floor      ${ethers.formatUnits(MIN_PRICE, 6)} USDC`);
+  console.log(`method     ${method}${updateId === null ? "" : ` (replacing ${updateId})`}`);
   console.log(`gas        ${gas} units, about ${ethers.formatEther(gas * (fee.maxFeePerGas ?? fee.gasPrice ?? 0n))} ETH`);
 
   if (dry) {
@@ -106,7 +127,7 @@ async function main() {
     return;
   }
 
-  const tx = await d.registerMiner(...args);
+  const tx = await d[method](...args);
   console.log(`\nsent       ${tx.hash}`);
   const receipt = await tx.wait();
   console.log(`mined      block ${receipt.blockNumber}, gas used ${receipt.gasUsed}`);

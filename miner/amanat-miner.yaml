@@ -91,27 +91,33 @@ on_chain:
     strings:
       - index: 0
         name: summary
+        description: One-sentence plain-language forecast for the point and hour.
         source_path: summary
     integers:
       - index: 0
         name: temp_c_x100
+        description: Temperature in degrees Celsius times 100.
         source_path: temp_c
         multiplier: 100
       - index: 1
         name: wind_kmh_x100
+        description: Sustained wind speed in km/h times 100.
         source_path: wind_kmh
         multiplier: 100
       - index: 2
         name: precip_mm_x100
+        description: Precipitation for the hour in mm times 100.
         source_path: precip_mm
         multiplier: 100
       - index: 3
         name: risk_x10000
+        description: Storm risk between 0 and 1 times 10000.
         source_path: risk
         multiplier: 10000
     bools:
       - index: 0
         name: breach
+        description: True when storm risk is at or above the 0.75 payout threshold.
         source_path: breach
         transform_rule: bool_from_eq:true
   request:
