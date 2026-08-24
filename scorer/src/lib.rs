@@ -81,30 +81,44 @@ unsafe fn read_bytes<'a>(ptr: i32, len: i32) -> &'a [u8] {
 //   prose     no figure to check; wording carries the whole answer
 
 /// What contradicting the ground truth's verdict costs.
-#[cfg(feature = "verdict")]
+#[cfg(any(feature = "verdict", feature = "authenticity"))]
 const VERDICT_PENALTY: f32 = 0.05;
-#[cfg(not(feature = "verdict"))]
+#[cfg(not(any(feature = "verdict", feature = "authenticity")))]
 const VERDICT_PENALTY: f32 = 0.15;
 
 /// What asserting both poles costs.
-#[cfg(feature = "verdict")]
+#[cfg(any(feature = "verdict", feature = "authenticity"))]
 const HEDGE_PENALTY: f32 = 0.25;
-#[cfg(not(feature = "verdict"))]
+#[cfg(not(any(feature = "verdict", feature = "authenticity")))]
 const HEDGE_PENALTY: f32 = 0.4;
 
 /// How much of the score the reading decides, when there is a reading.
-#[cfg(feature = "prose")]
+#[cfg(feature = "authenticity")]
+const W_NUMERIC: f32 = 0.25; // "is this AI-written?" has no figure to check
+#[cfg(all(feature = "prose", not(feature = "authenticity")))]
 const W_NUMERIC: f32 = 0.40;
-#[cfg(feature = "verdict")]
+#[cfg(all(feature = "verdict", not(feature = "authenticity")))]
 const W_NUMERIC: f32 = 0.50;
-#[cfg(not(any(feature = "prose", feature = "verdict")))]
+#[cfg(not(any(feature = "prose", feature = "verdict", feature = "authenticity")))]
 const W_NUMERIC: f32 = 0.75;
+
+/// How many times the contrast curve is applied. More passes widen the gap
+/// between a good answer and a bad one without touching their order, which is
+/// what Stage 2 measures as separation. Fewer passes keep mid-quality answers
+/// distinguishable from each other, which matters where the fixture set is
+/// small and the interesting cases sit in the middle.
+#[cfg(feature = "authenticity")]
+const CONTRAST_PASSES: u8 = 4;
+#[cfg(feature = "meteo")]
+const CONTRAST_PASSES: u8 = 2;
+#[cfg(not(any(feature = "authenticity", feature = "meteo")))]
+const CONTRAST_PASSES: u8 = 3;
 
 /// Trigram shape is discounted against exact word evidence — except where
 /// wording is all there is.
-#[cfg(feature = "prose")]
+#[cfg(any(feature = "prose", feature = "authenticity"))]
 const SHAPE_WEIGHT: f32 = 1.0;
-#[cfg(not(feature = "prose"))]
+#[cfg(not(any(feature = "prose", feature = "authenticity")))]
 const SHAPE_WEIGHT: f32 = 0.9;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -127,7 +141,7 @@ impl Dim {
     /// (full-credit band, zero-credit band) in canonical units. Inside the first
     /// the answer is simply right; past the second it is a different reading.
     /// `Plain` is relative, everything else absolute.
-    #[cfg(not(any(feature = "weather", feature = "forecast", feature = "finance")))]
+    #[cfg(not(any(feature = "weather", feature = "forecast", feature = "meteo", feature = "finance")))]
     fn tolerance(self) -> (f32, f32) {
         match self {
             Dim::Temperature => (1.0, 8.0),
@@ -162,7 +176,7 @@ impl Dim {
     /// A forecast is a prediction, not a reading. Being 2 °C out three hours
     /// ahead is a good forecast; the same error on a current temperature is a
     /// broken sensor. Wider than `weather`, still far tighter than prose.
-    #[cfg(feature = "forecast")]
+    #[cfg(any(feature = "forecast", feature = "meteo"))]
     fn tolerance(self) -> (f32, f32) {
         match self {
             Dim::Temperature => (2.0, 10.0),
@@ -829,9 +843,13 @@ fn smoothstep(x: f32) -> f32 {
     // the gap between a good answer and a bad one widens. That matters because
     // Stage 2 rejects on separation as well as ordering: registration 186 tied
     // the champion 32/32 on ordering and lost by 0.017 of margin.
-    let y = x * x * (3.0 - 2.0 * x);
-    let z = y * y * (3.0 - 2.0 * y);
-    z * z * (3.0 - 2.0 * z)
+    let mut v = x;
+    let mut n = 0u8;
+    while n < CONTRAST_PASSES {
+        v = v * v * (3.0 - 2.0 * v);
+        n += 1;
+    }
+    v
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

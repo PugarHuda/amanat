@@ -17,7 +17,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT = join(HERE, "dist");
 const BUILT = join(HERE, "target/wasm32-unknown-unknown/release/amanat_scorer.wasm");
 
-const PROFILES = ["", "weather", "forecast", "finance", "verdict", "prose"];
+const PROFILES = ["", "weather", "forecast", "finance", "verdict", "prose", "authenticity", "meteo"];
 
 // keccak256 is what registerWasm commits to; ethers is already a dependency.
 const { ethers } = await import("ethers");
