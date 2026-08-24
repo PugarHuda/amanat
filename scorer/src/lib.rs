@@ -670,11 +670,17 @@ pub fn polarity(s: &[u8]) -> i32 {
     let mut flipped = false;
     let mut at_clause_start = true;
 
+    // The first verdict in a text is the answer; what follows is support. "No,
+    // the passage paraphrases the source and cites it correctly" is a negative
+    // verdict with a positive detail, not a wash — and summing them flat made it
+    // exactly a wash, which let a contradicting answer past the check.
+    let mut first = true;
     let commit = |w: &[u8], brk: bool, total: &mut i32, reach: &mut u8, flipped: &mut bool,
-                  at_clause_start: &mut bool| {
+                  at_clause_start: &mut bool, first: &mut bool| {
+        let weight = |f: &mut bool| { let w = if *f { 3 } else { 1 }; *f = false; w };
         if brk && *reach > 0 {
             if *reach == 3 && !*flipped {
-                *total -= 1; // stood alone: "No," is itself the verdict
+                *total -= weight(first); // stood alone: "No," is itself the verdict
             }
             *reach = 0;
         }
@@ -687,12 +693,14 @@ pub fn polarity(s: &[u8]) -> i32 {
         *at_clause_start = false;
         let p = polarity_of(w);
         if p != 0 && *reach > 0 {
-            *total -= p;
+            *total -= p * weight(first);
             *flipped = true;
             *reach = 0;
             return;
         }
-        *total += p;
+        if p != 0 {
+            *total += p * weight(first);
+        }
         if *reach > 0 {
             *reach -= 1; // ran out of reach without finding a verdict: asserts nothing
         }
@@ -706,7 +714,7 @@ pub fn polarity(s: &[u8]) -> i32 {
             }
         } else {
             if n > 0 {
-                commit(&word[..n], clause_break, &mut total, &mut reach, &mut flipped, &mut at_clause_start);
+                commit(&word[..n], clause_break, &mut total, &mut reach, &mut flipped, &mut at_clause_start, &mut first);
                 n = 0;
                 clause_break = false;
             }
@@ -716,10 +724,10 @@ pub fn polarity(s: &[u8]) -> i32 {
         }
     }
     if n > 0 {
-        commit(&word[..n], clause_break, &mut total, &mut reach, &mut flipped, &mut at_clause_start);
+        commit(&word[..n], clause_break, &mut total, &mut reach, &mut flipped, &mut at_clause_start, &mut first);
     }
     if reach == 3 && !flipped {
-        total -= 1; // text ended on a bare "No"
+        total -= if first { 3 } else { 1 }; // text ended on a bare "No"
     }
     total
 }
@@ -800,6 +808,56 @@ pub fn trigram_dice(a: &[u8], b: &[u8]) -> f32 {
         return 0.0;
     }
     2.0 * inter as f32 / total as f32
+}
+
+/// How much of the ground truth's word *order* the answer preserves.
+///
+/// "Deposit, then call, then act" and "call, then deposit" share every content
+/// word and mean opposite things. Bag-of-words scoring cannot see that, and
+/// neither can trigram overlap once the words are the same. This walks the words
+/// the two texts share, in ground-truth order, and counts how many consecutive
+/// pairs appear in that same order in the answer.
+///
+/// Returns 1.0 when there is nothing to judge — too few shared words is a
+/// lexical problem, and it is measured elsewhere.
+pub fn order_agreement(ground_truth: &[u8], answer: &[u8]) -> f32 {
+    const MAX: usize = 48;
+    let mut positions = [0i32; MAX];
+    let mut n = 0usize;
+
+    // For each ground-truth content word, where does it first appear in the
+    // answer's own word sequence?
+    for_each_word(ground_truth, |w| {
+        if is_stopword(w) || n >= MAX {
+            return;
+        }
+        let mut idx = -1i32;
+        let mut seen = 0i32;
+        for_each_word(answer, |a| {
+            if a == w && idx < 0 {
+                idx = seen;
+            }
+            seen += 1;
+        });
+        if idx >= 0 {
+            positions[n] = idx;
+            n += 1;
+        }
+    });
+
+    // Two or three shared words say nothing about sequence — "The capital is
+    // Paris" reorders "Paris is the capital" and means exactly the same thing.
+    // Order is only evidence once there is enough of it.
+    if n < 4 {
+        return 1.0;
+    }
+    let mut ordered = 0u32;
+    for i in 1..n {
+        if positions[i] > positions[i - 1] {
+            ordered += 1;
+        }
+    }
+    ordered as f32 / (n - 1) as f32
 }
 
 fn is_blank(s: &[u8]) -> bool {
@@ -918,6 +976,12 @@ pub fn signals(question: &[u8], ground_truth: &[u8], answer: &[u8]) -> [f32; 4] 
     // evidence still leads where both agree.
     let shape = trigram_dice(ground_truth, answer) * SHAPE_WEIGHT;
     let lexical = if shape > f1 { shape } else { f1 };
+    // Words in the wrong sequence are the wrong claim, but a paraphrase reorders
+    // freely and legitimately. A quarter of the lexical score rides on order —
+    // enough to separate "deposit then call" from "call then deposit", not
+    // enough to sink a rewording. It has to stay small because the contrast
+    // curve is applied three times, and a dent before that becomes a crater.
+    let lexical = lexical * (0.75 + 0.25 * order_agreement(ground_truth, answer));
 
     // Contradicting the ground truth's verdict is not a near miss. An answer
     // that commits the other way loses almost everything, however much of the
@@ -931,6 +995,18 @@ pub fn signals(question: &[u8], ground_truth: &[u8], answer: &[u8]) -> [f32; 4] 
     // genuinely mixed ground truth is not punished for being mixed.
     if !hedges(ground_truth) && hedges(answer) {
         verdict *= HEDGE_PENALTY;
+    }
+
+    // A figure that contradicts the ground truth's figure is wrong however
+    // little the intent cares about numbers. Profiles that down-weight the
+    // numeric signal — prose, authenticity — were letting "the CVSS is 2.0"
+    // through against a ground truth of 10.0 because the weight, not the
+    // evidence, was small. Weight decides how much a *right* number is worth;
+    // it must not decide how much a wrong one costs.
+    // Costed the same as contradicting a verdict, because it is the same act:
+    // stating something the ground truth says is not so.
+    if numeric >= 0.0 && !ma_q.as_slice().is_empty() && numeric < 0.25 {
+        verdict *= VERDICT_PENALTY;
     }
 
     let composite = if numeric >= 0.0 && !ma_q.as_slice().is_empty() {
@@ -1220,6 +1296,45 @@ mod tests {
         assert!(d > 0.0 && d < 1.0, "dice {d}");
         assert!((trigram_dice(b"same text here", b"same text here") - 1.0).abs() < 0.001);
         assert_eq!(trigram_dice(b"", b"anything"), 0.0);
+    }
+
+
+    // Note: order_agreement is deliberately only a quarter of the lexical score,
+    // so it does not on its own overturn a wrong answer that reuses more of the
+    // ground truth's words than the right one does. The AGENT_TASK ordering case
+    // in bench.json is still lost by the default profile — and by the champion.
+    #[test]
+    fn order_is_only_evidence_when_there_is_enough_of_it() {
+        // Two or three shared words say nothing about sequence.
+        assert_eq!(order_agreement(b"Paris is the capital of France", b"The capital is Paris"), 1.0);
+        // Enough shared words, all reversed.
+        let forwards = order_agreement(b"alpha bravo charlie delta echo", b"alpha bravo charlie delta echo");
+        let backwards = order_agreement(b"alpha bravo charlie delta echo", b"echo delta charlie bravo alpha");
+        assert_eq!(forwards, 1.0);
+        assert_eq!(backwards, 0.0);
+    }
+
+    #[test]
+    fn the_first_verdict_is_the_answer() {
+        // "No" answers the question; "correctly" is supporting detail, and
+        // summing them flat made the whole thing read as neutral.
+        assert!(polarity(b"No, the passage paraphrases the source and cites it correctly.") < 0);
+        let q = "Does this passage plagiarise the cited source?";
+        let gt = "No, the passage paraphrases the source and cites it correctly.";
+        let agrees = r(q, gt, "There is no plagiarism here - it is a properly attributed paraphrase.");
+        let contradicts = r(q, gt, "Yes, the passage copies the source verbatim without attribution.");
+        assert!(agrees > contradicts, "agreeing {agrees} must beat contradicting {contradicts}");
+    }
+
+    #[test]
+    fn a_contradicting_figure_is_wrong_however_prosaic_the_intent() {
+        // Weight decides what a right number is worth; it must not decide what
+        // a wrong one costs. This held on every profile once it was true.
+        let q = "What is the CVSS score?";
+        let gt = "The CVSS v3 base score is 10.0, rated critical.";
+        let right = r(q, gt, "It scores the maximum 10.0 and is critical.");
+        let wrong = r(q, gt, "The CVSS v3 base score is 2.0, rated critical.");
+        assert!(right > wrong * 2.0, "right {right} must dominate a contradicting figure {wrong}");
     }
 
     #[test]

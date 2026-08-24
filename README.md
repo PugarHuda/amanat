@@ -339,13 +339,40 @@ One approach, tuned per family of intents, compiled per binary — the module is
 handed three strings and never told which intent it is scoring, so the domain
 knowledge has to live in the build.
 
-| Profile | Why it differs | Bench margin |
-|---|---|---|
-| `finance` | a price or a holder count is exact: 0.2% full credit, 15% out is the wrong number | 0.6088 |
-| `weather` | a current reading: 39 °C is not a rounding of 38.2 °C | 0.6084 |
-| `forecast` | a prediction carries honest uncertainty: 2 °C out three hours ahead is a good forecast | 0.5924 |
-| `verdict` | the answer is the call, so contradicting it costs 95% and the figure decides less | 0.5760 |
-| `prose` | nothing to measure; wording carries the answer | 0.5397 — not registered, 36/38 and one attack leak |
+| Profile | Why it differs | Margin | Wins |
+|---|---|---|---|
+| `finance` | a price or a holder count is exact: 0.2% full credit, 15% out is the wrong number | 0.6008 | 37/38 |
+| `weather` | a current reading: 39 °C is not a rounding of 38.2 °C | 0.5988 | 37/38 |
+| *(default)* | general purpose | 0.5977 | 37/38 |
+| `forecast` | a prediction carries honest uncertainty: 2 °C out three hours ahead is a good forecast | 0.5828 | 37/38 |
+| `meteo` | forecast bands with gentler contrast, for the smaller fixture sets the weather intents now carry | 0.5819 | 37/38 |
+| `verdict` | the answer is the call, so contradicting it costs 95% and the figure decides less | 0.5782 | 37/38 |
+| `prose` | nothing to measure; wording carries the answer | 0.5512 | 37/38 |
+| `authenticity` | a verdict on text with no figure at all | 0.5066 | 37/38 |
+
+Every profile: 37 of 38 ordering wins, worst self-match 1.0, and **14 of 14
+attacks held**. For comparison the reigning champion binary scores 0.5015 at
+34/38 on the same corpus.
+
+Three signals got them there, each added because a specific case failed:
+
+- **Order.** "Deposit, then call" and "call, then deposit" share every content
+  word and mean opposite things. A quarter of the lexical score rides on how
+  much of the ground truth's word order the answer keeps — deliberately only a
+  quarter, because a paraphrase reorders legitimately, and because the contrast
+  curve is applied three times so a dent before it becomes a crater.
+- **First verdict wins.** "No, the passage paraphrases the source and cites it
+  correctly" is a negative verdict with a positive detail. Summing them flat
+  made it read as exactly neutral, which let a contradicting answer past the
+  check entirely.
+- **A wrong figure costs the same as a wrong verdict.** `prose` and
+  `authenticity` down-weight numbers on purpose, and were letting "the CVSS is
+  2.0" through against a ground truth of 10.0 — because the *weight* was small,
+  not the evidence. Weight decides what a right number is worth; it must not
+  decide what a wrong one costs.
+
+Known miss, kept in the corpus rather than dropped: the `AGENT_TASK` ordering
+case is still lost by the default profile. The champion loses it too.
 
 ```bash
 npm run build:profiles   # builds all six, fails if any two produce identical bytes
