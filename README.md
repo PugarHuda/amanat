@@ -227,6 +227,46 @@ built-in WebAssembly, so comparing against a champion needs no extra toolchain.
 
 ## On-chain so far
 
+**The loop closes.** `Amanat.sol` is deployed at
+[`0x1649ce04…Bc6e`](https://sepolia.basescan.org/address/0x1649ce04B8b9D56285a62Afb2b442602EE0bBc6e)
+and has settled two claims without anyone deciding anything:
+
+```
+openPolicy -> requestCheck -> createJob(keccak256("STORM_ALERT"))
+  -> protocol routes, validators finalise -> job Terminal
+  -> subnetMessage -> risk 0.382, below the 0.75 trigger -> Declined
+```
+
+Jobs 7 and 8. Before these, the chain had seen six ERC-8183 jobs in its entire
+lifetime.
+
+### A finding the second job proved
+
+Policy 2 was written at latitude `1` and policy 3 at `10.32`. Both came back
+with **risk 0.382 and a forecast for `0.00, 0.00`**. The contract stored the
+coordinates correctly and passed them in `strings[0]` and `strings[1]`; the YAML
+maps `lat` and `lon` from `strings.0` and `strings.1` with `type: float`. They
+do not survive the node's `on_chain.request` mapping — the miner is called with
+zeros regardless of what the job carried.
+
+Two different inputs producing byte-identical output is what makes this a bug
+report rather than a suspicion. Filed for the team; the settlement path itself
+is unaffected, since the contract acts on whatever reading it is given.
+
+### Two things that cost a transaction to learn
+
+**`createJob` draws on the escrow of whoever calls it** — the contract, not the
+wallet that deployed it. Funding the deployer's escrow leaves the contract
+unable to open a single job. Hence `fundEscrow()` and `jobBudget()`.
+
+**The public Base Sepolia RPC serves its own writes back stale**, often enough
+to break a script: a confirmed transfer read as a zero balance, a confirmed
+`approve` simulated as `exceeds allowance`, and a `requestCheck` that reverted
+on `estimateGas` while the same call returned `jobId 7` when simulated directly
+one command later. `BASE_SEPOLIA_RPC` now points at publicnode.
+
+## Miner and scoring modules
+
 **Miner: registration 179, `amanat-weather-risk`, active.** Serving
 `WEATHER_FORECAST`, `WEATHER_CHECK` and `STORM_ALERT` from
 https://amanat-miner.vercel.app, floor 0.01 USDC. Grace period runs seven days

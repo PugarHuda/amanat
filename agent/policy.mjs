@@ -46,17 +46,25 @@ async function main() {
   console.log(`book       ${u(bookUsdc)} USDC   escrow ${u(escrow)} USDC   job ${u(jobPrice)} USDC`);
   if (escrow < jobPrice) throw new Error("the contract's escrow cannot cover a job — call fundEscrow");
 
-  const payout = ethers.parseUnits("1", 6);
-  if (bookUsdc < payout) throw new Error("the book cannot back a policy");
+  // --policy <id> reuses a policy that is already open, so a failure anywhere
+  // after openPolicy does not write a second policy against the book on retry.
+  let policyId;
+  if (reuseId !== null) {
+    policyId = reuseId;
+    console.log(`\nreusing    policy ${policyId}`);
+  } else {
+    const payout = ethers.parseUnits("1", 6);
+    if (bookUsdc < payout) throw new Error("the book cannot back a policy");
 
-  console.log(`\nopening    "${name}" at ${lat}, ${lon} for ${u(payout)} USDC`);
-  const open = await book.openPolicy(me, lat, lon, payout);
-  const openReceipt = await open.wait();
-  const opened = openReceipt.logs
-    .map((l) => { try { return book.interface.parseLog(l); } catch { return null; } })
-    .find((e) => e?.name === "PolicyOpened");
-  const policyId = opened.args.policyId;
-  console.log(`policy     ${policyId}  ${open.hash}`);
+    console.log(`\nopening    "${name}" at ${lat}, ${lon} for ${u(payout)} USDC`);
+    const open = await book.openPolicy(me, lat, lon, payout);
+    const openReceipt = await open.wait();
+    const opened = openReceipt.logs
+      .map((l) => { try { return book.interface.parseLog(l); } catch { return null; } })
+      .find((e) => e?.name === "PolicyOpened");
+    policyId = opened.args.policyId;
+    console.log(`policy     ${policyId}  ${open.hash}`);
+  }
 
   const id = intentId(INTENT);
   console.log(`\nintent     ${INTENT}`);
