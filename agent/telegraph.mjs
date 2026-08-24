@@ -10,6 +10,7 @@
 // say a policy is worth settling.
 
 import { ethers } from "ethers";
+import { fetchWithPayment } from "./x402.mjs";
 
 export const NODE = process.env.TELEGRAPH_NODE ?? "https://devnode.telegraphprotocol.com";
 export const RPC = process.env.BASE_SEPOLIA_RPC ?? "https://sepolia.base.org";
@@ -91,22 +92,38 @@ export async function miners({ intent } = {}) {
 // ── Paid rail: a fresh answer over HTTP ─────────────────────────────────────
 
 /**
- * Ask the Engine and let it route. Needs an x402-capable fetch — pass one in
- * from `@x402/fetch` — because the first call always comes back 402.
+ * Ask the Engine and let it route, paying the 402 as it comes.
  *
- * Returns the node's envelope: miner_id, intent, result, cost_usd, signal_hash.
+ * Returns the node's envelope — miner_id, intent, result, cost_usd,
+ * signal_hash — plus the settlement receipt, so a caller can prove what it
+ * bought rather than assert it.
  */
-export async function ask(query, { fetchImpl = fetch, context } = {}) {
-  const res = await fetchImpl(`${NODE}/engine/v1/ask`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(context ? { query, context } : { query }),
-  });
-  if (res.status === 402) {
-    throw new Error("402 unpaid — wrap fetch with @x402/fetch and fund the wallet with Base Sepolia USDC");
+export async function ask(query, { signer, context } = {}) {
+  const w = signer ?? wallet();
+  const { response, paid, amount, settlement } = await fetchWithPayment(
+    `${NODE}/engine/v1/ask`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(context ? { query, context } : { query }),
+    },
+    w,
+  );
+  if (!response.ok) {
+    throw new Error(`engine ask ${response.status}: ${(await response.text()).slice(0, 200)}`);
   }
-  if (!res.ok) throw new Error(`engine ask ${res.status}: ${(await res.text()).slice(0, 200)}`);
-  return res.json();
+  const body = await response.json();
+  return { ...body, paid, paidAmount: amount, receipt: decodeSettlement(settlement) };
+}
+
+/** The settlement header is base64 JSON: who paid, and the transaction that did it. */
+export function decodeSettlement(header) {
+  if (!header) return null;
+  try {
+    return JSON.parse(Buffer.from(header, "base64").toString("utf8"));
+  } catch {
+    return { raw: header.slice(0, 120) };
+  }
 }
 
 // ── On-chain rail ───────────────────────────────────────────────────────────
