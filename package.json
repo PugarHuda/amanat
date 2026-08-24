@@ -20,7 +20,10 @@
     "wallet": "node --env-file=.env agent/wallet-status.mjs",
     "miner:check": "node agent/miner-check.mjs",
     "register:miner": "node --env-file=.env agent/register-miner.mjs",
-    "register:wasm": "node --env-file=.env agent/register-wasm.mjs"
+    "register:wasm": "node --env-file=.env agent/register-wasm.mjs",
+    "subscribe": "node --env-file=.env agent/subscribe.mjs",
+    "deploy": "node --env-file=.env agent/deploy.mjs",
+    "policy": "node --env-file=.env agent/policy.mjs"
   },
   "dependencies": {
     "ethers": "^6.13.0"
