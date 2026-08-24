@@ -1,0 +1,41 @@
+# The scoring module is the part that has to be right, so CI builds it the way
+# the protocol does and refuses anything the node would refuse: a WASM with host
+# imports cannot instantiate in the sandbox, and a duplicate binary cannot be
+# registered at all.
+name: ci
+on: [push, pull_request]
+
+jobs:
+  scorer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: cd scorer && cargo test
+      - run: npm install
+      - run: node scorer/build-profiles.mjs
+      - name: every profile must beat the champion and hold every attack
+        run: |
+          node scorer/harness.mjs scorer/dist/*.wasm
+          for f in scorer/dist/*.wasm; do
+            node scorer/harness.mjs --attacks "$f" | grep -q LEAKS && {
+              echo "attack leak in $f"; exit 1; }
+          done
+          echo "no attack leaks"
+
+  miner:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      # Hits the real upstream, which is the point: a miner that cannot answer
+      # is a miner the node will drop.
+      - run: node miner/test.mjs
