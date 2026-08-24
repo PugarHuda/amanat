@@ -391,20 +391,32 @@ until it answers 200.
 
 ## Status
 
-Done: miner (live upstream, validation, self-check passing, Docker image built
-and health-checked, Vercel adapter tested), YAML with full on-chain mapping,
-scoring module at 24 tests / 14-of-14 attacks / 37-of-38 ordering wins against
-the reigning champion, rank-agreement and diff tooling, contract written, agent
-loop dry-running against the live node.
+**Track 1 — miner.** Registration 179, `amanat-weather-risk`, active on
+`WEATHER_FORECAST`, `WEATHER_CHECK` and `STORM_ALERT`, served from
+https://amanat-miner.vercel.app. The Engine routes real paid traffic to it. Not
+yet scored: epochs are 9 hours on testnet, having been 1 hour earlier the same
+day, so the first ranking lands at the next boundary.
 
-Blocked, not skipped: `fly deploy` fails with `requested machine count exceeds
-organization limit` on an account with zero apps, which is an account-level cap
-rather than anything in this repo. The Docker image runs anywhere, and
-`miner/api/` covers the serverless route.
+**Track 2 — scoring modules.** Four champion slots held before the 23 August
+evaluator change superseded them; nine registrations since, all recorded on
+chain with their reasons. Eight profiles, every one at 37 of 38 ordering wins
+with 14 of 14 attacks held.
 
-Next: host the miner, `registerMiner` on Base Sepolia, deploy `Amanat.sol`,
-`registerWasm` the scoring module. Then keep widening the benchmark — 38 cases
-found four real bugs, and the next 38 will find more.
+**Track 3 — application.** Contract live, four jobs settled through the
+callback, all three rails exercised, 40-plus paid Engine calls and counting.
 
-Nothing here has been submitted on-chain yet — no transaction is sent without
-an explicit go-ahead.
+Everything above is checkable: registration ids and transactions on Base
+Sepolia, evaluation numbers at `/api/wasm`.
+
+## Reproducing any of it
+
+```bash
+npm install
+cp .env.example .env            # fill in a funded Base Sepolia key
+npm run miner                   # the miner, locally
+npm test                        # miner self-check + 27 scorer tests
+npm run build:profiles          # eight binaries, fails if any two match
+npm run bench && npm run attacks # against the real champion binaries
+npm run agent:dry               # the loop, read-only, spends nothing
+```
+
