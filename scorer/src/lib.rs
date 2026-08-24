@@ -623,6 +623,37 @@ pub fn precision(ground_truth: &[u8], answer: &[u8]) -> f32 {
 // Polarity
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// The authenticity axis: written by a person, or produced by a machine.
+///
+/// "human" is deliberately absent from the general lists, because on
+/// AI_TEXT_DETECTION "not a human" is the *correct* answer to "was this written
+/// by a model" and reading it as a negative verdict inverts the whole intent.
+/// On TEXT_AUTHENTICITY_CHECK it is the axis itself, which is what a profile is
+/// for: the same word, opposite roles, decided at build time.
+#[cfg(feature = "authenticity")]
+fn authenticity_axis(w: &[u8]) -> i32 {
+    const HUMAN: &[&[u8]] = &[
+        b"human", b"authentic", b"original", b"genuine", b"handwritten", b"person",
+        b"organic", b"unedited",
+    ];
+    const MACHINE: &[&[u8]] = &[
+        b"ai", b"synthetic", b"generated", b"machine", b"model", b"llm", b"gpt",
+        b"fabricated", b"automated", b"spun", b"plagiarised", b"plagiarized",
+    ];
+    if HUMAN.iter().any(|p| *p == w) {
+        1
+    } else if MACHINE.iter().any(|n| *n == w) {
+        -1
+    } else {
+        0
+    }
+}
+
+#[cfg(not(feature = "authenticity"))]
+fn authenticity_axis(_w: &[u8]) -> i32 {
+    0
+}
+
 /// Words that carry a verdict. Sign is the verdict they assert on their own.
 fn polarity_of(w: &[u8]) -> i32 {
     const POSITIVE: &[&[u8]] = &[
@@ -661,6 +692,20 @@ fn is_negator(w: &[u8]) -> bool {
 /// against it, and disagreeing with the ground truth's verdict costs almost
 /// everything.
 pub fn polarity(s: &[u8]) -> i32 {
+    polarity_on(s, polarity_of)
+}
+
+/// The authenticity axis, read independently of the verdict axis.
+///
+/// "Yes, the passage is AI-generated" is positive on the verdict and negative on
+/// authenticity at the same time. Summing the two into one number makes it
+/// exactly neutral and the scorer blind to both — which is what happened the
+/// first time this was tried.
+pub fn authenticity(s: &[u8]) -> i32 {
+    polarity_on(s, authenticity_axis)
+}
+
+fn polarity_on(s: &[u8], classify: fn(&[u8]) -> i32) -> i32 {
     let mut total = 0i32;
     let mut word = [0u8; 64];
     let mut n = 0usize;
@@ -691,7 +736,7 @@ pub fn polarity(s: &[u8]) -> i32 {
             return;
         }
         *at_clause_start = false;
-        let p = polarity_of(w);
+        let p = classify(w);
         if p != 0 && *reach > 0 {
             *total -= p * weight(first);
             *flipped = true;
@@ -986,9 +1031,13 @@ pub fn signals(question: &[u8], ground_truth: &[u8], answer: &[u8]) -> [f32; 4] 
     // Contradicting the ground truth's verdict is not a near miss. An answer
     // that commits the other way loses almost everything, however much of the
     // right vocabulary it carries.
-    let gt_pol = polarity(ground_truth);
-    let ma_pol = polarity(answer);
-    let mut verdict = if gt_pol != 0 && ma_pol != 0 && (gt_pol > 0) != (ma_pol > 0) { VERDICT_PENALTY } else { 1.0 };
+    // Two axes, compared separately. An answer contradicts if it disagrees on
+    // either one — "written by a human" against a ground truth of "AI-generated"
+    // is a contradiction even though neither text says yes or no.
+    let contradicts = |gt: i32, ma: i32| gt != 0 && ma != 0 && (gt > 0) != (ma > 0);
+    let opposed = contradicts(polarity(ground_truth), polarity(answer))
+        || contradicts(authenticity(ground_truth), authenticity(answer));
+    let mut verdict = if opposed { VERDICT_PENALTY } else { 1.0 };
 
     // Saying a thing and its opposite is not an answer twice over, it is a
     // hedge. Only charged when the ground truth itself commits one way, so a
