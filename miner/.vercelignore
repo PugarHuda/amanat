@@ -1,0 +1,6 @@
+# Vercel runs server.mjs directly as the entrypoint, so only the server and the
+# logic it imports belong in the bundle.
+test.mjs
+Dockerfile
+fly.toml
+*.yaml

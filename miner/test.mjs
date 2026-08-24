@@ -1,7 +1,8 @@
 // Self-check for the Amanat miner. One runnable file, no framework.
 //   node miner/test.mjs
 import assert from "node:assert/strict";
-import { riskScore, summarise, forecast, server } from "./server.mjs";
+import { riskScore, summarise, forecast } from "./lib/forecast.mjs";
+import { server } from "./server.mjs";
 
 // risk: each driver alone can reach the ceiling, and the worst one wins.
 assert.equal(riskScore({ wind_kmh: 0, gust_kmh: 0, precip_mm: 0 }), 0);

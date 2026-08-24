@@ -1,0 +1,8 @@
+{
+  "name": "amanat-miner",
+  "private": true,
+  "type": "module",
+  "main": "server.mjs",
+  "engines": { "node": ">=20" },
+  "scripts": { "start": "node server.mjs" }
+}
