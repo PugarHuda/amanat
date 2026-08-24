@@ -71,8 +71,8 @@ async function screen(policy, signer) {
 async function cycle(book, signer, n) {
   const p = provider();
   const policies = await openPolicies(book);
-  const escrow = await diamond(p).escrowBalance(ADDRESS);
   const jobPrice = await diamond(p).getJobBasePrice();
+  let escrow = await diamond(p).escrowBalance(ADDRESS);
 
   console.log(`\n── pass ${n} ── ${policies.length} open ${policies.length === 1 ? "policy" : "policies"}, ` +
     `escrow ${ethers.formatUnits(escrow, 6)} USDC`);
@@ -116,20 +116,27 @@ async function cycle(book, signer, n) {
     }
 
     console.log(`      above ${ESCALATE_AT}: settling on-chain`);
-    const tx = await book.requestCheck(policy.id, intentId(SETTLE_INTENT), 1n);
-    const receipt = await tx.wait();
-    const created = receipt.logs
-      .map((l) => { try { return book.interface.parseLog(l); } catch { return null; } })
-      .find((e) => e?.name === "CheckRequested");
-    const jobId = created?.args?.jobId;
-    console.log(`      job ${jobId}  ${tx.hash}`);
-    escalated++;
-    spent += 1;
+    // Screening is the point of the loop; a job that fails must not stop it.
+    try {
+      const tx = await book.requestCheck(policy.id, intentId(SETTLE_INTENT), 1n);
+      const receipt = await tx.wait();
+      const created = receipt.logs
+        .map((l) => { try { return book.interface.parseLog(l); } catch { return null; } })
+        .find((e) => e?.name === "CheckRequested");
+      const jobId = created?.args?.jobId;
+      console.log(`      job ${jobId}  ${tx.hash}`);
+      escalated++;
+      spent += 1;
 
-    const { state } = await waitForJob(jobId, { timeoutMs: 10 * 60_000 });
-    const after = await book.policies(policy.id);
-    console.log(`      job ${jobId} ${state} -> policy ${policy.id} ${STATUS[Number(after.status)]} ` +
-      `(risk ${Number(after.riskReported) / 10000})`);
+      const { state } = await waitForJob(jobId, { timeoutMs: 10 * 60_000 });
+      const after = await book.policies(policy.id);
+      console.log(`      job ${jobId} ${state} -> policy ${policy.id} ${STATUS[Number(after.status)]} ` +
+        `(risk ${Number(after.riskReported) / 10000})`);
+    } catch (e) {
+      console.log(`      job failed: ${e.shortMessage ?? e.message}`);
+    }
+    // A job just spent from the escrow this pass read at the start.
+    escrow = await diamond(p).escrowBalance(ADDRESS);
   }
 
   return { screened, escalated, spent };
