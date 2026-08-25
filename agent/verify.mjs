@@ -31,7 +31,17 @@ export async function verify(signalHash) {
   if (!res.ok) throw new Error(`signal lookup ${res.status}`);
   const record = await res.json();
 
-  const claimed = record.signal_hash;
+  // Check against the hash we asked for, not the one the node handed back.
+  // Trusting the returned value would let a node answer a different signal and
+  // still "verify" — the record would agree with itself. In a tool whose whole
+  // job is not taking the node's word, the requested hash is the only fixed
+  // point.
+  const claimed = signalHash;
+  if (record.signal_hash && record.signal_hash.toLowerCase() !== signalHash.toLowerCase()) {
+    throw new Error(
+      `the node returned a record for ${record.signal_hash}, not the signal asked for (${signalHash})`,
+    );
+  }
   const algorithm = record.verification?.algorithm ?? "keccak256";
   if (algorithm !== "keccak256") throw new Error(`unexpected algorithm: ${algorithm}`);
 
