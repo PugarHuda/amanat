@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amanat — weather cover that pays itself</title>
+<meta name="description" content="A contract that buys a verified storm reading and pays the claim itself. Built on Telegraph Protocol, settled on Base.">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="%23E9EDE6"/><line x1="3" y1="11" x2="29" y2="11" stroke="%23B93F27" stroke-width="3"/><circle cx="16" cy="23" r="4.5" fill="%231E6049"/></svg>'>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:wght@400;500&display=swap">
+<style>
+/* Barograph paper: pale ruled stock, ink trace, one red trigger line.
+   The trigger is the only red on the page and the only thing that means
+   anything is about to be paid. */
+:root{
+  --paper:#E9EDE6; --paper-2:#F4F7F2; --card:#FDFEFC;
+  --ink:#141D18; --ink-2:#3B4A42; --muted:#68796E;
+  --rule:#CBD6C8; --rule-2:#DDE5DA;
+  --trace:#1E6049; --trace-soft:#DCEAE2;
+  --trigger:#B93F27; --trigger-soft:#F6E2DC;
+  --shadow:0 1px 0 rgba(20,29,24,.04), 0 12px 32px -22px rgba(20,29,24,.5);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0D1411; --paper-2:#111A16; --card:#141F1A;
+    --ink:#E4EBE5; --ink-2:#B9C7BE; --muted:#7E9086;
+    --rule:#24322B; --rule-2:#1B2721;
+    --trace:#4FBE93; --trace-soft:#152A22;
+    --trigger:#E2664B; --trigger-soft:#2A1913;
+    --shadow:0 1px 0 rgba(0,0,0,.3), 0 12px 32px -22px rgba(0,0,0,.9);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0D1411; --paper-2:#111A16; --card:#141F1A;
+  --ink:#E4EBE5; --ink-2:#B9C7BE; --muted:#7E9086;
+  --rule:#24322B; --rule-2:#1B2721;
+  --trace:#4FBE93; --trace-soft:#152A22;
+  --trigger:#E2664B; --trigger-soft:#2A1913;
+  --shadow:0 1px 0 rgba(0,0,0,.3), 0 12px 32px -22px rgba(0,0,0,.9);
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Public Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:17px; line-height:1.6;
+  /* the ruled stock itself */
+  background-image:repeating-linear-gradient(to bottom, transparent 0 63px, var(--rule-2) 63px 64px);
+}
+.wrap{max-width:1040px; margin:0 auto; padding:0 24px}
+h1,h2,h3{font-family:"Familjen Grotesk",system-ui,sans-serif; margin:0; text-wrap:balance; letter-spacing:-.02em}
+a{color:var(--trace); text-underline-offset:3px}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--trace); outline-offset:3px; border-radius:2px}
+.mono{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:.7rem; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--muted)}
+
+/* ── masthead ─────────────────────────────────────── */
+header{border-bottom:1px solid var(--rule); background:var(--paper-2)}
+.bar{display:flex; align-items:baseline; justify-content:space-between; gap:16px; padding:18px 0; flex-wrap:wrap}
+.mark{font-family:"Familjen Grotesk",sans-serif; font-weight:700; font-size:1.15rem; letter-spacing:.02em}
+.mark span{color:var(--muted); font-weight:400; font-size:.8rem; letter-spacing:.14em; text-transform:uppercase; margin-left:10px}
+nav{display:flex; gap:20px; font-size:.85rem}
+nav a{color:var(--ink-2); text-decoration:none}
+nav a:hover{color:var(--trace)}
+
+/* ── hero: the trigger line ───────────────────────── */
+.hero{padding:76px 0 0}
+.hero h1{font-size:clamp(2.4rem,6.4vw,4.1rem); line-height:1.02; font-weight:700; max-width:15ch}
+.hero p.lede{font-size:1.18rem; color:var(--ink-2); max-width:56ch; margin:22px 0 0}
+
+/* The signature: one horizontal line that everything is either under or over. */
+.gauge{margin:56px 0 0; position:relative; height:290px; border-top:1px solid var(--rule); border-bottom:1px solid var(--rule); background:var(--card)}
+.gauge-inner{position:absolute; inset:0; padding:26px 22px}
+.trigger-line{position:absolute; left:0; right:0; top:25%; height:0; border-top:2px solid var(--trigger)}
+.trigger-tag{position:absolute; right:14px; top:calc(25% - 26px); font-family:"IBM Plex Mono",monospace;
+  font-size:.7rem; letter-spacing:.12em; text-transform:uppercase; color:var(--trigger);
+  background:var(--trigger-soft); padding:3px 8px; border-radius:2px}
+/* The band above the line is empty when no policy is near its trigger. Saying so
+   turns the emptiness into the reading it actually is. */
+.quiet-band{position:absolute; left:22px; top:14px; font-family:"IBM Plex Mono",monospace;
+  font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); opacity:.75}
+.plot{position:absolute; inset:26px 22px 26px 22px; display:flex; align-items:flex-end; gap:clamp(6px,2.4vw,26px)}
+.reading{flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; height:100%; position:relative}
+.stem{width:2px; background:var(--rule); flex:0 0 auto}
+.dot{width:11px; height:11px; border-radius:50%; background:var(--trace); border:2px solid var(--card);
+  box-shadow:0 0 0 1px var(--trace); transition:transform .5s cubic-bezier(.22,1,.36,1)}
+.reading.over .dot{background:var(--trigger); box-shadow:0 0 0 1px var(--trigger)}
+.reading .val{font-family:"IBM Plex Mono",monospace; font-size:.78rem; color:var(--ink-2); margin-bottom:8px}
+.reading.over .val{color:var(--trigger); font-weight:600}
+.reading .place{font-family:"IBM Plex Mono",monospace; font-size:.66rem; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--muted); margin-top:10px; white-space:nowrap;
+  position:absolute; bottom:-4px; transform:translateY(100%)}
+.gauge-foot{display:flex; justify-content:space-between; gap:12px; padding:14px 0 0; font-size:.82rem; color:var(--muted); flex-wrap:wrap}
+
+/* ── check a location ─────────────────────────────── */
+.check{margin:104px 0 0; border:1px solid var(--rule); border-radius:4px; background:var(--card); box-shadow:var(--shadow); overflow:hidden}
+.check-head{padding:24px 26px 0}
+.check h2{font-size:1.55rem; font-weight:600}
+.check-head p{color:var(--ink-2); margin:10px 0 0; max-width:58ch}
+form{display:flex; gap:10px; padding:22px 26px 26px; flex-wrap:wrap}
+input{flex:1 1 220px; min-width:0; font:inherit; font-family:"IBM Plex Mono",monospace; font-size:.92rem;
+  padding:12px 14px; border:1px solid var(--rule); border-radius:3px; background:var(--paper-2); color:var(--ink)}
+button{font:inherit; font-family:"Familjen Grotesk",sans-serif; font-weight:600; font-size:.95rem;
+  padding:12px 22px; border:0; border-radius:3px; background:var(--trace); color:var(--card); cursor:pointer}
+button:hover{filter:brightness(1.08)}
+button[disabled]{opacity:.55; cursor:progress}
+.presets{display:flex; gap:8px; flex-wrap:wrap; padding:0 26px 24px}
+.presets button{background:transparent; color:var(--ink-2); border:1px solid var(--rule); font-weight:500; padding:7px 13px; font-size:.82rem}
+.presets button:hover{border-color:var(--trace); color:var(--trace); filter:none}
+.result{border-top:1px solid var(--rule); padding:24px 26px; display:none}
+.result.shown{display:block}
+.verdict{font-family:"Familjen Grotesk",sans-serif; font-size:1.35rem; font-weight:600; display:flex; align-items:baseline; gap:12px; flex-wrap:wrap}
+.verdict .num{font-family:"IBM Plex Mono",monospace; font-size:2.1rem; font-weight:600; color:var(--trace)}
+.result.breach .verdict .num{color:var(--trigger)}
+.summary{color:var(--ink-2); margin:12px 0 0; font-size:.98rem}
+.figures{display:flex; gap:26px; flex-wrap:wrap; margin:18px 0 0; padding:16px 0 0; border-top:1px dashed var(--rule)}
+.figures div{font-family:"IBM Plex Mono",monospace; font-size:.82rem; color:var(--muted)}
+.figures b{display:block; font-size:1.02rem; color:var(--ink); font-weight:500; margin-top:3px}
+.err{color:var(--trigger); font-family:"IBM Plex Mono",monospace; font-size:.86rem}
+
+/* ── how it settles ───────────────────────────────── */
+.steps{margin:104px 0 0}
+.steps h2{font-size:1.9rem; font-weight:700}
+.steps > p{color:var(--ink-2); max-width:62ch; margin:14px 0 0}
+ol.flow{list-style:none; margin:36px 0 0; padding:0; display:grid; gap:0; border:1px solid var(--rule); border-radius:4px; overflow:hidden; background:var(--card)}
+ol.flow li{padding:22px 26px; border-bottom:1px solid var(--rule-2); display:grid; grid-template-columns:auto 1fr; gap:0 20px; align-items:start}
+ol.flow li:last-child{border-bottom:0}
+ol.flow .who{font-family:"IBM Plex Mono",monospace; font-size:.68rem; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--muted); padding-top:5px; white-space:nowrap}
+ol.flow h3{font-size:1.05rem; font-weight:600}
+ol.flow p{margin:6px 0 0; color:var(--ink-2); font-size:.95rem}
+ol.flow code{font-family:"IBM Plex Mono",monospace; font-size:.85em; background:var(--trace-soft); padding:1px 5px; border-radius:2px; color:var(--trace)}
+
+/* ── ledger ───────────────────────────────────────── */
+.ledger{margin:104px 0 0}
+.ledger h2{font-size:1.9rem; font-weight:700}
+.ledger > p{color:var(--ink-2); max-width:62ch; margin:14px 0 0}
+.tablewrap{overflow-x:auto; border:1px solid var(--rule); border-radius:4px; margin:30px 0 0; background:var(--card)}
+table{border-collapse:collapse; width:100%; font-size:.88rem}
+th,td{text-align:left; padding:11px 16px; border-bottom:1px solid var(--rule-2); white-space:nowrap}
+thead th{font-family:"IBM Plex Mono",monospace; font-size:.66rem; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--muted); background:var(--paper-2)}
+tbody tr:last-child td{border-bottom:0}
+td.m{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums}
+.tag{font-family:"IBM Plex Mono",monospace; font-size:.68rem; letter-spacing:.06em; text-transform:uppercase;
+  padding:2px 7px; border-radius:2px; background:var(--trace-soft); color:var(--trace)}
+.tag.declined{background:var(--paper-2); color:var(--muted)}
+
+footer{margin:104px 0 0; border-top:1px solid var(--rule); padding:26px 0 60px;
+  display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap;
+  font-family:"IBM Plex Mono",monospace; font-size:.76rem; color:var(--muted)}
+footer a{color:var(--muted)}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+@media (max-width:640px){
+  body{font-size:16px}
+  .gauge{height:250px}
+  .reading .place{font-size:.58rem}
+  ol.flow li{grid-template-columns:1fr; gap:8px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <div class="mark">Amanat<span>parametric weather cover</span></div>
+    <nav>
+      <a href="#check">Check a location</a>
+      <a href="#settles">How it settles</a>
+      <a href="#ledger">Ledger</a>
+      <a href="https://github.com/PugarHuda/amanat">Source</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="hero">
+    <span class="eyebrow">Telegraph Protocol · Base Sepolia</span>
+    <h1>One reading, one line, no adjuster.</h1>
+    <p class="lede">
+      A policy here is a mandate the contract carries out on its holder's behalf.
+      It buys a storm reading from whichever miner the network ranks best, and
+      pays the claim itself when the reading crosses the line. Nobody approves it.
+      Nobody can decline it out of turn.
+    </p>
+
+    <div class="gauge" aria-label="Live storm readings against the payout trigger">
+      <div class="gauge-inner">
+        <div class="trigger-line" role="presentation"></div>
+        <div class="trigger-tag">pays at 0.75</div>
+        <div class="quiet-band">nothing here means nothing is owed</div>
+        <div class="plot" id="plot"></div>
+      </div>
+    </div>
+    <div class="gauge-foot">
+      <span>Live readings from the Amanat miner. A dot above the line is a claim the contract pays.</span>
+      <span class="mono" id="plotstamp">loading…</span>
+    </div>
+  </section>
+
+  <section class="check" id="check">
+    <div class="check-head">
+      <h2>Check a location</h2>
+      <p>
+        The same call the contract makes before it spends anything. No wallet, no
+        sign-up — this asks the miner directly and shows you what it answers.
+      </p>
+    </div>
+    <form id="form">
+      <input id="lat" class="mono" inputmode="decimal" value="10.32" aria-label="Latitude" placeholder="latitude">
+      <input id="lon" class="mono" inputmode="decimal" value="123.89" aria-label="Longitude" placeholder="longitude">
+      <button type="submit" id="go">Read the risk</button>
+    </form>
+    <div class="presets" id="presets">
+      <button data-lat="14.60" data-lon="120.98">Manila</button>
+      <button data-lat="22.30" data-lon="114.17">Hong Kong</button>
+      <button data-lat="-6.20" data-lon="106.85">Jakarta</button>
+      <button data-lat="25.78" data-lon="-80.19">Miami</button>
+      <button data-lat="51.51" data-lon="-0.13">London</button>
+    </div>
+    <div class="result" id="result" aria-live="polite"></div>
+  </section>
+
+  <section class="steps" id="settles">
+    <h2>How a claim settles</h2>
+    <p>
+      Four steps, and a person appears in none of them. The contract is the
+      customer of the intelligence, not a screen someone reads it on.
+    </p>
+    <ol class="flow">
+      <li>
+        <span class="who">contract</span>
+        <div>
+          <h3>Opens a job</h3>
+          <p>It calls <code>createJob</code> against <code>STORM_ALERT</code> — the intent, not a miner. Which miner answers is the protocol's decision, and it goes to whoever currently ranks best.</p>
+        </div>
+      </li>
+      <li>
+        <span class="who">network</span>
+        <div>
+          <h3>Answers and is checked</h3>
+          <p>A miner returns a reading. Validators score it against ground truth and finalise it before anything is paid.</p>
+        </div>
+      </li>
+      <li>
+        <span class="who">protocol</span>
+        <div>
+          <h3>Delivers it back</h3>
+          <p>The result arrives at the contract through <code>subnetMessage</code>. It arrives packed the way that miner declares its fields, so the contract reads defensively and declines a payload it cannot interpret rather than guessing at a payout.</p>
+        </div>
+      </li>
+      <li>
+        <span class="who">contract</span>
+        <div>
+          <h3>Pays, or does not</h3>
+          <p>Risk at or above 0.75 pays the holder in the same transaction. Below it, the policy closes as declined. If no answer ever comes, the holder reclaims the reserve after 24 hours.</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section class="ledger" id="ledger">
+    <h2>What it has settled</h2>
+    <p>
+      Every one of these is on Base Sepolia and none of it is a screenshot —
+      follow the job id to the chain and read it yourself.
+    </p>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>Policy</th><th>Point</th><th>Job</th><th class="m">Risk read</th><th>Outcome</th></tr>
+        </thead>
+        <tbody id="ledgerbody">
+          <tr><td class="m">2</td><td>1.00, 123.89</td><td class="m">7</td><td class="m">0.382</td><td><span class="tag declined">declined</span></td></tr>
+          <tr><td class="m">3</td><td>10.32, 123.89</td><td class="m">8</td><td class="m">0.382</td><td><span class="tag declined">declined</span></td></tr>
+          <tr><td class="m">4</td><td>14.60, 120.98</td><td class="m">9</td><td class="m">0.361</td><td><span class="tag declined">declined</span></td></tr>
+          <tr><td class="m">5</td><td>22.30, 114.17</td><td class="m">10</td><td class="m">0.361</td><td><span class="tag declined">declined</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="mono" style="font-size:.78rem;color:var(--muted);margin-top:16px">
+      Contract <a href="https://sepolia.basescan.org/address/0x1649ce04B8b9D56285a62Afb2b442602EE0bBc6e">0x1649ce04…Bc6e</a>
+      · <span id="bookstat">reading the book…</span>
+    </p>
+  </section>
+
+  <footer>
+    <span>Amanat · a miner, a scoring module and a contract on Telegraph</span>
+    <span><a href="https://github.com/PugarHuda/amanat">github.com/PugarHuda/amanat</a></span>
+  </footer>
+
+</main>
+
+<script>
+const TRIGGER = 0.75;
+const PLOT_TOP = 1.0;            // the gauge is drawn from 0 to 1
+const TRIGGER_TOP_PCT = 25;      // the red line sits at 25% from the top => 0.75
+
+const WATCH = [
+  { name: "Cebu",      lat: 10.32,  lon: 123.89 },
+  { name: "Manila",    lat: 14.60,  lon: 120.98 },
+  { name: "Hong Kong", lat: 22.30,  lon: 114.17 },
+  { name: "Jakarta",   lat: -6.20,  lon: 106.85 },
+  { name: "Miami",     lat: 25.78,  lon: -80.19 },
+];
+
+const $ = (id) => document.getElementById(id);
+
+async function read(lat, lon) {
+  const res = await fetch("/forecast", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ lat: Number(lat), lon: Number(lon), hours: 1 }),
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || `the miner answered ${res.status}`);
+  return body;
+}
+
+/** Place a reading in the gauge. 0 sits on the floor, 1.0 at the ceiling. */
+function place(risk) {
+  const clamped = Math.max(0, Math.min(risk, PLOT_TOP));
+  return (clamped / PLOT_TOP) * 100;
+}
+
+function drawPlot(rows) {
+  $("plot").innerHTML = rows.map((r) => {
+    const pct = place(r.risk);
+    const over = r.risk >= TRIGGER;
+    return `<div class="reading ${over ? "over" : ""}" style="justify-content:flex-end">
+      <div style="height:${100 - pct}%"></div>
+      <div class="val">${r.risk.toFixed(3)}</div>
+      <div class="dot"></div>
+      <div class="stem" style="height:${pct}%"></div>
+      <div class="place">${r.name}</div>
+    </div>`;
+  }).join("");
+}
+
+async function loadPlot() {
+  const rows = [];
+  for (const site of WATCH) {
+    try {
+      const r = await read(site.lat, site.lon);
+      rows.push({ name: site.name, risk: r.risk });
+      drawPlot(rows);
+    } catch {
+      rows.push({ name: site.name, risk: 0 });
+    }
+  }
+  $("plotstamp").textContent = new Date().toISOString().replace("T", " ").slice(0, 16) + " UTC";
+}
+
+function showResult(lat, lon, r) {
+  const over = r.risk >= TRIGGER;
+  const el = $("result");
+  el.className = "result shown" + (over ? " breach" : "");
+  el.innerHTML = `
+    <div class="verdict">
+      <span class="num">${r.risk.toFixed(3)}</span>
+      <span>${over ? "the contract pays this claim" : "below the line — no payout"}</span>
+    </div>
+    <p class="summary">${r.summary}</p>
+    <div class="figures">
+      <div>temperature<b>${r.temp_c.toFixed(1)} °C</b></div>
+      <div>wind<b>${r.wind_kmh.toFixed(1)} km/h</b></div>
+      <div>gusts<b>${r.gust_kmh.toFixed(1)} km/h</b></div>
+      <div>precipitation<b>${r.precip_mm.toFixed(1)} mm</b></div>
+      <div>valid at<b>${r.valid_at}</b></div>
+    </div>`;
+}
+
+$("form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const go = $("go");
+  go.disabled = true;
+  go.textContent = "Reading…";
+  try {
+    const r = await read($("lat").value, $("lon").value);
+    showResult($("lat").value, $("lon").value, r);
+  } catch (err) {
+    const el = $("result");
+    el.className = "result shown";
+    el.innerHTML = `<p class="err">${err.message}</p>`;
+  } finally {
+    go.disabled = false;
+    go.textContent = "Read the risk";
+  }
+});
+
+$("presets").addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  $("lat").value = b.dataset.lat;
+  $("lon").value = b.dataset.lon;
+  $("form").requestSubmit();
+});
+
+fetch("/api/book")
+  .then((r) => r.json())
+  .then((b) => {
+    $("bookstat").textContent =
+      `${b.policies} policies written · ${b.jobBudget} USDC left for jobs`;
+  })
+  .catch(() => { $("bookstat").textContent = "book unavailable"; });
+
+loadPlot();
+</script>
+</body>
+</html>

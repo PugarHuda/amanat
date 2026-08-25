@@ -2,8 +2,15 @@
 // The logic lives in lib/forecast.mjs; this is transport only.
 
 import { createServer } from "node:http";
-import { pathToFileURL } from "node:url";
+import { pathToFileURL, fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { forecast } from "./lib/forecast.mjs";
+import { book } from "./lib/book.mjs";
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+// One file, read once. The page is static and the server has no build step.
+const PAGE = readFileSync(join(HERE, "public/index.html"));
 
 const PORT = Number(process.env.PORT ?? 8787);
 
@@ -28,7 +35,15 @@ export const server = createServer(async (req, res) => {
   try {
     const { pathname, searchParams } = new URL(req.url, `http://${req.headers.host}`);
 
+    if (pathname === "/" || pathname === "/index.html") {
+      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Content-Length": PAGE.length });
+      return res.end(PAGE);
+    }
+
     if (pathname === "/health") return send(res, 200, { status: "ok", miner: "amanat", time: new Date().toISOString() });
+
+    // What the contract is carrying, read straight off chain for the page.
+    if (pathname === "/api/book") return send(res, 200, await book());
 
     if (pathname === "/forecast") {
       const body = req.method === "POST" ? await readJson(req) : {};
