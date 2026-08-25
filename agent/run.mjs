@@ -25,6 +25,16 @@ const SETTLE_INTENT = process.env.AMANAT_INTENT ?? "STORM_ALERT";
 /** Screen below this and a policy is not worth a job. */
 const ESCALATE_AT = Number(process.env.AMANAT_ESCALATE_AT ?? 0.45);
 
+/**
+ * Hard ceiling on what one run may spend, in USD. The loop stops when it is
+ * reached rather than continuing to its cycle count.
+ *
+ * A screening pass is cheap enough to feel free — $0.01 — which is exactly how
+ * a long run quietly drains a wallet. The cap is deliberately small: raise it
+ * per run with AMANAT_MAX_SPEND when you actually mean to.
+ */
+const MAX_SPEND = Number(process.env.AMANAT_MAX_SPEND ?? 0.5);
+
 const STATUS = ["None", "Active", "Claimed", "Declined", "Expired"];
 
 function arg(flag, fallback) {
@@ -156,12 +166,19 @@ async function main() {
   console.log(`escalate   risk >= ${ESCALATE_AT}, settling via ${SETTLE_INTENT}`);
   console.log(`wallet     ${await signer.getAddress()}`);
 
+  console.log(`budget     $${MAX_SPEND.toFixed(2)} for this run`);
+
   const totals = { screened: 0, escalated: 0, spent: 0 };
   for (let n = 1; n <= cycles; n++) {
     const r = await cycle(book, signer, n);
     totals.screened += r.screened;
     totals.escalated += r.escalated;
     totals.spent += r.spent;
+    if (totals.spent >= MAX_SPEND) {
+      console.log(`
+budget spent ($${totals.spent.toFixed(2)} of $${MAX_SPEND.toFixed(2)}) — stopping after pass ${n}`);
+      break;
+    }
     if (n < cycles) await new Promise((r) => setTimeout(r, interval * 1000));
   }
 
