@@ -1,81 +1,147 @@
-# X drafts
+# X posts
 
-Tag `@Telegraphprotoc` in every one. Everything here is checkable — a
-registration id, a transaction, a number from `/api/wasm`, or a page you can
-open. Announcements do not travel; specifics do.
+Single posts, in the order they happened. One a day, not all at once — the
+criterion is consistency, and a burst reads like a dump. Tag
+`@Telegraphprotoc` in every one.
 
-Post 1 and 2 first. They are the two that give other builders something they did
-not have.
+Each post stands alone: someone landing on post 7 should understand it without
+having read post 1. Every claim is checkable — a registration id, a
+transaction, a number from `/api/wasm`, or a page that loads.
 
 ---
 
-## 1. The finding worth posting on its own: escrow has no exit
+**1 — the start**
+
+> Registered for the @Telegraphprotoc hackathon.
+>
+> Building Amanat: parametric weather cover where the smart contract is the
+> customer of the intelligence, not a dashboard someone reads it on. It buys a
+> storm reading, and if the reading crosses the line it pays the claim itself.
+>
+> All three tracks, one codebase.
+
+---
+
+**2 — what the network looked like before I wrote anything**
+
+> Before building on @Telegraphprotoc I read the live network instead of the
+> docs.
+>
+> 139 miner registrations. Six ERC-8183 jobs created in the chain's entire
+> lifetime.
+>
+> Everyone is building on the HTTP rail. The on-chain rail — the thing the
+> protocol is actually for — is empty.
+
+---
+
+**3 — the miner**
+
+> Amanat's miner is live on @Telegraphprotoc, serving WEATHER_FORECAST,
+> WEATHER_CHECK and STORM_ALERT.
+>
+> Every answer comes back in two shapes at once: a sentence a scoring module can
+> grade, and scalars a contract can act on.
+>
+> Serving only one of those is why the on-chain rail is empty.
+
+---
+
+**4 — losing by 0.017**
+
+> First scoring module I registered on @Telegraphprotoc lost.
+>
+> margin 0.74155 against the champion's 0.75854. Ordering tied 32/32. Beaten on
+> separation by 0.017.
+>
+> Ordering was already perfect, so the fix wasn't judgement. It was contrast.
+
+---
+
+**5 — winning it**
+
+> Fixed it by repeating a strictly increasing curve: it widens the gap between a
+> good answer and a bad one and cannot reorder them, so ordering is safe by
+> construction.
+>
+> 0.7415 → 0.8355. Champion on STORM_ALERT.
+>
+> The rejection taught more than a pass would have.
+
+---
+
+**6 — the loop closes**
+
+> Amanat settled an insurance claim on @Telegraphprotoc with nobody in the loop.
+>
+> The contract opened an ERC-8183 job, the protocol picked the miner, validators
+> finalised it, and the callback declined the claim on what came back.
+>
+> Before this the chain had seen 6 jobs ever. I've now run 5.
+
+---
+
+**7 — what a job costs, and what that buys**
+
+> A job on @Telegraphprotoc is $1. An Engine call over x402 is $0.01.
+>
+> So the agent asks a hundred cheap questions before it asks one expensive one:
+> it screens every open policy over HTTP, and only goes on-chain when a policy is
+> near its trigger.
+>
+> 42 screens, one escalation, $1.42.
+
+---
+
+**8 — a bug worth reporting properly**
+
+> Two ERC-8183 jobs on @Telegraphprotoc. Different coordinates stored on-chain.
+> Byte-identical answers, both about 0.00, 0.00.
+>
+> On one of them it changed the outcome: the HTTP screen read risk 0.488, the job
+> came back 0.361, and the contract declined a claim on a reading of somewhere
+> else.
+
+---
+
+**9 — the escrow has no exit**
 
 > Spent a while looking for how to get USDC back out of the @Telegraphprotoc
 > escrow on Base Sepolia.
 >
-> There isn't a way.
+> There isn't a way. `depositUSDC` and `escrowBalance` are on the Diamond;
+> nothing that takes USDC out is.
 >
-> `depositUSDC` and `escrowBalance` are both on the Diamond. Nothing that takes
-> USDC back out is.
-
-Reply:
-
-> Enumerated it through the diamond loupe rather than guessing: 21 facets, 182
-> selectors. None matches any of 420 withdrawal-shaped names — withdraw,
-> unstake, redeem, exit, reclaim, release, refund, unlock, sweep, crossed with
-> the obvious suffixes and argument shapes.
-
-Reply:
-
-> The docs list "Escrow withdrawal timelock — 4 hours", which reads like a path
-> that exists and is delayed.
->
-> And the docs send you there: funding escrow is step one of the ERC-8183
-> walkthrough, and a WebSocket subscription gates on a minimum escrow balance at
-> connect time.
-
-Reply:
-
-> Testnet makes this an annoyance — mine's holding 7.4 USDC that can only ever
-> leave as job payments. The same contract on mainnet would not be an annoyance.
->
-> Writeup: github.com/PugarHuda/amanat/blob/main/docs/bug-report.md
+> 21 facets, 182 selectors, checked against 420 withdrawal-shaped names.
 
 ---
 
-## 2. Why your miner might be scoring zero
-
-This one helps other people directly, which is the point.
+**10 — why your miner might be scoring zero**
 
 > My @Telegraphprotoc miner served 289 requests in one epoch — more than any
-> other recently registered miner but one — and scored **0**. Rank 7 of 9.
-> Miners serving a third of that traffic scored 0.011.
+> other recently registered miner but one — and scored 0.
 >
-> The cause was one line of YAML.
-
-Reply:
-
 > `signal_mapping.label_field` is the field a validator reads as your answer.
-> Mine pointed at `breach` — a boolean.
->
-> Grading "false" against a scraped weather reading compares nothing to
-> something. Zero, every epoch.
-
-Reply:
-
-> The pattern across the board is unambiguous. Every miner that scores declares
-> something substantive: `current`, `weather`, `answer`, `summary`.
->
-> The only other miner sitting at 0 points its label at an array.
+> Mine pointed at a boolean.
 >
 > If you're scoring zero with traffic, check that line first.
 
 ---
 
-## 3. Something you can click
+**11 — the trick has a ceiling**
 
-> Amanat is live: read a storm risk for any point on earth, no wallet, no
+> Repeating that contrast curve looks free: monotone can't reorder anything.
+>
+> It is not free. Five passes took my corpus from 37 ordering wins to 34.
+>
+> Monotone preserves order in arithmetic, not in floats — repeat it enough and
+> answers that differed become equal. An equal pair is a lost pair.
+
+---
+
+**12 — something you can click**
+
+> Amanat is live: read a storm risk for any point on earth. No wallet, no
 > sign-up.
 >
 > It's the same call the contract makes on @Telegraphprotoc before it spends
@@ -83,103 +149,23 @@ Reply:
 >
 > amanat-miner.vercel.app
 
-Reply:
+---
 
-> The page is the product's own instrument. Barograph paper, an ink trace, and
-> one red line at 0.75.
+**13 — testing my own work**
+
+> Ran Playwright over my own @Telegraphprotoc miner, walking the unhappy paths.
 >
-> Red appears nowhere else, so the only red thing on the page is the only thing
-> that means money moves. The band above the line is usually empty, and it says
-> so, because empty is the reading.
+> A request with no coordinates answered 200 with a confident forecast for Null
+> Island. Number(null) is 0.
+>
+> I'd filed a bug about the node sending 0,0. Turns out my own miner was turning
+> nothing into zero.
 
 ---
 
-## 4. The on-chain loop
-
-> Amanat settled an insurance claim with nobody in the loop.
->
-> The contract opened an ERC-8183 job on @Telegraphprotoc, the protocol picked
-> the miner, validators finalised it, and the callback paid or declined on what
-> came back.
->
-> Before this the chain had seen 6 jobs in its lifetime. We've run 4.
-
-Reply:
-
-> The part that cost a transaction to learn: `createJob` draws on the escrow of
-> whoever calls it. That's the contract, not the wallet that deployed it.
->
-> Fund the deployer and your contract cannot open a single job.
-
-Reply:
-
-> A job is $1. An Engine call is $0.01. So the agent asks a hundred cheap
-> questions before it asks one expensive one — it screens every open policy over
-> x402 and only goes on-chain when one is near its trigger.
->
-> 42 screens, one escalation, $1.42.
-
----
-
-## 5. Rejected for being right
-
-> A scoring module I registered on @Telegraphprotoc beat the champion on the
-> fixtures — 0.8349 vs 0.7859, ordering 32/32 — and was rejected anyway:
->
-> "disagreed with the champion on real traffic: agreement -0.2585, need at least
-> 0.60"
->
-> Negatively correlated. On purpose.
-
-Reply:
-
-> The incumbent scores weather answers near zero — rank 1 on WEATHER_CHECK got
-> 0.0206. The miners answer with numbers and it compares words.
->
-> Its ordering of real answers is close to noise, and disagreeing with noise
-> gives you a negative correlation with it.
-
-Reply:
-
-> So on an intent carrying traffic, a scorer can't replace the incumbent by being
-> right, if being right means disagreeing with it.
->
-> I haven't tuned it to agree more. A scorer fitted to match one that scores real
-> answers near zero is a worse scorer.
-
----
-
-## 6. The trick that stopped working
-
-For the scorer-authors watching. This is the kind of thing people repay.
-
-> Losing on separation with your ordering already perfect looks like a free win:
-> repeat a strictly increasing curve, the good/bad gap widens, and monotone
-> can't reorder anything.
->
-> It is not free.
-
-Reply:
-
-> Five passes took my corpus from 37 ordering wins to 34 and opened an attack
-> leak. Four gave 35 and still leaked.
->
-> Monotone preserves order in arithmetic, not in floats. Repeated application
-> saturates toward 0 and 1 until answers that differed become *equal* — and an
-> equal pair is a lost pair.
-
-Reply:
-
-> Three passes is the ceiling. Finding it also fixed a profile that had lost the
-> same three fixtures across three unrelated rebuilds: it was running four.
->
-> 38/38 on the corpus now, 14/14 attacks held.
-
----
-
-## Save for when the numbers land
+## Hold these until the numbers land
 
 - The miner's first non-zero score, next to the `label_field` fix that caused it.
 - Any registration that comes back champion.
-- Total Telegraph calls by the end of Track 3 — post it as a count with the
-  contract address beside it, because that is the number being weighed.
+- Total Telegraph calls by the end of Track 3, as a count with the contract
+  address beside it — that is the number being weighed.
