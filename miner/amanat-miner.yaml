@@ -70,10 +70,16 @@ output_schema:
     valid_at: { type: string, description: UTC timestamp the forecast applies to. }
     source: { type: string }
 
+# What the validator grades. `label_field` is the field it reads as the miner's
+# answer, so it has to point at the substance — not at our product's own
+# vocabulary. Pointing it at `breach`, a boolean, scored 0 across every epoch
+# while miners declaring `summary`, `answer` or `current` scored around 0.01:
+# grading "false" against a scraped weather reading compares nothing to
+# something. The sentence carries every figure, so the sentence is the answer.
 semantics:
   signal_mapping:
     confidence_field: risk
-    label_field: breach
+    label_field: summary
     reason_field: summary
   supported_intents:
     - WEATHER_FORECAST
