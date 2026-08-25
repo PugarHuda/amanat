@@ -107,8 +107,12 @@ const W_NUMERIC: f32 = 0.75;
 /// what Stage 2 measures as separation. Fewer passes keep mid-quality answers
 /// distinguishable from each other, which matters where the fixture set is
 /// small and the interesting cases sit in the middle.
+// Three, not four. Four passes saturate: values collapse toward 0 and 1 until
+// answers that differed become equal, and an equal pair is a lost pair. That is
+// what cost the meteo experiment three ordering wins, and TEXT_AUTHENTICITY_CHECK
+// has lost the same three fixtures to this profile across three separate builds.
 #[cfg(feature = "authenticity")]
-const CONTRAST_PASSES: u8 = 4;
+const CONTRAST_PASSES: u8 = 3;
 #[cfg(not(feature = "authenticity"))]
 const CONTRAST_PASSES: u8 = 3;
 
