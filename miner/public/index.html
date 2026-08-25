@@ -172,6 +172,7 @@ footer a{color:var(--muted)}
       <a href="#check">Check a location</a>
       <a href="#settles">How it settles</a>
       <a href="#ledger">Ledger</a>
+      <a href="#use">Use it</a>
       <a href="https://github.com/PugarHuda/amanat">Source</a>
     </nav>
   </div>
@@ -262,6 +263,47 @@ footer a{color:var(--muted)}
         </div>
       </li>
     </ol>
+  </section>
+
+  <section class="steps" id="use">
+    <h2>Call it from your own agent</h2>
+    <p>
+      Four ways in, cheapest first. The reading is useful anywhere a decision
+      waits on weather — the contract is only one thing to do with it.
+    </p>
+    <ol class="flow">
+      <li>
+        <span class="who">free</span>
+        <div>
+          <h3>Straight over HTTP</h3>
+          <p><code>POST /forecast</code> with <code>lat</code>, <code>lon</code> and an <code>hours</code> offset. No wallet, no key, no sign-up. Nothing is verified by validators on this route, and it costs nothing — those go together.</p>
+        </div>
+      </li>
+      <li>
+        <span class="who">$0.01</span>
+        <div>
+          <h3>From an agent, over MCP</h3>
+          <p>The Telegraph MCP server discovers every registered miner, so Amanat is already a tool in Claude Desktop, Cursor, Continue, Goose and LangChain — nothing to integrate. It appears as <code>tg_amanat_weather_risk_forecast</code>.</p>
+        </div>
+      </li>
+      <li>
+        <span class="who">$0.01</span>
+        <div>
+          <h3>Through the Engine</h3>
+          <p>Ask in plain language and the protocol picks the miner. You may or may not get Amanat — that is the point, and it is how you find out whether we are any good.</p>
+        </div>
+      </li>
+      <li>
+        <span class="who">$1.00</span>
+        <div>
+          <h3>From a contract</h3>
+          <p>Escrow USDC, open a job against an intent, receive the answer through <code>subnetMessage</code>. The contract on this page is a working receiver you can copy.</p>
+        </div>
+      </li>
+    </ol>
+    <p style="margin-top:20px">
+      <a href="https://github.com/PugarHuda/amanat/blob/main/docs/use-amanat.md">Copy-paste configs and the full field reference →</a>
+    </p>
   </section>
 
   <section class="ledger" id="ledger">
