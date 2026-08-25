@@ -75,8 +75,8 @@ it exists to prevent, in the miner itself. Fixed: missing coordinates are now a
 `400 lat is required`.
 
 Then the same job was run again. Jobs 9, 10 and 11 reached `Terminal` within
-minutes. Job 12, opened after the fix, has stayed `Funded` for far longer with
-the same policy, the same intent and the same coordinates.
+minutes. Job 12, opened after the fix against the same policy, the same intent
+and the same coordinates, has stayed `Funded` for **148 minutes and counting**.
 
 That points at the node calling the miner with no coordinate fields at all,
 rather than with zeros. The zeros were ours. The parameters still are not
@@ -84,8 +84,13 @@ arriving, and a miner that validates its input now fails the job loudly instead
 of answering about Null Island — which is the better failure, but it is still a
 failure of the `on_chain.request` mapping.
 
-Stated as evidence rather than proof: one job held open against three that
-settled quickly is a strong signal, not a controlled experiment.
+The miner is the only thing that changed between job 11 and job 12, and the
+change was that it stopped accepting a request with no coordinates. A job that
+settled in minutes now does not settle at all.
+
+So: the parameters are not reaching the miner, the miner was masking it by
+treating absent as zero, and with the mask removed the job simply fails. The
+`on_chain.request` mapping is where to look.
 
 ## Reproducing
 

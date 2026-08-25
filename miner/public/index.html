@@ -62,8 +62,10 @@ header{border-bottom:1px solid var(--rule); background:var(--paper-2)}
 .bar{display:flex; align-items:baseline; justify-content:space-between; gap:16px; padding:18px 0; flex-wrap:wrap}
 .mark{font-family:"Familjen Grotesk",sans-serif; font-weight:700; font-size:1.15rem; letter-spacing:.02em}
 .mark span{color:var(--muted); font-weight:400; font-size:.8rem; letter-spacing:.14em; text-transform:uppercase; margin-left:10px}
-nav{display:flex; gap:20px; font-size:.85rem}
-nav a{color:var(--ink-2); text-decoration:none}
+nav{display:flex; gap:20px; font-size:.85rem; flex-wrap:wrap}
+/* Each link stays on one line and the row wraps between them, rather than
+   every label breaking mid-phrase and the last one falling off the edge. */
+nav a{color:var(--ink-2); text-decoration:none; white-space:nowrap}
 nav a:hover{color:var(--trace)}
 
 /* ── hero: the trigger line ───────────────────────── */
@@ -157,6 +159,8 @@ footer a{color:var(--muted)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
 @media (max-width:640px){
   body{font-size:16px}
+  .bar{padding:14px 0 16px}
+  nav{gap:8px 16px; font-size:.8rem}
   .gauge{height:250px}
   .reading .place{font-size:.58rem}
   ol.flow li{grid-template-columns:1fr; gap:8px}
