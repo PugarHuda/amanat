@@ -47,10 +47,21 @@ export const server = createServer(async (req, res) => {
 
     if (pathname === "/forecast") {
       const body = req.method === "POST" ? await readJson(req) : {};
-      const lat = Number(body.lat ?? searchParams.get("lat"));
-      const lon = Number(body.lon ?? searchParams.get("lon"));
-      const hours = Number(body.hours ?? searchParams.get("hours") ?? 0);
-      return send(res, 200, await forecast({ lat, lon, hours }));
+
+      // Absent is not zero. Number(null) and Number(undefined ?? null) both
+      // collapse to 0, which turned a request with no coordinates into a
+      // confident forecast for Null Island — the exact failure this miner
+      // exists to avoid. Say what is missing instead.
+      const pick = (name) => {
+        const raw = body[name] ?? searchParams.get(name);
+        if (raw === undefined || raw === null || raw === "") {
+          throw new RangeError(`${name} is required`);
+        }
+        return Number(raw);
+      };
+      const rawHours = body.hours ?? searchParams.get("hours");
+      const hours = rawHours === undefined || rawHours === null || rawHours === "" ? 0 : Number(rawHours);
+      return send(res, 200, await forecast({ lat: pick("lat"), lon: pick("lon"), hours }));
     }
 
     send(res, 404, { error: "not found", endpoints: ["/forecast", "/health"] });

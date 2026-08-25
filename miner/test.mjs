@@ -50,7 +50,6 @@ assert.equal(bad.status, 400);
 assert.equal((await fetch(`http://127.0.0.1:${port}/health`)).status, 200);
 assert.equal((await fetch(`http://127.0.0.1:${port}/nope`)).status, 404);
 
-server.close();
 console.log("miner ok —", body.summary);
 
 // `hours` is measured from now, not from midnight — the bug this asserts against
@@ -60,3 +59,18 @@ const at = Date.parse(body.valid_at);
 assert.ok(at >= now - 3600e3, `valid_at ${body.valid_at} must not be in the past`);
 assert.ok(Math.abs(at - (now + 3 * 3600e3)) <= 3600e3, `hours=3 must land ~3h ahead, got ${body.valid_at}`);
 console.log("hours offset ok —", body.valid_at);
+
+const port2 = port;
+
+// Absent is not zero. Number(null) is 0, and a request with no coordinates was
+// answering with a confident forecast for Null Island instead of failing.
+for (const missing of [{}, { lon: 10 }, { lat: 10 }, { lat: null, lon: null }, { lat: "", lon: "" }]) {
+  const r = await fetch(`http://127.0.0.1:${port2}/forecast`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(missing),
+  });
+  assert.equal(r.status, 400, `missing coordinates must be refused: ${JSON.stringify(missing)}`);
+  assert.match((await r.json()).error, /required/, "and must say which field");
+}
+console.log("missing coordinates refused");
+
+server.close();
