@@ -62,6 +62,31 @@ for 0,0 — and the contract declined the claim.
 A contract settling on a signal it paid a dollar for acted on a reading of
 somewhere else entirely. For a parametric product that is not a display bug.
 
+## Correction: the node may be sending nothing, not zeros
+
+The original report said the miner receives `lat=0, lon=0`. Testing my own miner
+turned that around.
+
+Playwright over the unhappy paths found that `{}`, `{"lon": 10}` and
+`{"lat": null}` all returned **200 with a forecast for 0.00, 0.00**.
+`Number(null)` is 0, and `searchParams.get` on a missing key returns `null`, so
+the miner was quietly turning *absent* into *zero* — which is exactly the failure
+it exists to prevent, in the miner itself. Fixed: missing coordinates are now a
+`400 lat is required`.
+
+Then the same job was run again. Jobs 9, 10 and 11 reached `Terminal` within
+minutes. Job 12, opened after the fix, has stayed `Funded` for far longer with
+the same policy, the same intent and the same coordinates.
+
+That points at the node calling the miner with no coordinate fields at all,
+rather than with zeros. The zeros were ours. The parameters still are not
+arriving, and a miner that validates its input now fails the job loudly instead
+of answering about Null Island — which is the better failure, but it is still a
+failure of the `on_chain.request` mapping.
+
+Stated as evidence rather than proof: one job held open against three that
+settled quickly is a strong signal, not a controlled experiment.
+
 ## Reproducing
 
 ```bash
