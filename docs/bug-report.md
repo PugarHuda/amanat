@@ -74,6 +74,39 @@ node --env-file=.env agent/policy.mjs "anywhere" 14.60 120.98 1
 The settled policy reports a forecast for `0.00, 0.00` whatever coordinates you
 pass.
 
+## A signal commitment that cannot be re-derived
+
+Every paid call returns a `signal_hash`, and the docs say why that is useful:
+
+> The response includes the signal, the result behind it, and the payload the
+> hash was computed over, so you can re-derive the hash yourself rather than
+> taking the node's word for it.
+
+`GET /engine/v1/signal/{hash}` does return a payload and a verification block:
+
+```json
+"verification": { "algorithm": "keccak256", "commitment": "payload", "verified": true }
+```
+
+But the hash cannot be reproduced from what it returns. Thirty variants tried —
+`payload`, `result`, `signal`, the response and the request alone, each under
+canonical key-sorted JSON, plain `JSON.stringify` and indented, each under both
+keccak256 and sha256. None matches.
+
+Example: signal
+`0x5118458217d28fdc93f1b1588958232ebf3213f41cc0877d0288dec1fb9f2af6`, miner
+`amanat-weather-risk`, payment
+[`0x0ccfe6f1…`](https://sepolia.basescan.org/tx/0x0ccfe6f1616ddbfc3903163e2f6305dd1f5abd959cb780d1fc82209d5582c838).
+
+This is not a claim that any answer is wrong. It is that `verified: true` is
+currently the node vouching for itself, and the independent check the docs
+describe is not reachable from the response. Either the exact bytes hashed
+should be recoverable — a canonical form, or the pre-image returned verbatim —
+or the docs should stop promising it can be checked.
+
+`agent/verify.mjs` in this repo does the check and reports honestly when it
+cannot confirm, rather than printing a tick.
+
 ## The escrow has no exit
 
 `depositUSDC` and `escrowBalance` are both on the Diamond. Nothing that takes
