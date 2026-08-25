@@ -9,6 +9,10 @@ carries it out without anyone deciding anything by hand.
 
 Built for Telegraph Hackathon Season I. One codebase, three entries:
 
+**Live:** [amanat-miner.vercel.app](https://amanat-miner.vercel.app) — read a
+storm risk for any point, no wallet, no sign-up. It is the same call the contract
+makes before it spends anything.
+
 | Track | What | Where |
 |---|---|---|
 | **1 — Miner** | Weather and storm-risk miner, answers legible to *both* a text scorer and a smart contract | [`miner/`](miner/) |
