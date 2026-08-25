@@ -74,6 +74,35 @@ node --env-file=.env agent/policy.mjs "anywhere" 14.60 120.98 1
 The settled policy reports a forecast for `0.00, 0.00` whatever coordinates you
 pass.
 
+## The escrow has no exit
+
+`depositUSDC` and `escrowBalance` are both on the Diamond. Nothing that takes
+USDC back out is.
+
+Enumerated through the loupe: 21 facets, 182 selectors. None of them matches any
+of 420 withdrawal-shaped names — `withdraw`, `unstake`, `redeem`, `exit`,
+`reclaim`, `release`, `refund`, `unlock`, `sweep`, each crossed with the obvious
+suffixes and argument shapes.
+
+```
+depositUSDC(uint256)        YES
+escrowBalance(address)      YES
+createJob(bytes32,...)      YES
+withdraw* / reclaim* / ...  none
+```
+
+The docs list an "Escrow withdrawal timelock — 4 hours" under Gas & Escrow,
+which reads as a withdrawal path that exists and is delayed. On this deployment
+there is no path at all.
+
+It matters more than it looks, because the docs send you here: funding escrow is
+step one of the ERC-8183 walkthrough, and a WebSocket subscription gates on a
+minimum escrow balance at connect time. Following either instruction puts USDC
+somewhere it cannot come back from. On testnet that is an annoyance. The same
+contract on mainnet would be something else.
+
+Ours currently holds 7.4 USDC that can only ever leave as job payments.
+
 ## Two smaller things found alongside
 
 **`on_chain.fields` entries require a `description`.** Registration 178 was
