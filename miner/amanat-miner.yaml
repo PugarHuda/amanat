@@ -26,12 +26,12 @@ limitations:
     property: rate
     value_num: 10000
     window_seconds: 86400
-  - code: MAX_PARAM_VALUE
-    message: hours must be an integer offset between 0 and 168
-    param: hours
-    property: value
-    value_num: 168
-    operator: lte
+  # A MAX_PARAM_VALUE limit on `hours` was declared here and had to be removed:
+  # the node evaluates `operator: lte` inverted. It refuses hours=0 and hours=2
+  # as violating "lte 168", and lets hours=200 through. Declaring the real limit
+  # therefore blocked every legitimate direct call and every job, which send
+  # hours=1. The server validates the range itself and answers 400, which is the
+  # check that was working all along.
 
 # Failures come back as real HTTP status codes, so there is no status_path to
 # declare — a 4xx/5xx already tells the node not to charge for the call.

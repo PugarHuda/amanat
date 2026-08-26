@@ -6,7 +6,7 @@ import { pathToFileURL, fileURLToPath } from "node:url";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { forecast } from "./lib/forecast.mjs";
-import { book } from "./lib/book.mjs";
+import { book, policies } from "./lib/book.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 // One file, read once. The page is static and the server has no build step.
@@ -44,6 +44,9 @@ export const server = createServer(async (req, res) => {
 
     // What the contract is carrying, read straight off chain for the page.
     if (pathname === "/api/book") return send(res, 200, await book());
+
+    // Every policy the contract has written. Nothing on the page is typed in.
+    if (pathname === "/api/policies") return send(res, 200, await policies({ limit: 40 }));
 
     if (pathname === "/forecast") {
       const body = req.method === "POST" ? await readJson(req) : {};

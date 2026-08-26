@@ -116,6 +116,74 @@ export async function ask(query, { signer, context } = {}) {
   return { ...body, paid, paidAmount: amount, receipt: decodeSettlement(settlement) };
 }
 
+/**
+ * Call one miner by id, skipping the router.
+ *
+ * Auto-routing classifies your sentence and picks a miner, which is right when
+ * you want the network's judgement and wrong when you already know the shape of
+ * the call you need. This is the escape hatch: same payment, no routing, and the
+ * endpoint and payload are yours to name.
+ *
+ * The node validates a direct call against the miner's declared limits *before*
+ * charging, and refuses with 422 rather than taking payment — so a refusal here
+ * costs nothing and carries the reason.
+ */
+export async function askDirect(minerId, { method = "POST", endpoint, payload, signer, acknowledgeWarnings = false } = {}) {
+  const w = signer ?? wallet();
+  const body = { method, endpoint, payload };
+  if (acknowledgeWarnings) body.acknowledge_warnings = true;
+
+  const { response, paid, amount, settlement } = await fetchWithPayment(
+    `${NODE}/engine/v1/ask/${minerId}`,
+    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) },
+    w,
+  );
+
+  if (response.status === 422) {
+    const refusal = await response.json();
+    const err = new Error(`the node predicted this call would fail: ${(refusal.warnings ?? []).join("; ")}`);
+    err.refusal = refusal;
+    err.chargeable = false; // 422 settles nothing
+    throw err;
+  }
+  if (!response.ok) throw new Error(`direct ask ${response.status}: ${(await response.text()).slice(0, 200)}`);
+
+  const out = await response.json();
+  return { ...out, paid, paidAmount: amount, receipt: decodeSettlement(settlement) };
+}
+
+/**
+ * The Daemon's own signals, filtered to what a caller can use.
+ *
+ * This rail costs nothing: the Daemon generates and answers its own questions on
+ * a schedule whether or not anyone asks. A signal here is minutes to hours old,
+ * so it is worth reading before paying for a fresh one — and worth ignoring once
+ * it is stale.
+ */
+export async function recentSignals({ intents = [], maxAgeMinutes = 240, limit = 50 } = {}) {
+  const res = await fetch(`${NODE}/daemon/api/questions?limit=${limit}`);
+  if (!res.ok) throw new Error(`daemon feed ${res.status}`);
+  const { results = [] } = await res.json();
+  const cutoff = Date.now() - maxAgeMinutes * 60_000;
+
+  return results
+    .filter((r) => r.status === "success")
+    // The feed carries the Daemon's own questions alongside direct results from
+    // paid callers. Only the former are free intelligence; a direct result is
+    // someone else's answer to a question we did not ask.
+    .filter((r) => r.type === "daemon" && r.routing?.intent)
+    .filter((r) => !intents.length || intents.includes(r.routing.intent))
+    .filter((r) => Date.parse(r.created_at) >= cutoff)
+    .map((r) => ({
+      intent: r.routing?.intent,
+      miner: r.routing?.miner_slug ?? r.routing?.subnet_name,
+      question: r.question?.text ?? "",
+      result: r.execution?.result,
+      signalHash: r.signal_hash,
+      at: r.created_at,
+    }));
+}
+
 /** The settlement header is base64 JSON: who paid, and the transaction that did it. */
 export function decodeSettlement(header) {
   if (!header) return null;

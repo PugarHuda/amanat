@@ -150,6 +150,7 @@ td.m{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums}
 .tag{font-family:"IBM Plex Mono",monospace; font-size:.68rem; letter-spacing:.06em; text-transform:uppercase;
   padding:2px 7px; border-radius:2px; background:var(--trace-soft); color:var(--trace)}
 .tag.declined{background:var(--paper-2); color:var(--muted)}
+.tag.active{background:var(--trigger-soft); color:var(--trigger)}
 
 footer{margin:104px 0 0; border-top:1px solid var(--rule); padding:26px 0 60px;
   display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap;
@@ -319,13 +320,10 @@ footer a{color:var(--muted)}
     <div class="tablewrap">
       <table>
         <thead>
-          <tr><th>Policy</th><th>Point</th><th>Job</th><th class="m">Risk read</th><th>Outcome</th></tr>
+          <tr><th>Policy</th><th>Point</th><th class="m">Cover</th><th>Job</th><th class="m">Risk read</th><th>Outcome</th></tr>
         </thead>
         <tbody id="ledgerbody">
-          <tr><td class="m">2</td><td>1.00, 123.89</td><td class="m">7</td><td class="m">0.382</td><td><span class="tag declined">declined</span></td></tr>
-          <tr><td class="m">3</td><td>10.32, 123.89</td><td class="m">8</td><td class="m">0.382</td><td><span class="tag declined">declined</span></td></tr>
-          <tr><td class="m">4</td><td>14.60, 120.98</td><td class="m">9</td><td class="m">0.361</td><td><span class="tag declined">declined</span></td></tr>
-          <tr><td class="m">5</td><td>22.30, 114.17</td><td class="m">10</td><td class="m">0.361</td><td><span class="tag declined">declined</span></td></tr>
+          <tr><td colspan="6" class="m" style="color:var(--muted)">reading the chain…</td></tr>
         </tbody>
       </table>
     </div>
@@ -446,6 +444,28 @@ $("presets").addEventListener("click", (e) => {
   $("lon").value = b.dataset.lon;
   $("form").requestSubmit();
 });
+
+const STATUS_TAG = { Claimed: "", Declined: "declined", Active: "active", Expired: "declined" };
+
+fetch("/api/policies")
+  .then((r) => r.json())
+  .then((rows) => {
+    if (!rows.length) {
+      $("ledgerbody").innerHTML = `<tr><td colspan="6" class="m" style="color:var(--muted)">no policies yet</td></tr>`;
+      return;
+    }
+    $("ledgerbody").innerHTML = rows.map((p) => `<tr>
+      <td class="m">${p.id}</td>
+      <td class="m">${p.lat}, ${p.lon}</td>
+      <td class="m">${p.payout}</td>
+      <td class="m">${p.jobId ? p.jobId : "—"}</td>
+      <td class="m">${p.jobId ? p.risk.toFixed(3) : "—"}</td>
+      <td><span class="tag ${STATUS_TAG[p.status] ?? ""}">${p.status.toLowerCase()}</span></td>
+    </tr>`).join("");
+  })
+  .catch(() => {
+    $("ledgerbody").innerHTML = `<tr><td colspan="6" class="m" style="color:var(--trigger)">could not read the chain</td></tr>`;
+  });
 
 fetch("/api/book")
   .then((r) => r.json())
