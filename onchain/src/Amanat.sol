@@ -17,11 +17,8 @@ interface ITelegraph {
     function escrowBalance(address account) external view returns (uint256);
 }
 
-interface IERC20 {
-    function transfer(address to, uint256 amount) external returns (bool);
-    function approve(address spender, uint256 amount) external returns (bool);
-    function balanceOf(address account) external view returns (uint256);
-}
+import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title Amanat — parametric weather cover settled by verified intelligence
 /// @notice A policy is an *amanat*: a mandate the contract carries out on its
@@ -43,6 +40,16 @@ interface IERC20 {
 ///            stay escrowed against the policy until an answer lands, and the
 ///            holder can reclaim them after `CLAIM_TIMEOUT` if none ever does.
 contract Amanat {
+    // The payout token is a constructor parameter, so it is not necessarily
+    // USDC. Tokens that predate the finalised ERC-20 return nothing from
+    // `transfer` — USDT is the well-known one — and `require(token.transfer(..))`
+    // reverts on every payout against them. Others return `false` instead of
+    // reverting, which the same expression reads as success only because the
+    // require catches it, and would not catch at all if it were dropped.
+    // SafeERC20 handles both shapes, and is audited, which hand-rolled token
+    // plumbing is not.
+    using SafeERC20 for IERC20;
+
     // ── Wiring ──────────────────────────────────────────────────────────────
 
     /// The Telegraph Diamond. It is the only address allowed to deliver results.
@@ -188,7 +195,7 @@ contract Amanat {
         if (riskX10000 >= PAYOUT_THRESHOLD) {
             p.status = Status.Claimed;
             _outstandingTotal -= p.payout;
-            require(payoutToken.transfer(p.holder, p.payout), "payout failed");
+            payoutToken.safeTransfer(p.holder, p.payout);
             emit Paid(policyId, p.holder, p.payout);
         } else {
             p.status = Status.Declined;
@@ -250,7 +257,9 @@ contract Amanat {
         // Escrowed funds are spent on jobs, so they must not also be counted as
         // backing a policy.
         require(payoutToken.balanceOf(address(this)) >= _outstandingTotal + amount, "would strand a policy");
-        payoutToken.approve(telegraph, amount);
+        // forceApprove, not approve: a token that requires the allowance be zeroed
+        // before it is raised again would revert on the second call to this.
+        payoutToken.forceApprove(telegraph, amount);
         ITelegraph(telegraph).depositUSDC(amount);
     }
 
@@ -266,7 +275,7 @@ contract Amanat {
         if (msg.sender != underwriter) revert NotUnderwriter();
         uint256 free = payoutToken.balanceOf(address(this)) - _outstandingTotal;
         if (free == 0) revert NothingPending();
-        require(payoutToken.transfer(to, free), "sweep failed");
+        payoutToken.safeTransfer(to, free);
     }
 
     function outstanding() external view returns (uint256) {

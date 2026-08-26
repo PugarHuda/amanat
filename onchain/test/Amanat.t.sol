@@ -4,30 +4,60 @@ pragma solidity ^0.8.19;
 import "forge-std/Test.sol";
 import "../src/Amanat.sol";
 
-/// Minimal ERC-20 standing in for Circle's USDC. A test double, not a product
-/// mock: the tests need a token whose balances they control, and Circle's is not
-/// deployable here.
+/// A well-behaved ERC-20 standing in for Circle's USDC. A test double, not a
+/// product mock: the tests need a token whose balances they control, and
+/// Circle's is not deployable here.
 contract TestUSDC is IERC20 {
-    mapping(address => uint256) public balances;
-    mapping(address => mapping(address => uint256)) public allowances;
+    mapping(address => uint256) public override balanceOf;
+    mapping(address => mapping(address => uint256)) public override allowance;
+    uint256 public override totalSupply;
     bool public transfersFail;
 
-    function mint(address to, uint256 amount) external { balances[to] += amount; }
+    function mint(address to, uint256 amount) external { balanceOf[to] += amount; totalSupply += amount; }
     function setTransfersFail(bool v) external { transfersFail = v; }
 
-    function balanceOf(address a) external view returns (uint256) { return balances[a]; }
-
-    function transfer(address to, uint256 amount) external returns (bool) {
+    function transfer(address to, uint256 amount) external override returns (bool) {
         if (transfersFail) return false;
-        require(balances[msg.sender] >= amount, "insufficient");
-        balances[msg.sender] -= amount;
-        balances[to] += amount;
+        require(balanceOf[msg.sender] >= amount, "insufficient");
+        balanceOf[msg.sender] -= amount;
+        balanceOf[to] += amount;
+        emit Transfer(msg.sender, to, amount);
         return true;
     }
 
-    function approve(address spender, uint256 amount) external returns (bool) {
-        allowances[msg.sender][spender] = amount;
+    function approve(address spender, uint256 amount) external override returns (bool) {
+        allowance[msg.sender][spender] = amount;
+        emit Approval(msg.sender, spender, amount);
         return true;
+    }
+
+    function transferFrom(address from, address to, uint256 amount) external override returns (bool) {
+        require(balanceOf[from] >= amount, "insufficient");
+        balanceOf[from] -= amount;
+        balanceOf[to] += amount;
+        emit Transfer(from, to, amount);
+        return true;
+    }
+}
+
+/// A token that predates the finalised standard: `transfer` and `approve` return
+/// nothing at all. USDT is the well-known one. `require(token.transfer(..))`
+/// cannot compile against this, and a raw call to it reverts on the decode —
+/// which is the whole reason the contract uses SafeERC20.
+contract NoReturnToken {
+    mapping(address => uint256) public balanceOf;
+    mapping(address => mapping(address => uint256)) public allowance;
+
+    function mint(address to, uint256 amount) external { balanceOf[to] += amount; }
+
+    function transfer(address to, uint256 amount) external {
+        require(balanceOf[msg.sender] >= amount, "insufficient");
+        balanceOf[msg.sender] -= amount;
+        balanceOf[to] += amount;
+    }
+
+    function approve(address spender, uint256 amount) external {
+        allowance[msg.sender][spender] = amount;
     }
 }
 
@@ -324,13 +354,35 @@ contract AmanatTest is Test {
 
     /// USDC returns a bool. A token that returns false without reverting must not
     /// leave the contract believing it paid.
+    /// A token that returns nothing must still pay. Before SafeERC20 this
+    /// contract could not settle a single claim against USDT-shaped tokens, and
+    /// the payout token is a constructor parameter.
+    function test_paysWithATokenThatReturnsNothing() public {
+        NoReturnToken quirky = new NoReturnToken();
+        TestTelegraph tg = new TestTelegraph(IERC20(address(quirky)));
+        Amanat quirkyBook = new Amanat(address(tg), address(quirky));
+        quirky.mint(address(quirkyBook), BOOK);
+
+        uint256 id = quirkyBook.openPolicy(holder, "1", "2", PAYOUT);
+        quirkyBook.fundEscrow(2e6);
+        uint256 jobId = quirkyBook.requestCheck(id, keccak256("STORM_ALERT"), 1);
+        tg.deliver(address(quirkyBook), jobId, true, _reading(9000, true), "");
+
+        assertEq(quirky.balanceOf(holder), PAYOUT, "a token with no return value still pays");
+        (, , , , Amanat.Status status, , , ) = quirkyBook.policies(id);
+        assertEq(uint256(status), uint256(Amanat.Status.Claimed));
+    }
+
     function test_revertsIfThePayoutTransferFails() public {
         uint256 id = book.openPolicy(holder, "1", "2", PAYOUT);
         book.fundEscrow(2e6);
         uint256 jobId = book.requestCheck(id, keccak256("STORM_ALERT"), 1);
         usdc.setTransfersFail(true);
 
-        vm.expectRevert("payout failed");
+        // SafeERC20 turns a `false` return into a revert, which is the point:
+        // without it the contract would mark the policy Claimed while the holder
+        // received nothing.
+        vm.expectRevert(abi.encodeWithSignature("SafeERC20FailedOperation(address)", address(usdc)));
         telegraph.deliver(address(book), jobId, true, _reading(9000, true), "");
     }
 
