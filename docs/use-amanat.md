@@ -29,9 +29,34 @@ curl -X POST https://amanat-miner.vercel.app/forecast \
 }
 ```
 
-`lat` and `lon` are required and are refused if absent — a missing coordinate is
-not the same as zero, and a forecast for Null Island is worse than an error.
-`hours` is an offset from now, 0 to 168.
+Or ask in a sentence and let the miner find the place:
+
+```bash
+curl -X POST https://amanat-miner.vercel.app/forecast \
+  -H "Content-Type: application/json" \
+  -d '{"question": "Will Riyadh exceed 40 degrees in the next 24 hours?"}'
+```
+
+```json
+{
+  "summary": "At 2026-08-27T03:00Z the forecast for Riyadh, Riyadh Region, Saudi Arabia is 32.2 °C with wind 6.9 km/h, gusts 13.0 km/h and 0.0 mm precipitation. Storm risk is low (0.144).",
+  "place": "Riyadh, Riyadh Region, Saudi Arabia",
+  "lat": 24.68773, "lon": 46.72185, "hours": 24,
+  "temp_c": 32.2, "risk": 0.144, "breach": false
+}
+```
+
+The place is resolved through Open-Meteo's geocoding API — the same source as
+the forecast, so the name and the reading agree about where they are. The hour
+offset is read from the question too: "in the next six hours" is hour 6, and
+"tomorrow" is hour 24.
+
+Give it coordinates or a question. `lat` and `lon` must come as a pair and are
+refused if either is absent — a missing coordinate is not the same as zero, and
+a forecast for Null Island is worse than an error. A question naming no place
+("Will it storm?") is refused for the same reason: guessing a location is worse
+than saying no when a contract may settle on the answer. `hours` is an offset
+from now, 0 to 168, and overrides whatever the question implies.
 
 `risk` is 0 to 1 from wind, gusts and precipitation against thresholds a
 reinsurer would recognise: Beaufort 8 at 62 km/h, 90 km/h gusts, 30 mm/h rain.

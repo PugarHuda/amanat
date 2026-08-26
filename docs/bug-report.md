@@ -1,6 +1,6 @@
 # Bug report: ERC-8183 job params do not reach the miner
 
-**Miner:** `amanat-weather-risk`, registration 179, id `20260821`
+**Miner:** `amanat-weather-risk`, registration 218, id `20260821`
 **Contract:** [`0x51fa7d66af31dE4d94Bd14e0404465fd2D0c7B3c`](https://sepolia.basescan.org/address/0x51fa7d66af31dE4d94Bd14e0404465fd2D0c7B3c)
 **Jobs:** 7, 8, 9 on Base Sepolia
 
@@ -226,3 +226,30 @@ unindexed. It advances a few per hour rather than being stuck, so this reads
 like the evaluation queue draining after the 23 August evaluator redeploy sent
 the whole network re-registering. Flagging it because other builders reported
 the same symptom and assumed their submissions had failed.
+
+## A terminal rejection with an empty reason list
+
+Registration **217** was rejected with:
+
+```
+YAML schema validation failed: []. This will NOT be retried:
+fix the YAML and re-submit the registration with updateMiner().
+```
+
+The list of what failed is empty. The cause turned out to be on our side — a
+`description` written into a `{ }` flow mapping carried a comma and a question
+mark, so the document did not parse at all — but the message gives no way to
+learn that. Rejection is terminal and costs a transaction plus, because
+`updateMiner` deregisters the old entry first, the live registration: the miner
+was off the network from 03:28 to 03:43 UTC with nothing to act on.
+
+Two changes would remove the whole class:
+
+- when the document fails to **parse**, say so and give the parser's message
+  and line, rather than reporting an empty schema-validation list;
+- validate the YAML at the URL **before** deregistering the incumbent, so a
+  bad update leaves the working miner in place instead of taking it down.
+
+The first is what turns a fifteen-minute outage into a one-line fix. Anyone
+generating YAML programmatically will hit this, because flow mappings are what
+a serialiser reaches for and punctuation in a description is normal.

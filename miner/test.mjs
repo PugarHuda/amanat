@@ -118,4 +118,20 @@ for (const q of ["Will it storm?", "zzzqqq", "   "]) {
 }
 console.log("placeless questions refused");
 
+
+// The same point asked for two ways has to read back one way.
+{
+  const byCoords = await fetch(`http://127.0.0.1:${port2}/forecast`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lat: 14.6, lon: 120.98 }),
+  });
+  const byText = await fetch(`http://127.0.0.1:${port2}/forecast`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: "14.6, 120.98" }),
+  });
+  const a = (await byCoords.json()).summary;
+  const b = (await byText.json()).summary;
+  assert.ok(a.includes("14.60, 120.98"), `bare coordinates: ${a}`);
+  assert.ok(b.includes("14.60, 120.98"), `coordinates in text: ${b}`);
+}
+console.log("both routes name the point identically");
+
 server.close();

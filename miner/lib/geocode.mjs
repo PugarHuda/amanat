@@ -108,7 +108,16 @@ export async function lookup(name) {
  */
 export async function locate(text) {
   const direct = coordinatesIn(text);
-  if (direct) return { ...direct, place: `${direct.lat}, ${direct.lon}`, source: "coordinates" };
+  if (direct) {
+    // Two decimals, the same as the sentence built from bare lat/lon. The same
+    // point asked for two ways has to read back one way, or the answer looks
+    // like it came from somewhere else.
+    return {
+      ...direct,
+      place: `${direct.lat.toFixed(2)}, ${direct.lon.toFixed(2)}`,
+      source: "coordinates",
+    };
+  }
 
   for (const candidate of placeCandidates(text).slice(0, 4)) {
     const hit = await lookup(candidate).catch(() => null);

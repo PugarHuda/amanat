@@ -233,10 +233,9 @@ test.describe("the page", () => {
     }
   });
 
-  test("checks a location and shows the reading", async ({ page }) => {
+  test("checks a coordinate pair and shows the reading", async ({ page }) => {
     await page.goto(BASE);
-    await page.fill("#lat", "14.60");
-    await page.fill("#lon", "120.98");
+    await page.fill("#ask", "14.60, 120.98");
     await page.click("#go");
 
     const result = page.locator("#result");
@@ -246,18 +245,34 @@ test.describe("the page", () => {
     await expect(result.locator(".figures")).toContainText("temperature");
   });
 
-  test("a preset fills the form and runs it", async ({ page }) => {
+  // One field, both forms — the page can only offer this because the miner
+  // accepts both, so the test is the claim.
+  test("takes a place name in the same field", async ({ page }) => {
     await page.goto(BASE);
-    await page.click('#presets button[data-lat="22.30"]');
-    await expect(page.locator("#lat")).toHaveValue("22.30");
-    await expect(page.locator("#result .summary")).toContainText("22.30, 114.17", { timeout: 30_000 });
+    await page.fill("#ask", "Rotterdam");
+    await page.click("#go");
+    await expect(page.locator("#result .summary")).toContainText("Rotterdam", { timeout: 30_000 });
   });
 
-  test("shows the miner's own message when a coordinate is out of range", async ({ page }) => {
+  test("takes a whole question in the same field", async ({ page }) => {
     await page.goto(BASE);
-    await page.fill("#lat", "999");
+    await page.fill("#ask", "Will Riyadh exceed 40 degrees tomorrow?");
     await page.click("#go");
-    await expect(page.locator("#result .err")).toContainText("lat must be between", { timeout: 30_000 });
+    await expect(page.locator("#result .summary")).toContainText("Riyadh", { timeout: 30_000 });
+  });
+
+  test("a preset fills the form and runs it", async ({ page }) => {
+    await page.goto(BASE);
+    await page.click('#presets button[data-ask="Hong Kong"]');
+    await expect(page.locator("#ask")).toHaveValue("Hong Kong");
+    await expect(page.locator("#result .summary")).toContainText("Hong Kong", { timeout: 30_000 });
+  });
+
+  test("shows the miner's own message when nothing in the text is a place", async ({ page }) => {
+    await page.goto(BASE);
+    await page.fill("#ask", "zzzqqq wibble");
+    await page.click("#go");
+    await expect(page.locator("#result .err")).toContainText("no place found", { timeout: 30_000 });
     // The button has to come back, or one bad input ends the session.
     await expect(page.locator("#go")).toBeEnabled();
     await expect(page.locator("#go")).toHaveText("Read the risk");
@@ -348,8 +363,8 @@ test.describe("the page", () => {
 
   test("keyboard reaches the form and shows focus", async ({ page }) => {
     await page.goto(BASE);
-    await page.locator("#lat").focus();
-    const outline = await page.locator("#lat").evaluate((el) => getComputedStyle(el).outlineStyle);
+    await page.locator("#ask").focus();
+    const outline = await page.locator("#ask").evaluate((el) => getComputedStyle(el).outlineStyle);
     expect(outline).not.toBe("none");
   });
 });

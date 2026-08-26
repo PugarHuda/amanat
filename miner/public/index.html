@@ -85,6 +85,7 @@ nav a:hover{color:var(--trace)}
 .quiet-band{position:absolute; left:22px; top:14px; font-family:"IBM Plex Mono",monospace;
   font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); opacity:.75}
 .plot{position:absolute; inset:26px 22px 26px 22px; display:flex; align-items:flex-end; gap:clamp(6px,2.4vw,26px)}
+.reading.missing .val{color:var(--muted); opacity:.6; font-style:italic}
 .reading{flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; height:100%; position:relative}
 .stem{width:2px; background:var(--rule); flex:0 0 auto}
 .dot{width:11px; height:11px; border-radius:50%; background:var(--trace); border:2px solid var(--card);
@@ -213,21 +214,22 @@ footer a{color:var(--muted)}
     <div class="check-head">
       <h2>Check a location</h2>
       <p>
-        The same call the contract makes before it spends anything. No wallet, no
-        sign-up — this asks the miner directly and shows you what it answers.
+        The same call the contract makes before it spends anything. Name a place
+        or give it a coordinate pair — no wallet, no sign-up. This asks the miner
+        directly and shows you what it answers.
       </p>
     </div>
     <form id="form">
-      <input id="lat" class="mono" inputmode="decimal" value="10.32" aria-label="Latitude" placeholder="latitude">
-      <input id="lon" class="mono" inputmode="decimal" value="123.89" aria-label="Longitude" placeholder="longitude">
+      <input id="ask" class="mono" value="10.32, 123.89" aria-label="A place, a coordinate pair, or a question"
+             placeholder="Cebu, or 10.32, 123.89, or a question">
       <button type="submit" id="go">Read the risk</button>
     </form>
     <div class="presets" id="presets">
-      <button data-lat="14.60" data-lon="120.98">Manila</button>
-      <button data-lat="22.30" data-lon="114.17">Hong Kong</button>
-      <button data-lat="-6.20" data-lon="106.85">Jakarta</button>
-      <button data-lat="25.78" data-lon="-80.19">Miami</button>
-      <button data-lat="51.51" data-lon="-0.13">London</button>
+      <button data-ask="Manila">Manila</button>
+      <button data-ask="Hong Kong">Hong Kong</button>
+      <button data-ask="Jakarta">Jakarta</button>
+      <button data-ask="Miami">Miami</button>
+      <button data-ask="Will Riyadh exceed 40 degrees tomorrow?">Ask a question</button>
     </div>
     <div class="result" id="result" aria-live="polite"></div>
   </section>
@@ -346,11 +348,11 @@ const PLOT_TOP = 1.0;            // the gauge is drawn from 0 to 1
 const TRIGGER_TOP_PCT = 25;      // the red line sits at 25% from the top => 0.75
 
 const WATCH = [
-  { name: "Cebu",      lat: 10.32,  lon: 123.89 },
-  { name: "Manila",    lat: 14.60,  lon: 120.98 },
-  { name: "Hong Kong", lat: 22.30,  lon: 114.17 },
-  { name: "Jakarta",   lat: -6.20,  lon: 106.85 },
-  { name: "Miami",     lat: 25.78,  lon: -80.19 },
+  { name: "Cebu",      at: "10.32, 123.89" },
+  { name: "Manila",    at: "14.60, 120.98" },
+  { name: "Hong Kong", at: "22.30, 114.17" },
+  { name: "Jakarta",   at: "-6.20, 106.85" },
+  { name: "Miami",     at: "25.78, -80.19" },
 ];
 
 const $ = (id) => document.getElementById(id);
@@ -375,11 +377,13 @@ function el(tag, { text, className, attrs } = {}, children = []) {
   return node;
 }
 
-async function read(lat, lon) {
+// One field takes both forms because the miner does: a coordinate pair inside
+// the text is used as-is, and anything else is looked up as a place name.
+async function read(question) {
   const res = await fetch("/forecast", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ lat: Number(lat), lon: Number(lon), hours: 1 }),
+    body: JSON.stringify({ question }),
   });
   const body = await res.json();
   if (!res.ok) throw new Error(body.error || `the miner answered ${res.status}`);
@@ -394,6 +398,13 @@ function place(risk) {
 
 function drawPlot(rows) {
   $("plot").replaceChildren(...rows.map((r) => {
+    if (r.risk === null) {
+      return el("div", { className: "reading missing", attrs: { style: "justify-content:flex-end" } }, [
+        el("div", { attrs: { style: "height:100%" } }),
+        el("div", { className: "val", text: "no reading" }),
+        el("div", { className: "place", text: r.name }),
+      ]);
+    }
     const pct = place(r.risk);
     const over = r.risk >= TRIGGER;
     return el("div", {
@@ -413,17 +424,19 @@ async function loadPlot() {
   const rows = [];
   for (const site of WATCH) {
     try {
-      const r = await read(site.lat, site.lon);
+      const r = await read(site.at);
       rows.push({ name: site.name, risk: r.risk });
-      drawPlot(rows);
     } catch {
-      rows.push({ name: site.name, risk: 0 });
+      // A reading that did not arrive is not a calm one. Plotting 0 here would
+      // draw a flat, reassuring column for a station that answered nothing.
+      rows.push({ name: site.name, risk: null });
     }
+    drawPlot(rows);
   }
   $("plotstamp").textContent = new Date().toISOString().replace("T", " ").slice(0, 16) + " UTC";
 }
 
-function showResult(lat, lon, r) {
+function showResult(r) {
   const over = r.risk >= TRIGGER;
   const panel = $("result");
   panel.className = "result shown" + (over ? " breach" : "");
@@ -451,8 +464,7 @@ $("form").addEventListener("submit", async (e) => {
   go.disabled = true;
   go.textContent = "Reading…";
   try {
-    const r = await read($("lat").value, $("lon").value);
-    showResult($("lat").value, $("lon").value, r);
+    showResult(await read($("ask").value));
   } catch (err) {
     const panel = $("result");
     panel.className = "result shown";
@@ -466,8 +478,7 @@ $("form").addEventListener("submit", async (e) => {
 $("presets").addEventListener("click", (e) => {
   const b = e.target.closest("button");
   if (!b) return;
-  $("lat").value = b.dataset.lat;
-  $("lon").value = b.dataset.lon;
+  $("ask").value = b.dataset.ask;
   $("form").requestSubmit();
 });
 
