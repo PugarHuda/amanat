@@ -1,7 +1,7 @@
 // Self-check for the Amanat miner. One runnable file, no framework.
 //   node miner/test.mjs
 import assert from "node:assert/strict";
-import { riskScore, summarise, forecast, hoursIn } from "./lib/forecast.mjs";
+import { riskScore, summarise, forecast, hoursIn, condition } from "./lib/forecast.mjs";
 import { placeCandidates, coordinatesIn } from "./lib/geocode.mjs";
 import { server } from "./server.mjs";
 
@@ -133,5 +133,22 @@ console.log("placeless questions refused");
   assert.ok(b.includes("14.60, 120.98"), `coordinates in text: ${b}`);
 }
 console.log("both routes name the point identically");
+
+// A condition word and a daily range: the part of "what is the weather" that a
+// list of scalars does not answer.
+{
+  const r = await fetch(`http://127.0.0.1:${port2}/forecast`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lat: 10.32, lon: 123.89, hours: 6 }),
+  });
+  const j = await r.json();
+  assert.equal(typeof j.condition, "string", "condition must be named");
+  assert.ok(Number.isFinite(j.temp_min_c) && Number.isFinite(j.temp_max_c), "daily range must be present");
+  assert.ok(j.temp_min_c <= j.temp_max_c, "min must not exceed max");
+  assert.ok(j.summary.startsWith(j.valid_at.slice(0, 10)), `summary must lead with the day: ${j.summary}`);
+  assert.ok(j.summary.includes(j.condition), "summary must name the condition");
+  assert.equal(condition(95), "Thunderstorm");
+  assert.equal(condition(4242), null, "an unknown code names nothing rather than guessing");
+}
+console.log("condition and daily range reported");
 
 server.close();

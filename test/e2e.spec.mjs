@@ -26,7 +26,8 @@ test.describe("miner API — happy paths", () => {
     expect(res.status()).toBe(200);
     const body = await res.json();
 
-    for (const key of ["summary", "temp_c", "wind_kmh", "gust_kmh", "precip_mm", "risk", "breach", "valid_at", "source"]) {
+    for (const key of ["summary", "temp_c", "wind_kmh", "gust_kmh", "precip_mm", "risk", "breach", "valid_at", "source",
+                       "condition", "weather_code", "temp_min_c", "temp_max_c"]) {
       expect(body, `response is missing ${key}`).toHaveProperty(key);
     }
     expect(body.risk).toBeGreaterThanOrEqual(0);
@@ -52,6 +53,21 @@ test.describe("miner API — happy paths", () => {
     const at = Date.parse(valid_at);
     expect(at).toBeGreaterThan(Date.now() - 3600e3);
     expect(Math.abs(at - (Date.now() + 3 * 3600e3))).toBeLessThanOrEqual(3600e3);
+  });
+
+  // A list of scalars does not answer "what is the weather". A condition word
+  // and a daily range do, and they are what the answers that score carry.
+  test("names the condition and the day range", async ({ request }) => {
+    const res = await request.post(`${BASE}/forecast`, { data: { ...CEBU, hours: 6 } });
+    const body = await res.json();
+
+    expect(typeof body.condition).toBe("string");
+    expect(body.condition.length).toBeGreaterThan(2);
+    expect(body.temp_min_c).toBeLessThanOrEqual(body.temp_max_c);
+    expect(body.summary.startsWith(body.valid_at.slice(0, 10))).toBe(true);
+    expect(body.summary).toContain(body.condition);
+    // and the scalars a contract settles on are still all there
+    expect(body.summary).toContain(body.risk.toFixed(3));
   });
 
   test("reports health as itself", async ({ request }) => {
@@ -387,6 +403,9 @@ test.describe("the registration YAML", () => {
 
   test("declares every input the server accepts, and demands none it cannot require", () => {
     expect(Object.keys(doc.input_schema.properties).sort()).toEqual(["hours", "lat", "lon", "question"]);
+    for (const field of ["condition", "weather_code", "temp_min_c", "temp_max_c"]) {
+      expect(Object.keys(doc.output_schema.properties), `output_schema must declare ${field}`).toContain(field);
+    }
     // `required: [lat, lon]` makes a plain-language question unanswerable by
     // declaration, which is how three intents scored zero at epoch 276.
     expect(doc.input_schema.required, "one of two input forms is legal, so neither is required").toBeUndefined();

@@ -73,7 +73,11 @@ input_schema:
 output_schema:
   type: object
   properties:
-    summary: { type: string, description: One-sentence plain-language forecast. }
+    summary: { type: string, description: Plain-language forecast. Opens with the day, the condition and the daily range, then the hour being asked about. }
+    condition: { type: string, description: WMO present-weather condition for that hour, e.g. Overcast or Thunderstorm. Null when the code is unrecognised. }
+    weather_code: { type: integer, description: WMO 4677 present-weather code for that hour. }
+    temp_min_c: { type: number, description: Lowest temperature that day in degrees Celsius. }
+    temp_max_c: { type: number, description: Highest temperature that day in degrees Celsius. }
     temp_c: { type: number, description: Temperature in degrees Celsius. }
     wind_kmh: { type: number, description: Sustained wind speed in km/h. }
     gust_kmh: { type: number, description: Wind gust speed in km/h. }

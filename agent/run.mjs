@@ -16,13 +16,20 @@
 import { ethers } from "ethers";
 import { readFile } from "node:fs/promises";
 import {
-  NODE, wallet, provider, diamond, usdc, ask, intentId, waitForJob, recentSignals,
+  NODE, wallet, provider, diamond, usdc, ask, askDirect, intentId, waitForJob, recentSignals,
   POLICY_STATUS,
 } from "./telegraph.mjs";
 import { flag, has, reject } from "./args.mjs";
 
 const ADDRESS = process.env.AMANAT_CONTRACT;
 const SETTLE_INTENT = process.env.AMANAT_INTENT ?? "STORM_ALERT";
+
+/**
+ * The miner asked directly when a routed answer cannot be read as a number.
+ * Any miner publishing an output_schema with a 0-1 risk field would do; this is
+ * the one we can guarantee stays live for the length of the run.
+ */
+const SCHEMA_MINER = process.env.AMANAT_SCHEMA_MINER ?? "20260821";
 
 /** Screen below this and a policy is not worth a job. */
 const ESCALATE_AT = Number(process.env.AMANAT_ESCALATE_AT ?? 0.45);
@@ -48,25 +55,33 @@ async function openPolicies(book) {
   return out;
 }
 
-/** Pull a risk out of an answer whose shape is not ours to assume. */
+/**
+ * Pull a risk out of an answer whose shape is not ours to assume.
+ *
+ * The Engine routes probabilistically, so a screening call can land on any
+ * miner serving the intent and come back as a declared `risk` field, as a
+ * sentence, or as something else. A declared number is taken as given;
+ * otherwise the largest figure between 0 and 1 the reply states is the best
+ * available reading of it. Returns null when it states none, which the caller
+ * must treat as "no reading" and never as zero.
+ */
 function readRisk(result) {
   const direct = result?.risk;
-  if (typeof direct === "number") return direct;
-  const fractions = [...JSON.stringify(result ?? {}).matchAll(/0\.\d+/g)].map((m) => Number(m[0]));
+  if (typeof direct === "number" && direct >= 0 && direct <= 1) return direct;
+
+  const fractions = [...JSON.stringify(result ?? {}).matchAll(/0.d+/g)].map((m) => Number(m[0]));
   return fractions.length ? Math.max(...fractions) : null;
 }
 
 /**
- * The free rail, tried before any paid one.
+ * The free rail: what the Daemon has already answered, at no cost.
  *
- * The Daemon answers its own questions on a schedule whether or not anyone is
- * asking, and those answers cost nothing to read. When one of them is recent and
- * on an intent we care about, it is worth knowing before spending a cent — not
- * because it is about our exact point, but because a network that has just seen
- * no storm activity at all is a network we do not need to interrogate twice.
- *
- * Returns the signals rather than a verdict: this rail informs the pass, it does
- * not replace it.
+ * Worth asking before paying, and worth reporting when it yields nothing. The
+ * Daemon collectors cover Hacker News, openFDA, ClinicalTrials and Polymarket,
+ * and not one of them produces a weather question — so for our intents this
+ * returns empty every time. It stays because the check costs one free request
+ * and the collector set is the node's to change, not ours. The count is
+ * printed so a pass says plainly which rail did the work.
  */
 async function freeContext(intents) {
   try {
@@ -77,27 +92,35 @@ async function freeContext(intents) {
 }
 
 /**
- * Ask the network what the weather is at a point, and read a risk out of the
- * answer. The miner is whichever one the Engine routes to, so the shape of the
- * reply is not ours to assume.
+ * Ask the network what the weather is at a point, and read a risk out of it.
+ *
+ * Two paid rails, in the order that respects the protocol. The Engine picks
+ * the miner, which is the point — routing is the thing being tested, and
+ * Amanat should take whichever miner the network rates highest. But a routed
+ * answer stating no readable figure has cost a cent and settled nothing, and
+ * the policy would be skipped with the money already gone. When that happens
+ * the same point goes directly to a miner that publishes an output_schema, and
+ * the pass reports which rail answered.
  */
 async function screen(policy, signer) {
-  const answer = await ask(
+  const question =
     `What is the storm risk at latitude ${policy.lat}, longitude ${policy.lon} in the next six hours? ` +
-    `Report wind speed, gusts, precipitation and an overall risk between 0 and 1.`,
-    { signer },
-  );
+    `Report wind speed, gusts, precipitation and an overall risk between 0 and 1.`;
 
-  const text = JSON.stringify(answer.result ?? {});
-  // Our own miner reports `risk` directly; anyone else's answer has to be read
-  // out of prose, so fall back to the largest 0..1 figure it states.
-  const direct = answer.result?.risk;
-  let risk = typeof direct === "number" ? direct : null;
-  if (risk === null) {
-    const fractions = [...text.matchAll(/\b0\.\d+\b/g)].map((m) => Number(m[0]));
-    risk = fractions.length ? Math.max(...fractions) : null;
+  const answer = await ask(question, { signer });
+  const risk = readRisk(answer.result);
+  if (risk !== null) return { risk, answer, rail: "routed" };
+
+  try {
+    const fallback = await askDirect(SCHEMA_MINER, {
+      endpoint: "/forecast",
+      payload: { lat: Number(policy.lat), lon: Number(policy.lon), hours: 6 },
+      signer,
+    });
+    return { risk: readRisk(fallback.result), answer: fallback, rail: "direct", blind: answer.miner_name };
+  } catch (e) {
+    return { risk: null, answer, rail: "routed", fallbackError: e.message };
   }
-  return { risk, answer };
 }
 
 async function cycle(book, signer, n) {
@@ -114,6 +137,13 @@ async function cycle(book, signer, n) {
     return { screened: 0, escalated: 0, spent: 0 };
   }
 
+  // The free rail first, every pass, and reported either way — a run should
+  // never leave you guessing whether the cheap answer was even tried.
+  const free = await freeContext([SETTLE_INTENT, "WEATHER_FORECAST", "WEATHER_CHECK"]);
+  console.log(free.length
+    ? `   free rail: ${free.length} recent Daemon signal${free.length === 1 ? "" : "s"} on these intents`
+    : "   free rail: nothing — the Daemon runs no weather collector, so it never has one");
+
   let screened = 0;
   let escalated = 0;
   let spent = 0;
@@ -129,12 +159,17 @@ async function cycle(book, signer, n) {
     screened++;
     spent += Number(result.answer.cost_usd ?? 0.01);
 
-    const { risk, answer } = result;
+    const { risk, answer, rail, blind, fallbackError } = result;
     const shown = risk === null ? "unreadable" : risk.toFixed(3);
     console.log(
       `   policy ${policy.id} @ ${policy.lat},${policy.lon}: risk ${shown} ` +
-      `via ${answer.miner_name} (${answer.intent}) ${answer.signal_hash?.slice(0, 12)}…`,
+      `via ${answer.miner_name ?? SCHEMA_MINER} (${answer.intent ?? "direct"}) ${answer.signal_hash?.slice(0, 12)}…`,
     );
+    if (rail === "direct") {
+      console.log(`      routed answer from ${blind} stated no readable risk — asked a schema miner directly`);
+      spent += Number(answer.cost_usd ?? 0.01);
+    }
+    if (fallbackError) console.log(`      and the direct rail failed too: ${fallbackError}`);
 
     if (risk === null || risk < ESCALATE_AT) continue;
     if (escrow < jobPrice) {

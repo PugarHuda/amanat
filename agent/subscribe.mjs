@@ -13,6 +13,19 @@
 // the wallet address goes in the query string, the challenge must be signed with
 // personal_sign and returned within 15 seconds, and `spend_limit_usdc` is
 // mandatory on subscribe.
+//
+// What a run of this actually shows, 26 August: the handshake completes, the
+// subscription is accepted with an id and a cap of 60 signals an hour — and
+// then nothing arrives. Six minutes on WEATHER_FORECAST, STORM_ALERT and
+// WEATHER_CHECK delivered zero signals, and it will keep delivering zero. The
+// Daemon generates its questions from collectors, and the live set is Hacker
+// News, openFDA approvals, openFDA recalls, openFDA adverse events,
+// ClinicalTrials and Polymarket. Not one of them produces a weather question,
+// so no weather intent has a signal to push.
+//
+// That is worth knowing before designing around this rail: it works, it is just
+// empty for this domain. Amanat therefore pays per question rather than waiting
+// to be told, and agent/run.mjs says so on every pass.
 
 import { ethers } from "ethers";
 import { wallet, diamond, provider, NODE } from "./telegraph.mjs";
