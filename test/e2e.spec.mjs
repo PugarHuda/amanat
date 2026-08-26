@@ -13,6 +13,8 @@
 // did.
 
 import { test, expect } from "@playwright/test";
+import { readFileSync } from "node:fs";
+import { parse as parseYaml } from "yaml";
 
 const BASE = process.env.E2E_BASE ?? "http://127.0.0.1:8799";
 
@@ -349,5 +351,40 @@ test.describe("the page", () => {
     await page.locator("#lat").focus();
     const outline = await page.locator("#lat").evaluate((el) => getComputedStyle(el).outlineStyle);
     expect(outline).not.toBe("none");
+  });
+});
+
+test.describe("the registration YAML", () => {
+  // Registration is terminal and costs a transaction. Registration 217 was
+  // rejected with "YAML schema validation failed: []" — an empty list, because
+  // a description carrying a comma and a question mark inside a { } flow
+  // mapping stopped the file parsing at all. Nothing before this test read the
+  // YAML with a parser, so every pre-flight check passed and the gas was spent.
+  const doc = parseYaml(readFileSync(new URL("../miner/amanat-miner.yaml", import.meta.url), "utf8"));
+
+  test("declares the endpoint the server actually serves", async ({ request }) => {
+    expect(doc.endpoints.map((e) => e.path)).toContain("/forecast");
+    expect(doc.endpoints.find((e) => e.path === "/forecast").method).toBe("POST");
+
+    const res = await request.post(`${BASE}/forecast`, { data: { ...CEBU, hours: 1 } });
+    expect(res.status()).toBe(200);
+  });
+
+  test("declares every input the server accepts, and demands none it cannot require", () => {
+    expect(Object.keys(doc.input_schema.properties).sort()).toEqual(["hours", "lat", "lon", "question"]);
+    // `required: [lat, lon]` makes a plain-language question unanswerable by
+    // declaration, which is how three intents scored zero at epoch 276.
+    expect(doc.input_schema.required, "one of two input forms is legal, so neither is required").toBeUndefined();
+  });
+
+  test("maps the answer field a validator grades", () => {
+    expect(doc.semantics.signal_mapping.label_field).toBe("summary");
+    expect(doc.semantics.supported_intents.length).toBeGreaterThan(0);
+  });
+
+  test("gives every on_chain field a description", () => {
+    for (const field of Object.values(doc.on_chain.fields).flat()) {
+      expect(field.description, `${field.name} needs a description or the registration is rejected`).toBeTruthy();
+    }
   });
 });

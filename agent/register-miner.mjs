@@ -7,6 +7,8 @@
 // does not retry, and the fix costs another transaction. So every failure this
 // can catch beforehand, it catches:
 //
+//   0. the YAML parses at all — a file the node cannot read is rejected with
+//      an empty error list, which tells you nothing and costs the registration,
 //   1. the YAML URL serves bytes whose SHA-256 matches what we commit,
 //   2. the base_url in that YAML actually answers, unauthenticated,
 //   3. every declared endpoint responds to a real call,
@@ -17,6 +19,7 @@
 // activation, so a host behind SSO or a login wall fails there rather than here.
 
 import { ethers } from "ethers";
+import { parse as parseYaml } from "yaml";
 import { readFile } from "node:fs/promises";
 import { wallet, provider, DIAMOND } from "./telegraph.mjs";
 import { reject } from "./args.mjs";
@@ -31,13 +34,57 @@ const YAML_URL = process.env.AMANAT_YAML_URL;
 const FEE_ADDRESS = process.env.FEE_ADDRESS;
 const MIN_PRICE = 10_000n; // 0.01 USDC, the protocol minimum
 
-/** Pull the handful of fields we need without a YAML parser. */
+/**
+ * Parse the YAML the way the node does, and refuse to spend a transaction on
+ * bytes it cannot read.
+ *
+ * This was regex scraping until registration 217. A description written into a
+ * `{ }` flow mapping carried a comma and a question mark, which is not a legal
+ * plain scalar — the file stopped parsing entirely. The regexes did not care,
+ * every pre-flight check passed, the transaction was sent, and the node came
+ * back with "YAML schema validation failed: []": an empty list, because it
+ * never parsed far enough to have a complaint. Terminal, and it cost the live
+ * registration. A parser sees it before the gas does.
+ */
 function readYaml(text) {
-  const scalar = (key) => text.match(new RegExp(`^${key}:\\s*(\\S+)`, "m"))?.[1];
-  const intents = [...text.matchAll(/^\s{4}- ([A-Z_]+)\s*$/gm)].map((m) => m[1]);
-  const paths = [...text.matchAll(/^\s+- path:\s*(\S+)/gm)].map((m) => m[1]);
-  const methods = [...text.matchAll(/^\s+method:\s*(\S+)/gm)].map((m) => m[1]);
-  return { baseUrl: scalar("base_url"), slug: scalar("slug"), id: scalar("id"), intents, paths, methods };
+  let doc;
+  try {
+    doc = parseYaml(text);
+  } catch (e) {
+    throw new Error(`the YAML does not parse, so the node will reject it: ${e.message}`);
+  }
+  if (doc === null || typeof doc !== "object") throw new Error("the YAML is not a mapping");
+
+  const endpoints = doc.endpoints ?? [];
+  const y = {
+    baseUrl: doc.base_url,
+    slug: doc.slug,
+    id: doc.id,
+    intents: doc.semantics?.supported_intents ?? [],
+    paths: endpoints.map((e) => e.path),
+    methods: endpoints.map((e) => e.method),
+  };
+
+  // Every field the registration call itself needs. Missing any of these fails
+  // on-chain or at activation, both of which cost more than this check.
+  for (const [key, value] of Object.entries({ base_url: y.baseUrl, slug: y.slug, id: y.id })) {
+    if (value === undefined || value === null || value === "") throw new Error(`${key} is missing from the YAML`);
+  }
+  if (!y.intents.length) throw new Error("semantics.supported_intents is empty");
+  if (!endpoints.length) throw new Error("endpoints is empty");
+
+  // Every on_chain.fields entry needs a `description`. The schema requires one,
+  // the docs' own direct-transform example omits it, and leaving it out cost
+  // registration 178 — rejected terminally, fixable only with updateMiner.
+  const onChainFields = Object.values(doc.on_chain?.fields ?? {}).flat();
+  const undescribed = onChainFields.filter((f) => !f?.description);
+  if (undescribed.length) {
+    throw new Error(
+      `${undescribed.length} on_chain.fields entr${undescribed.length === 1 ? "y is" : "ies are"} missing a description — ` +
+      `the schema requires one on every field and rejects the registration terminally`
+    );
+  }
+  return y;
 }
 
 async function main() {
@@ -54,18 +101,6 @@ async function main() {
   const yamlHash = ethers.sha256(bytes); // SHA-256, not keccak — the node verifies with SHA-256
   const local = await readFile(new URL("../miner/amanat-miner.yaml", import.meta.url));
   const same = Buffer.compare(Buffer.from(bytes), local) === 0;
-
-  // Every on_chain.fields entry needs a `description`. The schema requires it,
-  // the docs' own direct-transform example omits it, and leaving it out cost
-  // registration 178 — rejected terminally, fixable only with updateMiner.
-  const fieldNames = [...text.matchAll(/^\s+- index:[\s\S]*?(?=^\s+- index:|^\s{2}\w|\Z)/gm)].map((m) => m[0]);
-  const undescribed = fieldNames.filter((b) => /name:/.test(b) && !/description:/.test(b));
-  if (undescribed.length) {
-    throw new Error(
-      `${undescribed.length} on_chain.fields entr${undescribed.length === 1 ? "y is" : "ies are"} missing a description — ` +
-      `the schema requires one on every field and rejects the registration terminally`
-    );
-  }
 
   const y = readYaml(text);
   console.log(`yaml       ${YAML_URL}`);
