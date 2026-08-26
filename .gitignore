@@ -14,3 +14,4 @@ onchain/cache/
 .env*
 !.env.example
 board.json
+pw-full.log
