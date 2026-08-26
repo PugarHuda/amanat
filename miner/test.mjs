@@ -1,7 +1,8 @@
 // Self-check for the Amanat miner. One runnable file, no framework.
 //   node miner/test.mjs
 import assert from "node:assert/strict";
-import { riskScore, summarise, forecast } from "./lib/forecast.mjs";
+import { riskScore, summarise, forecast, hoursIn } from "./lib/forecast.mjs";
+import { placeCandidates, coordinatesIn } from "./lib/geocode.mjs";
 import { server } from "./server.mjs";
 
 // risk: each driver alone can reach the ceiling, and the worst one wins.
@@ -72,5 +73,49 @@ for (const missing of [{}, { lon: 10 }, { lat: 10 }, { lat: null, lon: null }, {
   assert.match((await r.json()).error, /required/, "and must say which field");
 }
 console.log("missing coordinates refused");
+
+// The epoch tournament asks in sentences. A miner that only takes coordinates
+// answers 400 to every one of them and scores zero on the whole intent, which
+// is what happened here across three intents at epoch 276.
+assert.equal(hoursIn("What is the storm risk in the next six hours?"), 6);
+assert.equal(hoursIn("Will it rain in 24 hours?"), 24);
+assert.equal(hoursIn("Will it be hot tomorrow?"), 24);
+assert.equal(hoursIn("How much rain tonight?"), 6);
+assert.equal(hoursIn("What is the weather in New York City?"), 0, "no time named means now");
+assert.equal(hoursIn("in 900 hours"), 168, "clamped to the forecast horizon");
+
+// "Will Riyadh exceed…" starts a sentence, so "Will" is capitalised too and the
+// naive capitalised-run reading looks up "Will Riyadh", which is nowhere.
+assert.deepEqual(placeCandidates("Will Riyadh exceed 40 degrees?").slice(0, 1), ["Riyadh"]);
+assert.ok(placeCandidates("Is a storm expected in Cebu Port this evening?").includes("Cebu"));
+assert.deepEqual(coordinatesIn("storm risk at 10.32, 123.89 tonight"), { lat: 10.32, lon: 123.89 });
+assert.equal(coordinatesIn("no numbers here"), null);
+assert.equal(coordinatesIn("at 91.5, 200.1"), null, "out-of-range pairs are not coordinates");
+
+for (const [field, question, expect] of [
+  ["question", "Will Riyadh exceed 40 degrees in the next 24 hours?", /Riyadh/],
+  ["q", "What is the storm risk at 10.32, 123.89 in the next six hours?", /10\.32, 123\.89/],
+  ["prompt", "Is there a severe weather warning for Manila today?", /Manila/],
+]) {
+  const r = await fetch(`http://127.0.0.1:${port2}/forecast`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ [field]: question }),
+  });
+  assert.equal(r.status, 200, `${field} must be answered: ${question}`);
+  const j = await r.json();
+  assert.match(j.summary, expect, `summary must name where it answered about: ${j.summary}`);
+  assert.match(j.summary, /Storm risk is (low|elevated|severe)/);
+  assert.ok(j.risk >= 0 && j.risk <= 1);
+}
+console.log("questions answered");
+
+// A question naming no place is refused rather than answered about somewhere
+// invented. Guessing is worse than saying no.
+for (const q of ["Will it storm?", "zzzqqq", "   "]) {
+  const r = await fetch(`http://127.0.0.1:${port2}/forecast`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: q }),
+  });
+  assert.equal(r.status, 400, `placeless question must be refused: ${q}`);
+}
+console.log("placeless questions refused");
 
 server.close();

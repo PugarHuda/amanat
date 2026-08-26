@@ -142,6 +142,69 @@ test.describe("miner API — failure paths", () => {
   });
 });
 
+test.describe("miner API — plain-language questions", () => {
+  // Validators run an epoch tournament that puts one sentence to every miner on
+  // an intent. Answering only coordinate pairs scored zero on three intents at
+  // epoch 276 while 296 direct requests were being served correctly.
+  for (const [question, expected] of [
+    ["Will Riyadh exceed 40 degrees in the next 24 hours?", /Riyadh/],
+    ["What is the storm risk at 10.32, 123.89 in the next six hours?", /10\.32, 123\.89/],
+    ["Is there a severe weather warning for Manila today?", /Manila/],
+    ["How much rain will fall in Jakarta tonight?", /Jakarta/],
+    ["What is the weather in New York City?", /New York/],
+  ]) {
+    test(`answers: ${question}`, async ({ request }) => {
+      const res = await request.post(`${BASE}/forecast`, { data: { question } });
+      expect(res.status(), await res.text()).toBe(200);
+      const body = await res.json();
+
+      expect(body.summary, "must name where it answered about").toMatch(expected);
+      expect(body.summary).toMatch(/Storm risk is (low|elevated|severe)/);
+      expect(body.risk).toBeGreaterThanOrEqual(0);
+      expect(body.risk).toBeLessThanOrEqual(1);
+      expect(Date.parse(body.valid_at)).toBeGreaterThan(Date.now() - 3600e3);
+    });
+  }
+
+  test("reads the hour offset out of the question", async ({ request }) => {
+    const soon = await request.post(`${BASE}/forecast`, { data: { question: "Storm risk in Cebu right now?" } });
+    const later = await request.post(`${BASE}/forecast`, { data: { question: "Storm risk in Cebu in 48 hours?" } });
+    expect(soon.status()).toBe(200);
+    expect(later.status()).toBe(200);
+
+    const gap = Date.parse((await later.json()).valid_at) - Date.parse((await soon.json()).valid_at);
+    expect(gap, "48 hours must land two days out").toBe(48 * 3600e3);
+  });
+
+  test("takes the question under any of the field names callers use", async ({ request }) => {
+    for (const field of ["question", "q", "query", "prompt", "text", "input", "place", "location", "city"]) {
+      const res = await request.post(`${BASE}/forecast`, { data: { [field]: "weather in Rotterdam" } });
+      expect(res.status(), `${field} must be accepted`).toBe(200);
+      expect((await res.json()).summary).toMatch(/Rotterdam/);
+    }
+  });
+
+  test("explicit coordinates win over any question in the same body", async ({ request }) => {
+    const res = await request.post(`${BASE}/forecast`, { data: { ...CEBU, question: "weather in Reykjavik" } });
+    expect(res.status()).toBe(200);
+    expect((await res.json()).summary).toMatch(/10\.32, 123\.89/);
+  });
+
+  // Answering about an invented place is worse than refusing: a contract that
+  // settles on the reading would settle on the wrong one.
+  for (const [name, question] of [
+    ["a question naming no place", "Will it storm?"],
+    ["nonsense", "zzzqqq wibble"],
+    ["whitespace", "   "],
+  ]) {
+    test(`refuses ${name}`, async ({ request }) => {
+      const res = await request.post(`${BASE}/forecast`, { data: { question } });
+      expect(res.status()).toBe(400);
+      expect((await res.json()).error).toMatch(/no place found|required/);
+    });
+  }
+});
+
 test.describe("the page", () => {
   test("loads and names itself", async ({ page }) => {
     await page.goto(BASE);

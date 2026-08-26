@@ -47,15 +47,21 @@ endpoints:
   - path: /forecast
     external_path: /forecast
     method: POST
-    description: Weather and storm-risk forecast for a point, at an hour offset.
+    description: Weather and storm-risk forecast for a place, at an hour offset. Takes lat/lon or a plain-language question.
 
+# Either a coordinate pair or a question naming a place. `required` is left off
+# deliberately: the epoch tournament puts one plain-language sentence to every
+# miner on an intent, and a schema demanding lat/lon makes that sentence
+# unanswerable — which is how this miner scored zero on three intents while
+# serving 296 direct requests correctly. The server enforces the real rule: one
+# of the two forms must be present, and neither is allowed to default to zero.
 input_schema:
   type: object
-  required: [lat, lon]
   properties:
-    lat: { type: number, minimum: -90, maximum: 90, description: Latitude in decimal degrees. }
-    lon: { type: number, minimum: -180, maximum: 180, description: Longitude in decimal degrees. }
-    hours: { type: integer, minimum: 0, maximum: 168, description: Hours ahead of now. 0 is the current hour. }
+    lat: { type: number, minimum: -90, maximum: 90, description: Latitude in decimal degrees. Requires lon. }
+    lon: { type: number, minimum: -180, maximum: 180, description: Longitude in decimal degrees. Requires lat. }
+    question: { type: string, description: A plain-language weather question naming a place, e.g. "Will Riyadh exceed 40 degrees in the next 24 hours?". Used when lat and lon are absent. }
+    hours: { type: integer, minimum: 0, maximum: 168, description: Hours ahead of now. 0 is the current hour. Read from the question when absent. }
 
 output_schema:
   type: object

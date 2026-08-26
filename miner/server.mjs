@@ -5,8 +5,14 @@ import { createServer } from "node:http";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { forecast } from "./lib/forecast.mjs";
+import { forecast, hoursIn } from "./lib/forecast.mjs";
+import { locate } from "./lib/geocode.mjs";
 import { book, policies } from "./lib/book.mjs";
+
+// Callers name the question field differently and the protocol does not fix
+// one. Accepting the whole set costs a lookup and turns "unsupported request"
+// into an answer.
+const QUESTION_FIELDS = ["question", "q", "query", "prompt", "text", "input", "place", "location", "city"];
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 // One file, read once. The page is static and the server has no build step.
@@ -50,21 +56,41 @@ export const server = createServer(async (req, res) => {
 
     if (pathname === "/forecast") {
       const body = req.method === "POST" ? await readJson(req) : {};
+      const field = (name) => {
+        const raw = body[name] ?? searchParams.get(name);
+        return raw === undefined || raw === null || raw === "" ? undefined : raw;
+      };
 
       // Absent is not zero. Number(null) and Number(undefined ?? null) both
       // collapse to 0, which turned a request with no coordinates into a
       // confident forecast for Null Island — the exact failure this miner
       // exists to avoid. Say what is missing instead.
-      const pick = (name) => {
-        const raw = body[name] ?? searchParams.get(name);
-        if (raw === undefined || raw === null || raw === "") {
-          throw new RangeError(`${name} is required`);
-        }
-        return Number(raw);
-      };
-      const rawHours = body.hours ?? searchParams.get("hours");
-      const hours = rawHours === undefined || rawHours === null || rawHours === "" ? 0 : Number(rawHours);
-      return send(res, 200, await forecast({ lat: pick("lat"), lon: pick("lon"), hours }));
+      const rawLat = field("lat");
+      const rawLon = field("lon");
+      const question = QUESTION_FIELDS.map(field).find((v) => typeof v === "string" && v.trim() !== "");
+
+      let lat, lon, place;
+      if (rawLat !== undefined || rawLon !== undefined) {
+        if (rawLat === undefined) throw new RangeError("lat is required alongside lon");
+        if (rawLon === undefined) throw new RangeError("lon is required alongside lat");
+        lat = Number(rawLat);
+        lon = Number(rawLon);
+      } else if (question !== undefined) {
+        // The epoch tournament puts one sentence to every miner on an intent.
+        // Refusing it because it is not a coordinate pair scores zero however
+        // good the forecast behind it would have been.
+        const hit = await locate(question);
+        if (!hit) throw new RangeError(`no place found in "${String(question).slice(0, 120)}"`);
+        ({ lat, lon, place } = hit);
+      } else {
+        throw new RangeError("lat and lon are required, or a question naming a place");
+      }
+
+      const rawHours = field("hours");
+      const hours = rawHours !== undefined ? Number(rawHours)
+        : question !== undefined ? hoursIn(question)
+        : 0;
+      return send(res, 200, await forecast({ lat, lon, hours, place }));
     }
 
     send(res, 404, { error: "not found", endpoints: ["/forecast", "/health"] });
