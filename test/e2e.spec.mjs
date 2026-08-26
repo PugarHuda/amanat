@@ -521,3 +521,69 @@ test.describe("the registration YAML", () => {
     }
   });
 });
+
+test.describe("how the site looks to a crawler", () => {
+  // Every link to this site posted on X rendered as a bare URL — no title, no
+  // description, no image — while a quarter of the hackathon score is
+  // engagement there. What a card shows is most of what a reader sees before
+  // deciding whether to click.
+  test("the page carries a full social preview", async ({ page }) => {
+    await page.goto(BASE);
+
+    const meta = async (sel) => page.locator(sel).getAttribute("content");
+    expect(await meta('meta[property="og:title"]')).toContain("Amanat");
+    expect((await meta('meta[property="og:description"]'))?.length).toBeGreaterThan(60);
+    expect(await meta('meta[property="og:image"]')).toMatch(/\/card\.png$/);
+    expect(await meta('meta[property="og:image:width"]')).toBe("1200");
+    expect(await meta('meta[property="og:image:height"]')).toBe("630");
+    expect(await meta('meta[name="twitter:card"]')).toBe("summary_large_image");
+    // Alt text is not optional on an image that carries the whole message.
+    expect((await meta('meta[property="og:image:alt"]'))?.length).toBeGreaterThan(20);
+    await expect(page.locator('link[rel="canonical"]')).toHaveCount(1);
+  });
+
+  test("the card is a real PNG at the size the meta promises", async ({ request }) => {
+    const res = await request.get(`${BASE}/card.png`);
+    expect(res.status()).toBe(200);
+    expect(res.headers()["content-type"]).toBe("image/png");
+    expect(res.headers()["cache-control"]).toContain("max-age");
+
+    const png = await res.body();
+    expect(png.subarray(0, 8).toString("hex"), "PNG signature").toBe("89504e470d0a1a0a");
+    expect(png.subarray(12, 16).toString("ascii")).toBe("IHDR");
+    // A card whose real size disagrees with og:image:width is cropped by every
+    // platform that trusts the tag.
+    expect(png.readUInt32BE(16)).toBe(1200);
+    expect(png.readUInt32BE(20)).toBe(630);
+    expect(png.length).toBeGreaterThan(1000);
+  });
+
+  test("robots and sitemap answer instead of 404ing", async ({ request }) => {
+    const robots = await request.get(`${BASE}/robots.txt`);
+    expect(robots.status()).toBe(200);
+    const text = await robots.text();
+    expect(text).toContain("Allow: /");
+    expect(text).toContain("sitemap.xml");
+
+    const sitemap = await request.get(`${BASE}/sitemap.xml`);
+    expect(sitemap.status()).toBe(200);
+    expect(sitemap.headers()["content-type"]).toContain("xml");
+    expect(await sitemap.text()).toContain("<loc>");
+  });
+
+  test("attribution travels with the data, not just on the page", async ({ page, request }) => {
+    // CC BY 4.0 wants the creator named, the licence linked, and changes
+    // indicated. Most callers here are machines that never load the page.
+    const body = await (await request.post(`${BASE}/forecast`, { data: { ...CEBU } })).json();
+    expect(body.attribution.source).toBe("Open-Meteo");
+    expect(body.attribution.licence).toBe("CC BY 4.0");
+    expect(body.attribution.licence_url).toContain("creativecommons.org");
+    expect(body.attribution.modified.length).toBeGreaterThan(20);
+
+    await page.goto(BASE);
+    const footer = page.locator("footer");
+    await expect(footer).toContainText("Open-Meteo");
+    await expect(footer).toContainText("CC BY 4.0");
+    await expect(footer.locator('a[href*="creativecommons.org"]')).toHaveCount(1);
+  });
+});

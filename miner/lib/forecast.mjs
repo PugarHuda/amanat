@@ -11,6 +11,31 @@ import { ttlCache } from "./cache.mjs";
 const OPEN_METEO = "https://api.open-meteo.com/v1/forecast";
 
 /**
+ * What CC BY 4.0 asks for, carried on every answer.
+ *
+ * Open-Meteo publishes under CC BY 4.0, which requires the creator named, the
+ * licence linked, and any changes indicated. The readings are theirs; the storm
+ * risk is ours, derived from them — that is a change, and saying so is the
+ * condition of using the data at all.
+ *
+ * It travels in the response rather than sitting only in a page footer because
+ * most callers here are machines: a miner answer reaches an agent, a scoring
+ * module and a contract without a human ever loading the site. Attribution that
+ * only exists on a page nobody in that chain visits is not attribution.
+ *
+ * The free tier is also non-commercial only — 10 000 calls a day, 5 000 an hour,
+ * 600 a minute. This project qualifies; anything charging for these answers
+ * would not, and would need a paid plan before it did.
+ */
+const ATTRIBUTION = Object.freeze({
+  source: "Open-Meteo",
+  url: "https://open-meteo.com",
+  licence: "CC BY 4.0",
+  licence_url: "https://creativecommons.org/licenses/by/4.0/",
+  modified: "storm risk derived from the published wind, gust and precipitation readings",
+});
+
+/**
  * The hourly series per point.
  *
  * Ten minutes: Open-Meteo publishes on the hour, so a shorter window buys
@@ -178,5 +203,6 @@ export async function forecast({ lat, lon, hours = 0, place }) {
     breach: risk >= 0.75,
     valid_at: at + "Z",
     source: "open-meteo",
+    attribution: ATTRIBUTION,
   };
 }

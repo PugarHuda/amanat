@@ -8,7 +8,14 @@ import { dirname, join } from "node:path";
 import { forecast, hoursIn } from "./lib/forecast.mjs";
 import { locate } from "./lib/geocode.mjs";
 import { assessRoute } from "./lib/route.mjs";
-import { bucket } from "./lib/cache.mjs";
+import { bucket, ttlCache } from "./lib/cache.mjs";
+import { drawCard } from "./lib/card.mjs";
+
+/** Where this deployment lives, for the absolute URLs crawlers require. */
+const SITE = process.env.AMANAT_SITE_URL ?? "https://amanat-miner.vercel.app";
+
+/** Rendered cards, keyed on the board they were drawn from. */
+const CARDS = ttlCache({ ttlMs: 30 * 60_000, max: 4 });
 import { book, policies } from "./lib/book.mjs";
 
 /**
@@ -83,6 +90,52 @@ export const server = createServer(async (req, res) => {
     }
 
     if (pathname === "/health") return send(res, 200, { status: "ok", miner: "amanat", time: new Date().toISOString() });
+
+    // The social preview card, drawn from the live board.
+    //
+    // A quarter of the hackathon score is engagement on X, and until now every
+    // link posted there rendered as a bare URL. The card is generated rather
+    // than committed because the interesting version is the real one: today's
+    // lanes, at today's risk, against the line that pays.
+    if (pathname === "/card.png") {
+      const board = await fetch(BOARD_URL, { signal: AbortSignal.timeout(8000) })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
+
+      // Rendered bytes are cached, not just the board: a card that trends gets
+      // fetched by every crawler that sees it, and redrawing 750 000 pixels for
+      // each of them is work nobody asked for.
+      const key = board?.generated_at ?? "empty";
+      const png = await CARDS.through(key, async () => drawCard(board?.lanes ?? []));
+
+      res.writeHead(200, {
+        "Content-Type": "image/png",
+        "Content-Length": png.length,
+        "Cache-Control": "public, max-age=1800",
+      });
+      return res.end(png);
+    }
+
+    // Crawlers ask for these by name and a 404 is a worse answer than a short
+    // one. The favicon is inline in the page as an SVG data URI; this is for
+    // the readers that only ever ask for /favicon.ico.
+    if (pathname === "/robots.txt") {
+      const body = `User-agent: *\nAllow: /\nSitemap: ${SITE}/sitemap.xml\n`;
+      res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8", "Content-Length": Buffer.byteLength(body) });
+      return res.end(body);
+    }
+    if (pathname === "/sitemap.xml") {
+      const body = `<?xml version="1.0" encoding="UTF-8"?>\n` +
+        `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+        `  <url><loc>${SITE}/</loc><changefreq>hourly</changefreq></url>\n` +
+        `</urlset>\n`;
+      res.writeHead(200, { "Content-Type": "application/xml; charset=utf-8", "Content-Length": Buffer.byteLength(body) });
+      return res.end(body);
+    }
+    if (pathname === "/favicon.ico") {
+      res.writeHead(302, { Location: "/card.png" });
+      return res.end();
+    }
 
     // What the contract is carrying, read straight off chain for the page.
     if (pathname === "/api/book") return send(res, 200, await book());

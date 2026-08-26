@@ -5,6 +5,7 @@ import { riskScore, summarise, forecast, hoursIn, condition } from "./lib/foreca
 import { placeCandidates, coordinatesIn } from "./lib/geocode.mjs";
 import { greatCircleKm, waypoints, assessRoute } from "./lib/route.mjs";
 import { ttlCache, bucket } from "./lib/cache.mjs";
+import { drawCard, textWidth } from "./lib/card.mjs";
 import { server } from "./server.mjs";
 
 // risk: each driver alone can reach the ceiling, and the worst one wins.
@@ -331,6 +332,62 @@ console.log("cache and budget hold");
   assert.equal(scored.status, 200, "/forecast must survive a flood aimed at /api/route");
 }
 console.log("a route flood cannot take the scored endpoint down");
+
+// ── the social card ─────────────────────────────────────────────────────────
+// A quarter of the hackathon score is engagement on X, and a link with no card
+// is a bare URL. The PNG is written by hand here, so its structure is worth
+// asserting: a malformed header renders nowhere and looks exactly like having
+// no card at all, which is the state this replaced.
+{
+  const png = drawCard([{ worst: { risk: 0.284 } }, { worst: { risk: 0.826 } }]);
+
+  assert.equal(png.subarray(0, 8).toString("hex"), "89504e470d0a1a0a", "PNG signature");
+  assert.equal(png.subarray(12, 16).toString("ascii"), "IHDR");
+  assert.equal(png.readUInt32BE(16), 1200, "width must match og:image:width");
+  assert.equal(png.readUInt32BE(20), 630, "height must match og:image:height");
+  assert.equal(png[24], 8, "bit depth");
+  assert.equal(png[25], 2, "truecolour RGB");
+  assert.equal(png.subarray(png.length - 8, png.length - 4).toString("ascii"), "IEND");
+
+  // Every chunk carries a CRC, and a decoder rejects the file if one is wrong.
+  const table = Array.from({ length: 256 }, (_, n) => {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    return c >>> 0;
+  });
+  const crc = (buf) => {
+    let c = 0xffffffff;
+    for (const b of buf) c = table[(c ^ b) & 0xff] ^ (c >>> 8);
+    return (c ^ 0xffffffff) >>> 0;
+  };
+
+  let at = 8;
+  let chunks = 0;
+  while (at < png.length) {
+    const len = png.readUInt32BE(at);
+    const body = png.subarray(at + 4, at + 8 + len);
+    assert.equal(png.readUInt32BE(at + 8 + len), crc(body), `CRC for chunk ${chunks}`);
+    at += 12 + len;
+    chunks++;
+  }
+  assert.equal(chunks, 3, "IHDR, IDAT, IEND");
+
+  // An empty board draws an honest empty plot rather than invented columns.
+  const empty = drawCard([]);
+  assert.equal(empty.readUInt32BE(16), 1200);
+  assert.ok(empty.length > 1000);
+  assert.ok(empty.length < png.length, "fewer marks compress smaller");
+
+  // A lane that could not be read is not plotted as if it had been.
+  const oneUnread = drawCard([{ worst: null }, { worst: { risk: 0.5 } }]);
+  const bothRead = drawCard([{ worst: { risk: 0.5 } }, { worst: { risk: 0.5 } }]);
+  assert.notEqual(oneUnread.length, bothRead.length, "an unread lane must not draw a dot");
+
+  assert.equal(textWidth("ABC", 1), 17, "3 glyphs of 5px, 1px tracking, no trailing gap");
+  assert.equal(textWidth("A", 2), 10);
+}
+console.log("the social card is a valid PNG at the promised size");
+
 
 
 
