@@ -1,0 +1,172 @@
+
+Running 168 tests using 1 worker
+
+[1/168] [api] › test\e2e.spec.mjs:24:3 › miner API — happy paths › answers a valid forecast request
+[2/168] [api] › test\e2e.spec.mjs:44:3 › miner API — happy paths › accepts coordinates as query parameters too
+[3/168] [api] › test\e2e.spec.mjs:50:3 › miner API — happy paths › forecasts a time in the future, not one already past
+[4/168] [api] › test\e2e.spec.mjs:60:3 › miner API — happy paths › names the condition and the day range
+[5/168] [api] › test\e2e.spec.mjs:73:3 › miner API — happy paths › reports health as itself
+[6/168] [api] › test\e2e.spec.mjs:79:3 › miner API — happy paths › reads the book from chain
+[7/168] [api] › test\e2e.spec.mjs:88:3 › miner API — happy paths › reads policies from chain, newest first
+[8/168] [api] › test\e2e.spec.mjs:118:5 › miner API — failure paths › refuses empty body
+[9/168] [api] › test\e2e.spec.mjs:118:5 › miner API — failure paths › refuses missing lat
+[10/168] [api] › test\e2e.spec.mjs:118:5 › miner API — failure paths › refuses missing lon
+[11/168] [api] › test\e2e.spec.mjs:118:5 › miner API — failure paths › refuses null coordinates
+[12/168] [api] › test\e2e.spec.mjs:118:5 › miner API — failure paths › refuses empty-string coordinates
+[13/168] [api] › test\e2e.spec.mjs:134:5 › miner API — failure paths › refuses latitude above 90
+[14/168] [api] › test\e2e.spec.mjs:134:5 › miner API — failure paths › refuses latitude below -90
+[15/168] [api] › test\e2e.spec.mjs:134:5 › miner API — failure paths › refuses longitude above 180
+[16/168] [api] › test\e2e.spec.mjs:134:5 › miner API — failure paths › refuses non-numeric coordinates
+[17/168] [api] › test\e2e.spec.mjs:134:5 › miner API — failure paths › refuses negative hours
+[18/168] [api] › test\e2e.spec.mjs:134:5 › miner API — failure paths › refuses hours beyond the forecast window
+[19/168] [api] › test\e2e.spec.mjs:134:5 › miner API — failure paths › refuses fractional hours
+[20/168] [api] › test\e2e.spec.mjs:141:3 › miner API — failure paths › accepts the boundary coordinates themselves
+[21/168] [api] › test\e2e.spec.mjs:148:3 › miner API — failure paths › refuses a body larger than the declared limit
+[22/168] [api] › test\e2e.spec.mjs:156:3 › miner API — failure paths › 404s an unknown route and names the ones that exist
+[23/168] [api] › test\e2e.spec.mjs:174:5 › miner API — plain-language questions › answers: Will Riyadh exceed 40 degrees in the next 24 hours?
+[24/168] [api] › test\e2e.spec.mjs:174:5 › miner API — plain-language questions › answers: What is the storm risk at 10.32, 123.89 in the next six hours?
+[25/168] [api] › test\e2e.spec.mjs:174:5 › miner API — plain-language questions › answers: Is there a severe weather warning for Manila today?
+[26/168] [api] › test\e2e.spec.mjs:174:5 › miner API — plain-language questions › answers: How much rain will fall in Jakarta tonight?
+[27/168] [api] › test\e2e.spec.mjs:174:5 › miner API — plain-language questions › answers: What is the weather in New York City?
+[28/168] [api] › test\e2e.spec.mjs:187:3 › miner API — plain-language questions › reads the hour offset out of the question
+[29/168] [api] › test\e2e.spec.mjs:197:3 › miner API — plain-language questions › takes the question under any of the field names callers use
+[30/168] [api] › test\e2e.spec.mjs:205:3 › miner API — plain-language questions › explicit coordinates win over any question in the same body
+[31/168] [api] › test\e2e.spec.mjs:218:5 › miner API — plain-language questions › refuses a question naming no place
+[32/168] [api] › test\e2e.spec.mjs:218:5 › miner API — plain-language questions › refuses nonsense
+[33/168] [api] › test\e2e.spec.mjs:218:5 › miner API — plain-language questions › refuses whitespace
+[34/168] [api] › test\e2e.spec.mjs:408:3 › routes › forecasts each leg for the hour the cargo arrives
+[35/168] [api] › test\e2e.spec.mjs:433:3 › routes › a slower vehicle meets later weather
+[36/168] [api] › test\e2e.spec.mjs:442:3 › routes › reports a leg beyond the forecast horizon instead of clamping it
+[37/168] [api] › test\e2e.spec.mjs:461:5 › routes › refuses an empty request
+[38/168] [api] › test\e2e.spec.mjs:461:5 › routes › refuses a route with no destination
+[39/168] [api] › test\e2e.spec.mjs:461:5 › routes › refuses a destination that is nowhere
+[40/168] [api] › test\e2e.spec.mjs:461:5 › routes › refuses an origin that is nowhere
+[41/168] [api] › test\e2e.spec.mjs:461:5 › routes › refuses a stationary vehicle
+[42/168] [api] › test\e2e.spec.mjs:495:3 › the registration YAML › declares the endpoint the server actually serves
+[43/168] [api] › test\e2e.spec.mjs:503:3 › the registration YAML › declares every input the server accepts, and demands none it cannot require
+[44/168] [api] › test\e2e.spec.mjs:513:3 › the registration YAML › maps the answer field a validator grades
+[45/168] [api] › test\e2e.spec.mjs:518:3 › the registration YAML › gives every on_chain field a description
+[46/168] [api] › test\e2e.spec.mjs:530:3 › how the site looks to a crawler › the page carries a full social preview
+[47/168] [api] › test\e2e.spec.mjs:545:3 › how the site looks to a crawler › the card is a real PNG at the size the meta promises
+[48/168] [api] › test\e2e.spec.mjs:561:3 › how the site looks to a crawler › robots and sitemap answer instead of 404ing
+[49/168] [api] › test\e2e.spec.mjs:574:3 › how the site looks to a crawler › attribution travels with the data, not just on the page
+[50/168] [api] › test\e2e.spec.mjs:594:3 › health reports what an operator needs › says how old the board is and how much budget is left
+[51/168] [api] › test\e2e.spec.mjs:620:3 › health reports what an operator needs › the caches fill as the miner is used
+[52/168] [ui-chromium] › test\a11y.spec.mjs:65:3 › accessibility @ui › the page as it first loads
+[53/168] [ui-chromium] › test\a11y.spec.mjs:71:3 › accessibility @ui › the page showing a reading
+[54/168] [ui-chromium] › test\a11y.spec.mjs:80:3 › accessibility @ui › the page showing a failure
+[55/168] [ui-chromium] › test\a11y.spec.mjs:89:3 › accessibility @ui › every control has a name a screen reader can announce
+[56/168] [ui-chromium] › test\a11y.spec.mjs:102:3 › accessibility @ui › the whole route form is reachable and operable from the keyboard alone
+[57/168] [ui-chromium] › test\a11y.spec.mjs:124:3 › accessibility @ui › focus is visible wherever it lands
+[58/168] [ui-chromium] › test\a11y.spec.mjs:137:3 › accessibility @ui › the page still works with motion turned off
+[59/168] [ui-chromium] › test\e2e.spec.mjs:227:3 › the page @ui › loads and names itself
+[60/168] [ui-chromium] › test\e2e.spec.mjs:236:3 › the page @ui › plots the published lanes against the trigger line
+[61/168] [ui-chromium] › test\e2e.spec.mjs:266:3 › the page @ui › checks a coordinate pair and shows the reading
+[62/168] [ui-chromium] › test\e2e.spec.mjs:280:3 › the page @ui › takes a place name in the same field
+[63/168] [ui-chromium] › test\e2e.spec.mjs:287:3 › the page @ui › takes a whole question in the same field
+[64/168] [ui-chromium] › test\e2e.spec.mjs:294:3 › the page @ui › a preset fills the form and runs it
+[65/168] [ui-chromium] › test\e2e.spec.mjs:301:3 › the page @ui › shows the miner's own message when nothing in the text is a place
+[66/168] [ui-chromium] › test\e2e.spec.mjs:311:3 › the page @ui › renders the ledger from chain, not from markup
+[67/168] [ui-chromium] › test\e2e.spec.mjs:325:3 › the page @ui › reports the book on chain
+[68/168] [ui-chromium] › test\e2e.spec.mjs:330:3 › the page @ui › cannot be injected through chain data
+[69/168] [ui-chromium] › test\e2e.spec.mjs:360:3 › the page @ui › renders every ledger cell as text, never markup
+[70/168] [ui-chromium] › test\e2e.spec.mjs:373:3 › the page @ui › logs nothing to the console
+[71/168] [ui-chromium] › test\e2e.spec.mjs:382:3 › the page @ui › fits a phone without clipping the navigation
+[72/168] [ui-chromium] › test\e2e.spec.mjs:396:3 › the page @ui › keyboard reaches the form and shows focus
+[73/168] [ui-chromium] › test\e2e.spec.mjs:468:3 › routes › the page draws the route leg by leg @ui
+[74/168] [ui-chromium] › test\e2e.spec.mjs:478:3 › routes › says so when a route names nowhere, rather than drawing an empty one @ui
+[75/168] [ui-chromium] › test\ui-states.spec.mjs:30:3 › what the page does while it waits @ui › shows a busy control and refuses a second submit until the first returns
+[76/168] [ui-chromium] › test\ui-states.spec.mjs:88:3 › what the page does while it waits @ui › recovers the control after a failure, so one bad input does not end the session
+[77/168] [ui-chromium] › test\ui-states.spec.mjs:108:3 › what the page does while it waits @ui › says something when the network never answers
+[78/168] [ui-chromium] › test\ui-states.spec.mjs:120:3 › what the page does while it waits @ui › a route that fails leaves the form usable
+[79/168] [ui-chromium] › test\ui-states.spec.mjs:131:3 › what the page does while it waits @ui › the ledger says so when the chain cannot be read
+[80/168] [ui-chromium] › test\ui-states.spec.mjs:143:3 › navigation and entry points @ui › a deep link lands on the section it names
+[81/168] [ui-chromium] › test\ui-states.spec.mjs:156:3 › navigation and entry points @ui › the back button returns to where it came from
+[82/168] [ui-chromium] › test\ui-states.spec.mjs:165:3 › navigation and entry points @ui › a reload mid-request leaves the page usable, not half-drawn
+[83/168] [ui-chromium] › test\ui-states.spec.mjs:190:5 › forms refuse what they cannot answer @ui › refuses an empty field and says why
+[84/168] [ui-chromium] › test\ui-states.spec.mjs:190:5 › forms refuse what they cannot answer @ui › refuses only spaces and says why
+[85/168] [ui-chromium] › test\ui-states.spec.mjs:190:5 › forms refuse what they cannot answer @ui › refuses punctuation and says why
+[86/168] [ui-chromium] › test\ui-states.spec.mjs:201:3 › forms refuse what they cannot answer @ui › a very long input is refused rather than sent whole
+[87/168] [ui-chromium] › test\ui-states.spec.mjs:212:3 › forms refuse what they cannot answer @ui › unicode and right-to-left text are handled, not mangled
+[88/168] [ui-chromium] › test\ui-states.spec.mjs:233:3 › the board can go stale, and must say so @ui › a fresh board reads as a plain timestamp
+[89/168] [ui-chromium] › test\ui-states.spec.mjs:245:3 › the board can go stale, and must say so @ui › a board older than the schedule says so, in the colour that means trouble
+[90/168] [ui-chromium] › test\ui-states.spec.mjs:256:3 › the board can go stale, and must say so @ui › no board at all draws nothing and says why
+[91/168] [ui-firefox] › test\a11y.spec.mjs:65:3 › accessibility @ui › the page as it first loads
+[92/168] [ui-firefox] › test\a11y.spec.mjs:71:3 › accessibility @ui › the page showing a reading
+[93/168] [ui-firefox] › test\a11y.spec.mjs:80:3 › accessibility @ui › the page showing a failure
+[94/168] [ui-firefox] › test\a11y.spec.mjs:89:3 › accessibility @ui › every control has a name a screen reader can announce
+[95/168] [ui-firefox] › test\a11y.spec.mjs:102:3 › accessibility @ui › the whole route form is reachable and operable from the keyboard alone
+[96/168] [ui-firefox] › test\a11y.spec.mjs:124:3 › accessibility @ui › focus is visible wherever it lands
+[97/168] [ui-firefox] › test\a11y.spec.mjs:137:3 › accessibility @ui › the page still works with motion turned off
+[98/168] [ui-firefox] › test\e2e.spec.mjs:227:3 › the page @ui › loads and names itself
+[99/168] [ui-firefox] › test\e2e.spec.mjs:236:3 › the page @ui › plots the published lanes against the trigger line
+[100/168] [ui-firefox] › test\e2e.spec.mjs:266:3 › the page @ui › checks a coordinate pair and shows the reading
+[101/168] [ui-firefox] › test\e2e.spec.mjs:280:3 › the page @ui › takes a place name in the same field
+[102/168] [ui-firefox] › test\e2e.spec.mjs:287:3 › the page @ui › takes a whole question in the same field
+[103/168] [ui-firefox] › test\e2e.spec.mjs:294:3 › the page @ui › a preset fills the form and runs it
+[104/168] [ui-firefox] › test\e2e.spec.mjs:301:3 › the page @ui › shows the miner's own message when nothing in the text is a place
+[105/168] [ui-firefox] › test\e2e.spec.mjs:311:3 › the page @ui › renders the ledger from chain, not from markup
+[106/168] [ui-firefox] › test\e2e.spec.mjs:325:3 › the page @ui › reports the book on chain
+[107/168] [ui-firefox] › test\e2e.spec.mjs:330:3 › the page @ui › cannot be injected through chain data
+[108/168] [ui-firefox] › test\e2e.spec.mjs:360:3 › the page @ui › renders every ledger cell as text, never markup
+[109/168] [ui-firefox] › test\e2e.spec.mjs:373:3 › the page @ui › logs nothing to the console
+[110/168] [ui-firefox] › test\e2e.spec.mjs:382:3 › the page @ui › fits a phone without clipping the navigation
+[111/168] [ui-firefox] › test\e2e.spec.mjs:396:3 › the page @ui › keyboard reaches the form and shows focus
+[112/168] [ui-firefox] › test\e2e.spec.mjs:468:3 › routes › the page draws the route leg by leg @ui
+[113/168] [ui-firefox] › test\e2e.spec.mjs:478:3 › routes › says so when a route names nowhere, rather than drawing an empty one @ui
+[114/168] [ui-firefox] › test\ui-states.spec.mjs:30:3 › what the page does while it waits @ui › shows a busy control and refuses a second submit until the first returns
+[115/168] [ui-firefox] › test\ui-states.spec.mjs:88:3 › what the page does while it waits @ui › recovers the control after a failure, so one bad input does not end the session
+[116/168] [ui-firefox] › test\ui-states.spec.mjs:108:3 › what the page does while it waits @ui › says something when the network never answers
+[117/168] [ui-firefox] › test\ui-states.spec.mjs:120:3 › what the page does while it waits @ui › a route that fails leaves the form usable
+[118/168] [ui-firefox] › test\ui-states.spec.mjs:131:3 › what the page does while it waits @ui › the ledger says so when the chain cannot be read
+[119/168] [ui-firefox] › test\ui-states.spec.mjs:143:3 › navigation and entry points @ui › a deep link lands on the section it names
+[120/168] [ui-firefox] › test\ui-states.spec.mjs:156:3 › navigation and entry points @ui › the back button returns to where it came from
+[121/168] [ui-firefox] › test\ui-states.spec.mjs:165:3 › navigation and entry points @ui › a reload mid-request leaves the page usable, not half-drawn
+[122/168] [ui-firefox] › test\ui-states.spec.mjs:190:5 › forms refuse what they cannot answer @ui › refuses an empty field and says why
+[123/168] [ui-firefox] › test\ui-states.spec.mjs:190:5 › forms refuse what they cannot answer @ui › refuses only spaces and says why
+[124/168] [ui-firefox] › test\ui-states.spec.mjs:190:5 › forms refuse what they cannot answer @ui › refuses punctuation and says why
+[125/168] [ui-firefox] › test\ui-states.spec.mjs:201:3 › forms refuse what they cannot answer @ui › a very long input is refused rather than sent whole
+[126/168] [ui-firefox] › test\ui-states.spec.mjs:212:3 › forms refuse what they cannot answer @ui › unicode and right-to-left text are handled, not mangled
+[127/168] [ui-firefox] › test\ui-states.spec.mjs:233:3 › the board can go stale, and must say so @ui › a fresh board reads as a plain timestamp
+[128/168] [ui-firefox] › test\ui-states.spec.mjs:245:3 › the board can go stale, and must say so @ui › a board older than the schedule says so, in the colour that means trouble
+[129/168] [ui-firefox] › test\ui-states.spec.mjs:256:3 › the board can go stale, and must say so @ui › no board at all draws nothing and says why
+[130/168] [ui-webkit] › test\a11y.spec.mjs:65:3 › accessibility @ui › the page as it first loads
+[131/168] [ui-webkit] › test\a11y.spec.mjs:71:3 › accessibility @ui › the page showing a reading
+[132/168] [ui-webkit] › test\a11y.spec.mjs:80:3 › accessibility @ui › the page showing a failure
+[133/168] [ui-webkit] › test\a11y.spec.mjs:89:3 › accessibility @ui › every control has a name a screen reader can announce
+[134/168] [ui-webkit] › test\a11y.spec.mjs:102:3 › accessibility @ui › the whole route form is reachable and operable from the keyboard alone
+[135/168] [ui-webkit] › test\a11y.spec.mjs:124:3 › accessibility @ui › focus is visible wherever it lands
+[136/168] [ui-webkit] › test\a11y.spec.mjs:137:3 › accessibility @ui › the page still works with motion turned off
+[137/168] [ui-webkit] › test\e2e.spec.mjs:227:3 › the page @ui › loads and names itself
+[138/168] [ui-webkit] › test\e2e.spec.mjs:236:3 › the page @ui › plots the published lanes against the trigger line
+[139/168] [ui-webkit] › test\e2e.spec.mjs:266:3 › the page @ui › checks a coordinate pair and shows the reading
+[140/168] [ui-webkit] › test\e2e.spec.mjs:280:3 › the page @ui › takes a place name in the same field
+[141/168] [ui-webkit] › test\e2e.spec.mjs:287:3 › the page @ui › takes a whole question in the same field
+[142/168] [ui-webkit] › test\e2e.spec.mjs:294:3 › the page @ui › a preset fills the form and runs it
+[143/168] [ui-webkit] › test\e2e.spec.mjs:301:3 › the page @ui › shows the miner's own message when nothing in the text is a place
+[144/168] [ui-webkit] › test\e2e.spec.mjs:311:3 › the page @ui › renders the ledger from chain, not from markup
+[145/168] [ui-webkit] › test\e2e.spec.mjs:325:3 › the page @ui › reports the book on chain
+[146/168] [ui-webkit] › test\e2e.spec.mjs:330:3 › the page @ui › cannot be injected through chain data
+[147/168] [ui-webkit] › test\e2e.spec.mjs:360:3 › the page @ui › renders every ledger cell as text, never markup
+[148/168] [ui-webkit] › test\e2e.spec.mjs:373:3 › the page @ui › logs nothing to the console
+[149/168] [ui-webkit] › test\e2e.spec.mjs:382:3 › the page @ui › fits a phone without clipping the navigation
+[150/168] [ui-webkit] › test\e2e.spec.mjs:396:3 › the page @ui › keyboard reaches the form and shows focus
+[151/168] [ui-webkit] › test\e2e.spec.mjs:468:3 › routes › the page draws the route leg by leg @ui
+[152/168] [ui-webkit] › test\e2e.spec.mjs:478:3 › routes › says so when a route names nowhere, rather than drawing an empty one @ui
+[153/168] [ui-webkit] › test\ui-states.spec.mjs:30:3 › what the page does while it waits @ui › shows a busy control and refuses a second submit until the first returns
+[154/168] [ui-webkit] › test\ui-states.spec.mjs:88:3 › what the page does while it waits @ui › recovers the control after a failure, so one bad input does not end the session
+[155/168] [ui-webkit] › test\ui-states.spec.mjs:108:3 › what the page does while it waits @ui › says something when the network never answers
+[156/168] [ui-webkit] › test\ui-states.spec.mjs:120:3 › what the page does while it waits @ui › a route that fails leaves the form usable
+[157/168] [ui-webkit] › test\ui-states.spec.mjs:131:3 › what the page does while it waits @ui › the ledger says so when the chain cannot be read
+[158/168] [ui-webkit] › test\ui-states.spec.mjs:143:3 › navigation and entry points @ui › a deep link lands on the section it names
+[159/168] [ui-webkit] › test\ui-states.spec.mjs:156:3 › navigation and entry points @ui › the back button returns to where it came from
+[160/168] [ui-webkit] › test\ui-states.spec.mjs:165:3 › navigation and entry points @ui › a reload mid-request leaves the page usable, not half-drawn
+[161/168] [ui-webkit] › test\ui-states.spec.mjs:190:5 › forms refuse what they cannot answer @ui › refuses an empty field and says why
+[162/168] [ui-webkit] › test\ui-states.spec.mjs:190:5 › forms refuse what they cannot answer @ui › refuses only spaces and says why
+[163/168] [ui-webkit] › test\ui-states.spec.mjs:190:5 › forms refuse what they cannot answer @ui › refuses punctuation and says why
+[164/168] [ui-webkit] › test\ui-states.spec.mjs:201:3 › forms refuse what they cannot answer @ui › a very long input is refused rather than sent whole
+[165/168] [ui-webkit] › test\ui-states.spec.mjs:212:3 › forms refuse what they cannot answer @ui › unicode and right-to-left text are handled, not mangled
+[166/168] [ui-webkit] › test\ui-states.spec.mjs:233:3 › the board can go stale, and must say so @ui › a fresh board reads as a plain timestamp
+[167/168] [ui-webkit] › test\ui-states.spec.mjs:245:3 › the board can go stale, and must say so @ui › a board older than the schedule says so, in the colour that means trouble
+[168/168] [ui-webkit] › test\ui-states.spec.mjs:256:3 › the board can go stale, and must say so @ui › no board at all draws nothing and says why
+  168 passed (2.8m)

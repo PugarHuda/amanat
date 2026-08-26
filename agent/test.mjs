@@ -12,6 +12,7 @@ import { ethers } from "ethers";
 import { signPayment, decodeChallenge, DEFAULT_MAX_AMOUNT } from "./x402.mjs";
 import { intentId, NAME_HASHED_INTENTS, readRisk, POLICY_STATUS } from "./telegraph.mjs";
 import { flag, has, positionals, reject } from "./args.mjs";
+import { payloadFor } from "./crosscheck.mjs";
 
 const USDC = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
 const PAY_TO = "0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8";
@@ -169,3 +170,52 @@ reject(["--dry"], ["--dry"]);
 console.log("arguments parse the way every script assumes");
 
 console.log("\nagent ok");
+
+// ── building a request from what a miner says it accepts ────────────────────
+// Sending {lat, lon} to everybody is the same mistake the contract avoids:
+// assuming a field layout because ours happens to have it. The top-ranked
+// weather miner takes a place name and nothing else, and answered "Parameter q
+// is missing" until this read the catalogue instead of guessing.
+{
+  const at = { lat: 10.33, lon: 123.75, place: "Cebu, Central Visayas, Philippines", hours: 6 };
+
+  assert.deepEqual(
+    payloadFor({ properties: { days: {}, q: {} }, required: ["q"] }, at),
+    { q: "Cebu", days: 1 },
+    "a miner that wants a name gets a name",
+  );
+  assert.deepEqual(
+    payloadFor({ properties: { latitude: {}, longitude: {}, hours: {} }, required: ["latitude", "longitude"] }, at),
+    { latitude: 10.33, longitude: 123.75, hours: 6 },
+    "latitude/longitude is the same concept under another name",
+  );
+  assert.deepEqual(
+    payloadFor({ properties: { lat: {}, lon: {}, forecast_hours: {} } }, at),
+    { lat: 10.33, lon: 123.75, forecast_hours: 6 },
+  );
+
+  // The bare name, not the full label. "Cebu, Central Visayas, Philippines" is
+  // what our geocoder returns and what openweathermap answers "city not found"
+  // to — the qualifiers that disambiguate for a person break a place lookup.
+  assert.equal(payloadFor({ properties: { q: {} } }, at).q, "Cebu");
+
+  // One name per concept. Sending both lat and latitude asks twice.
+  const both = payloadFor({ properties: { lat: {}, latitude: {}, lon: {}, longitude: {} } }, at);
+  assert.deepEqual(Object.keys(both).sort(), ["lat", "lon"]);
+
+  // A miner whose required fields we cannot fill is skipped, not called with a
+  // body it will reject.
+  assert.deepEqual(
+    payloadFor({ properties: { lat: {}, lon: {}, start: {}, end: {} }, required: ["lat", "lon", "start", "end"] }, at).missing,
+    ["start", "end"],
+  );
+
+  // An empty schema is not a refusal — several miners publish one and still
+  // take coordinates.
+  assert.deepEqual(payloadFor({}, at), { lat: 10.33, lon: 123.75, hours: 6 });
+
+  // Days are derived from hours, and a same-day request is still one day.
+  assert.equal(payloadFor({ properties: { days: {} } }, { ...at, hours: 0 }).days, 1);
+  assert.equal(payloadFor({ properties: { days: {} } }, { ...at, hours: 30 }).days, 2);
+}
+console.log("requests are built from what a miner declares, not from what ours has");
