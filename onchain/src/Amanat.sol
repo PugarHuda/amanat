@@ -36,9 +36,12 @@ import {SafeERC20} from "openzeppelin-contracts/contracts/token/ERC20/utils/Safe
 ///            is packed according to *that* miner's YAML, so this contract can
 ///            never assume a field layout. It validates what arrived and
 ///            declines the claim if the shape is not one it understands.
-///         2. Delivery is asynchronous and not guaranteed on a deadline. Funds
-///            stay escrowed against the policy until an answer lands, and the
-///            holder can reclaim them after `CLAIM_TIMEOUT` if none ever does.
+///         2. Delivery is asynchronous and not guaranteed on a deadline. The
+///            payout stays reserved against the policy until an answer lands.
+///            If none ever does, `expire` releases the reserve back to the book
+///            after `CLAIM_TIMEOUT` — it does not pay the holder. The holder
+///            never paid a premium into this contract, so a payout with no
+///            trigger would be a claim settled on nothing.
 contract Amanat {
     // The payout token is a constructor parameter, so it is not necessarily
     // USDC. Tokens that predate the finalised ERC-20 return nothing from
@@ -61,8 +64,13 @@ contract Amanat {
     /// `risk_x10000` field, so no floating point ever enters the contract.
     uint256 public constant PAYOUT_THRESHOLD = 7500;
 
-    /// A job that never comes back must not strand the holder's premium.
+    /// A job that never comes back must not strand the book.
     uint256 public constant CLAIM_TIMEOUT = 24 hours;
+
+    /// How long an outstanding check is presumed alive before it may be
+    /// replaced. Long enough that a slow rail is not paid for twice, short
+    /// enough that a lost job does not freeze the policy for a whole day.
+    uint256 public constant CHECK_RETRY_AFTER = 1 hours;
 
     // ── Policies ────────────────────────────────────────────────────────────
 
@@ -76,6 +84,7 @@ contract Amanat {
         Status status;
         uint256 openedAt;
         uint256 jobId;       // 0 until a check is requested
+        uint256 checkedAt;   // when the outstanding job was opened
         uint256 riskReported; // scaled 1e4, set when an answer lands
     }
 
@@ -88,7 +97,7 @@ contract Amanat {
     event AnswerReceived(uint256 indexed policyId, uint256 indexed jobId, uint256 riskX10000, string summary);
     event Paid(uint256 indexed policyId, address indexed holder, uint256 amount);
     event Declined(uint256 indexed policyId, string reason);
-    event Expired(uint256 indexed policyId, uint256 refunded);
+    event Expired(uint256 indexed policyId, uint256 released);
 
     error NotTelegraph();
     error NotUnderwriter();
@@ -96,6 +105,7 @@ contract Amanat {
     error WrongStatus();
     error NothingPending();
     error TooEarly();
+    error CheckPending();
 
     constructor(address _telegraph, address _payoutToken) {
         telegraph = _telegraph;
@@ -112,6 +122,11 @@ contract Amanat {
         returns (uint256 policyId)
     {
         if (msg.sender != underwriter) revert NotUnderwriter();
+        // address(0) cannot be paid: safeTransfer would revert at settlement,
+        // stranding the reserve until the timeout. A zero payout is a policy
+        // that promises nothing.
+        require(holder != address(0), "no holder");
+        require(payout > 0, "no payout");
         // Never write a policy the book cannot honour.
         require(payoutToken.balanceOf(address(this)) >= _outstanding() + payout, "underfunded");
 
@@ -124,6 +139,7 @@ contract Amanat {
             status: Status.Active,
             openedAt: block.timestamp,
             jobId: 0,
+            checkedAt: 0,
             riskReported: 0
         });
         _outstandingTotal += payout;
@@ -138,10 +154,15 @@ contract Amanat {
     ///
     /// `hoursAhead` rides in `integers[0]` and the coordinates in `strings[0..1]`,
     /// which is the mapping every weather miner's `on_chain.request` block reads.
+    /// A policy may only have one check outstanding. Jobs are asynchronous and
+    /// cost a dollar of escrow each, so a second call before the first answers
+    /// buys a duplicate reading and leaves two jobs racing to settle one
+    /// policy. After `CHECK_RETRY_AFTER` the first is treated as lost and may be replaced.
     function requestCheck(uint256 policyId, bytes32 intentId, uint256 hoursAhead) external returns (uint256 jobId) {
         Policy storage p = policies[policyId];
         if (msg.sender != underwriter && msg.sender != p.holder) revert NotHolder();
         if (p.status != Status.Active) revert WrongStatus();
+        if (p.jobId != 0 && block.timestamp < p.checkedAt + CHECK_RETRY_AFTER) revert CheckPending();
 
         OnChainData memory params;
         params.addresses = new address[](0);
@@ -154,6 +175,7 @@ contract Amanat {
 
         jobId = ITelegraph(telegraph).createJob(intentId, params, address(this));
         p.jobId = jobId;
+        p.checkedAt = block.timestamp;
         policyOfJob[jobId] = policyId;
         emit CheckRequested(policyId, jobId, intentId);
     }
@@ -205,7 +227,8 @@ contract Amanat {
     }
 
     /// Release a policy whose answer never arrived, so a silent rail cannot
-    /// hold the book hostage.
+    /// hold the book hostage. The reserve returns to the book, not to the
+    /// holder: no trigger was ever reported, so nothing is owed.
     /// @dev `block.timestamp` is validator-influenceable by seconds. Against a
     ///      24-hour timeout that buys an attacker nothing: the only thing they
     ///      could do is release a reserve a few seconds early or late, and the
@@ -229,17 +252,21 @@ contract Amanat {
 
     /// Pull a 1e4-scaled risk out of whatever the miner sent.
     ///
-    /// Amanat's own YAML puts it at `integers[3]`, but a different miner may
-    /// pack fewer fields, so this accepts the two shapes it can verify and
-    /// rejects the rest. `bools[0]` alone is enough when a miner reports only a
-    /// breach flag: a flag that says "yes" is a risk at the threshold.
+    /// Amanat's own YAML puts it at `integers[3]`, and that is the only shape
+    /// this will settle on.
+    ///
+    /// It used to fall back to `bools[0]`, reading a true there as a breach and
+    /// paying the claim. That was a guess wearing a convention's clothes: the
+    /// protocol chooses the miner, so `bools[0]` is whatever that miner's YAML
+    /// put first — on the miners registered today it is as likely to mean
+    /// "is AI generated" or "certificate valid" as anything about weather. A
+    /// claim paid on a misread flag is worse than a claim not paid at all,
+    /// because the holder of the next policy is the one who funds it. An answer
+    /// in a shape this cannot verify is declined, and the check can be retried.
     function _readRisk(OnChainData memory r) internal pure returns (bool ok, uint256 riskX10000) {
         if (r.integers.length >= 4) {
             uint256 v = r.integers[3];
             if (v <= 10000) return (true, v);
-        }
-        if (r.bools.length >= 1) {
-            return (true, r.bools[0] ? PAYOUT_THRESHOLD : 0);
         }
         return (false, 0);
     }

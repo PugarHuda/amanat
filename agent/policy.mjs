@@ -94,7 +94,13 @@ async function main() {
   const from = checkReceipt.blockNumber;
   for (const name of ["AnswerReceived", "Paid", "Declined", "Expired"]) {
     const events = await book.queryFilter(book.filters[name](), from, "latest").catch(() => []);
-    for (const e of events) console.log(`event ${name}: ${JSON.stringify(e.args.map((a) => a.toString()))}`);
+    // queryFilter returns a bare Log, without decoded args, for anything it
+    // could not decode against the ABI. Reaching straight for e.args turns one
+    // undecodable log into a TypeError that ends the whole report.
+    for (const e of events) {
+      const args = "args" in e ? [...e.args].map((a) => String(a)) : null;
+      console.log(args ? `event ${name}: ${JSON.stringify(args)}` : `event ${name}: undecodable log at ${e.transactionHash}`);
+    }
   }
 }
 

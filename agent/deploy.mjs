@@ -56,7 +56,7 @@ async function main() {
 
   const factory = new ethers.ContractFactory(JSON.parse(abi), bin, signer);
   const amanat = await factory.deploy(DIAMOND, USDC);
-  console.log(`\ndeploying  ${amanat.deploymentTransaction().hash}`);
+  console.log(`\ndeploying  ${amanat.deploymentTransaction()?.hash ?? "(no transaction hash returned)"}`);
   await amanat.waitForDeployment();
   const address = await amanat.getAddress();
   console.log(`deployed   ${address}`);

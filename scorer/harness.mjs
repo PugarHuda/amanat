@@ -12,6 +12,7 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, join, basename } from "node:path";
+import { existsSync, readdirSync } from "node:fs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -146,6 +147,38 @@ export function attackReport(mod, attacks) {
   });
 }
 
+/**
+ * Expand any argument the shell did not.
+ *
+ * npm runs a script through cmd.exe on Windows, which does not glob, so
+ * `npm run bench` handed this file the literal string "scorer/dist/*.wasm" and
+ * died on ENOENT. bash expands it and CI stayed green, which is the worst shape
+ * a bug can take: the benchmark that gates every scoring module could not be
+ * run by the command the manifest gives for running it.
+ */
+function expand(paths) {
+  const out = [];
+  for (const p of paths) {
+    if (!p.includes("*")) {
+      out.push(p);
+      continue;
+    }
+    const dir = dirname(p);
+    const parts = basename(p).split("*").map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    const rx = new RegExp(`^${parts.join(".*")}$`);
+    const hits = existsSync(dir) ? readdirSync(dir).filter((f) => rx.test(f)).sort() : [];
+
+    // A pattern matching nothing is a mistake worth stopping for. Silently
+    // benchmarking zero modules reports success for work never done.
+    if (!hits.length) {
+      console.error(`no file matches ${p}`);
+      process.exit(2);
+    }
+    for (const f of hits) out.push(join(dir, f));
+  }
+  return out;
+}
+
 const fmt = (x) => x.toFixed(4).padStart(7);
 
 async function main() {
@@ -163,7 +196,7 @@ async function main() {
   }
 
   const agreeMode = args.includes("--agreement");
-  const paths = args.filter((a) => a.endsWith(".wasm"));
+  const paths = expand(args.filter((a) => a.endsWith(".wasm")));
   if (!paths.length) {
     console.error("usage: node scorer/harness.mjs [--attacks] <module.wasm> [...]");
     process.exit(2);

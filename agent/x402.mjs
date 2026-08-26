@@ -35,13 +35,50 @@ export function decodeChallenge(header) {
   return JSON.parse(Buffer.from(header, "base64").toString("utf8"));
 }
 
-/** Sign the eip155 option of a challenge. Returns the PAYMENT-SIGNATURE value. */
-export async function signPayment(challenge, wallet, chainId = 84532) {
+/**
+ * One USDC, in the token's six decimals.
+ *
+ * An Engine call is $0.01 and the dearest thing on the protocol is a $1.00 job,
+ * so anything at this ceiling is already a hundred times the going rate.
+ */
+export const DEFAULT_MAX_AMOUNT = 1_000_000n;
+
+/**
+ * Sign the eip155 option of a challenge. Returns the PAYMENT-SIGNATURE value.
+ *
+ * Two checks stand between a 402 and a signature, and neither is paranoia.
+ *
+ * The challenge is written by the server being paid. It names the amount and it
+ * names the token, and an EIP-3009 authorization is a bearer instrument: once
+ * signed, the facilitator can submit it and the transfer lands with no further
+ * consent from us. A node that asked for 999 USDC instead of 0.01 would have
+ * been signed without complaint, and a node that named a different ERC-20 would
+ * have been signed a transfer of that instead. Neither needs malice — a units
+ * bug on the far side is enough.
+ *
+ * So the amount is capped and the asset must be the token the caller expected.
+ */
+export async function signPayment(challenge, wallet, { chainId = 84532, maxAmount = DEFAULT_MAX_AMOUNT, asset } = {}) {
   const accept = challenge.accepts?.find((a) => a.network?.startsWith("eip155:"));
   if (!accept) throw new Error("no eip155 option in the 402 challenge");
 
   const acceptChain = Number(accept.network.split(":")[1]);
   if (acceptChain !== chainId) throw new Error(`challenge is for chain ${acceptChain}, we are on ${chainId}`);
+
+  const amount = BigInt(accept.amount);
+  if (amount <= 0n) throw new Error(`challenge asks for ${accept.amount}, which is not a payable amount`);
+  if (amount > BigInt(maxAmount)) {
+    throw new Error(
+      `challenge asks for ${ethers.formatUnits(amount, 6)} USDC, over the ` +
+      `${ethers.formatUnits(BigInt(maxAmount), 6)} ceiling — refusing to sign. ` +
+      `Raise maxAmount only if you meant to pay this.`,
+    );
+  }
+  if (asset && ethers.getAddress(accept.asset) !== ethers.getAddress(asset)) {
+    throw new Error(
+      `challenge asks to be paid in ${accept.asset}, not the expected ${asset} — refusing to sign`,
+    );
+  }
 
   const now = Math.floor(Date.now() / 1000);
   const authorization = {
@@ -103,19 +140,34 @@ export async function signPayment(challenge, wallet, chainId = 84532) {
  * fetch that pays when asked to. Returns the response plus what it cost, so a
  * caller can keep its own tally rather than trusting a header it never read.
  */
-export async function fetchWithPayment(url, init, wallet, { chainId = 84532 } = {}) {
-  const first = await fetch(url, init);
+export async function fetchWithPayment(
+  url,
+  init,
+  wallet,
+  { chainId = 84532, maxAmount = DEFAULT_MAX_AMOUNT, asset, timeoutMs = 60_000 } = {},
+) {
+  // Without a deadline a hung node blocks the caller for as long as it likes,
+  // and an agent on a schedule simply stops. The paid leg gets its own budget
+  // rather than sharing the first one's.
+  const first = await fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) });
   if (first.status !== 402) return { response: first, paid: false };
 
   const header = first.headers.get("payment-required");
   if (!header) throw new Error("402 without a PAYMENT-REQUIRED header — nothing to sign");
 
   const challenge = decodeChallenge(header);
-  const payment = await signPayment(challenge, wallet, chainId);
+  const payment = await signPayment(challenge, wallet, { chainId, maxAmount, asset });
 
+  // The authorization is now signed and carries a fresh nonce. If this request
+  // is lost in flight the facilitator may still have settled it, and a re-run
+  // would sign a *new* nonce and pay a second time — there is no way from here
+  // to tell a lost response from a refused payment. Callers that retry should
+  // treat a network failure at this point as "possibly paid", which is why the
+  // agents tally spend from what they sent rather than from what came back.
   const retry = await fetch(url, {
     ...init,
     headers: { ...(init.headers ?? {}), "PAYMENT-SIGNATURE": payment.header },
+    signal: AbortSignal.timeout(timeoutMs),
   });
 
   // A second 402 means the facilitator rejected the payment, and it looks

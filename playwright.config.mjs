@@ -10,7 +10,7 @@
 // the suite flaky for reasons that have nothing to do with the code, and a retry
 // would hide it.
 
-import { defineConfig } from "@playwright/test";
+import { defineConfig, devices } from "@playwright/test";
 
 const local = !process.env.E2E_BASE;
 
@@ -22,6 +22,18 @@ export default defineConfig({
   workers: 1,
   retries: 0,
   reporter: [["list"]],
+
+  // Browser engines differ in layout, focus order and CSS support, so anything
+  // that touches a page is worth running on all three. Nothing else is: the API
+  // tests drive HTTP directly through the request fixture and would return the
+  // identical bytes on every engine, so running them three times would only
+  // spend a free upstream quota three times over.
+  projects: [
+    { name: "api", grepInvert: /@ui/, use: { ...devices["Desktop Chrome"] } },
+    { name: "ui-chromium", grep: /@ui/, use: { ...devices["Desktop Chrome"] } },
+    { name: "ui-firefox", grep: /@ui/, use: { ...devices["Desktop Firefox"] } },
+    { name: "ui-webkit", grep: /@ui/, use: { ...devices["Desktop Safari"] } },
+  ],
   use: {
     baseURL: process.env.E2E_BASE ?? "http://127.0.0.1:8799",
     trace: "retain-on-failure",

@@ -83,7 +83,7 @@ export function placeCandidates(text) {
 }
 
 /** Resolve one name. Returns null when the API knows no such place. */
-export async function lookup(name) {
+async function lookup(name) {
   const url = `${GEOCODING}?name=${encodeURIComponent(name)}&count=1&language=en&format=json`;
   const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
   if (!res.ok) throw new Error(`geocoding ${res.status}`);

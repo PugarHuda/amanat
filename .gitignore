@@ -2,7 +2,6 @@ node_modules/
 scorer/target/
 !scorer/dist/
 .yaml-cache.json
-.env
 scorer/champions/*.wasm
 onchain/out/
 test-results/
@@ -11,5 +10,7 @@ onchain/lib/
 onchain/cache/
 
 .vercel
+# .env, .env.local and friends. .env.example is tracked, so it is excepted.
 .env*
+!.env.example
 board.json

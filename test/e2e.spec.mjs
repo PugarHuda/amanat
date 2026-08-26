@@ -223,7 +223,7 @@ test.describe("miner API — plain-language questions", () => {
   }
 });
 
-test.describe("the page", () => {
+test.describe("the page @ui", () => {
   test("loads and names itself", async ({ page }) => {
     await page.goto(BASE);
     await expect(page).toHaveTitle(/Amanat/);
@@ -449,7 +449,7 @@ test.describe("routes", () => {
     });
   }
 
-  test("the page draws the route leg by leg", async ({ page }) => {
+  test("the page draws the route leg by leg @ui", async ({ page }) => {
     await page.goto(BASE);
     await page.click('#routepresets button[data-from="Cebu"]');
     await expect(page.locator("#routeresult .leg").first()).toBeVisible({ timeout: 45_000 });
@@ -459,7 +459,7 @@ test.describe("routes", () => {
     await expect(page.locator("#routeresult .figures")).toContainText("distance");
   });
 
-  test("says so when a route names nowhere, rather than drawing an empty one", async ({ page }) => {
+  test("says so when a route names nowhere, rather than drawing an empty one @ui", async ({ page }) => {
     await page.goto(BASE);
     await page.fill("#routeto", "zzzqqq");
     await page.click("#routego");

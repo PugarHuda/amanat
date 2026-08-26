@@ -34,6 +34,16 @@ const ERC20_ABI = [
   "function decimals() view returns (uint8)",
 ];
 
+/**
+ * The most one Engine answer may cost before we refuse to sign for it.
+ *
+ * The protocol floor is $0.01 and the dearest miner on the network prices at a
+ * few cents, so ten cents is ten times the going rate and still a rounding
+ * error against a wallet. A challenge above it is a units bug somewhere, and
+ * the right response to a units bug is not to pay it.
+ */
+const ASK_CEILING = 100_000n; // 0.10 USDC
+
 /** Job lifecycle states as the Diamond reports them. */
 const JOB_STATE = ["Funded", "Terminal", "Cancelled"];
 
@@ -100,7 +110,7 @@ export async function miners({ intent } = {}) {
  * signal_hash — plus the settlement receipt, so a caller can prove what it
  * bought rather than assert it.
  */
-export async function ask(query, { signer, context } = {}) {
+export async function ask(query, { signer, context, maxAmount } = {}) {
   const w = signer ?? wallet();
   const { response, paid, amount, settlement } = await fetchWithPayment(
     `${NODE}/engine/v1/ask`,
@@ -110,6 +120,10 @@ export async function ask(query, { signer, context } = {}) {
       body: JSON.stringify(context ? { query, context } : { query }),
     },
     w,
+    // The token we expect to be billed in, and a ceiling on what one answer may
+    // cost. An Engine answer is $0.01; anything near ASK_CEILING is a bug on
+    // one side or the other and is refused before it is signed.
+    { asset: USDC, maxAmount: maxAmount ?? ASK_CEILING },
   );
   if (!response.ok) {
     throw new Error(`engine ask ${response.status}: ${(await response.text()).slice(0, 200)}`);
@@ -130,7 +144,7 @@ export async function ask(query, { signer, context } = {}) {
  * charging, and refuses with 422 rather than taking payment — so a refusal here
  * costs nothing and carries the reason.
  */
-export async function askDirect(minerId, { method = "POST", endpoint, payload, signer, acknowledgeWarnings = false } = {}) {
+export async function askDirect(minerId, { method = "POST", endpoint, payload, signer, acknowledgeWarnings = false, maxAmount } = {}) {
   const w = signer ?? wallet();
   const body = { method, endpoint, payload };
   if (acknowledgeWarnings) body.acknowledge_warnings = true;
@@ -139,6 +153,7 @@ export async function askDirect(minerId, { method = "POST", endpoint, payload, s
     `${NODE}/engine/v1/ask/${minerId}`,
     { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) },
     w,
+    { asset: USDC, maxAmount: maxAmount ?? ASK_CEILING },
   );
 
   if (response.status === 422) {
@@ -200,7 +215,13 @@ export function readRisk(result) {
   const direct = result?.risk;
   if (typeof direct === "number" && direct >= 0 && direct <= 1) return direct;
 
-  const fractions = [...JSON.stringify(result ?? {}).matchAll(/0.d+/g)].map((m) => Number(m[0]));
+  // Only figures written with a decimal point count. A bare 0 or 1 somewhere in
+  // an answer is not identifiable as a risk, and reading `"precip_mm": 0` as
+  // risk 0 would report calm from an unrelated field — the same mistake as
+  // treating a missing coordinate as Null Island.
+  const fractions = [...JSON.stringify(result ?? {}).matchAll(/(?<![\d.])(?:0?\.\d+|1\.0+)(?![\d.])/g)]
+    .map((m) => Number(m[0]))
+    .filter((n) => n >= 0 && n <= 1);
   return fractions.length ? Math.max(...fractions) : null;
 }
 

@@ -38,11 +38,16 @@ jobs:
       - run: npm install
       # Hits the real upstream, which is the point: a miner that cannot answer
       # is a miner the node will drop.
+      - run: node scripts/check-sources.mjs
+      - run: node agent/test.mjs
       - run: node miner/test.mjs
-      - run: npx playwright install --with-deps chromium
-      # Starts the miner itself and drives it end to end: 33 tests over the happy
-      # paths, every failure path, the rendered page, mobile layout and the
-      # injection surface.
+      # Firefox and WebKit too: the page tests run on all three, and layout,
+      # focus order and CSS support are exactly where engines disagree.
+      - run: npx playwright install --with-deps chromium firefox webkit
+      # Starts the miner itself and drives it end to end: the happy paths and
+      # every failure path against the real upstream and the real chain, the
+      # loading and error states against a stubbed one, and an axe-core
+      # accessibility audit of the page in each state it can be in.
       - run: npx playwright test
       - uses: actions/upload-artifact@v4
         if: failure()

@@ -17,7 +17,7 @@ import { NODE, wallet, ask, askDirect, readRisk } from "./telegraph.mjs";
 import { assessRoute } from "../miner/lib/route.mjs";
 import { flag, has, positionals, reject } from "./args.mjs";
 
-const MINER = process.env.AMANAT_MINER ?? "https://amanat-miner.vercel.app";
+const MINER = process.env.AMANAT_MINER_URL ?? "https://amanat-miner.vercel.app";
 const SCHEMA_MINER = process.env.AMANAT_SCHEMA_MINER ?? "20260821";
 
 /** Resolve one end of the route through the miner's own geocoding. */
