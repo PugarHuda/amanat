@@ -45,6 +45,9 @@ const ATTRIBUTION = Object.freeze({
  */
 const SERIES = ttlCache({ ttlMs: 10 * 60_000, max: 400 });
 
+/** How many points are held, for the health report. */
+export const seriesCacheSize = () => SERIES.size;
+
 /**
  * WMO 4677 present-weather codes, the vocabulary Open-Meteo reports conditions
  * in. Naming the condition is what a person asking about the weather actually

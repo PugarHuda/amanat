@@ -25,6 +25,9 @@ const GEOCODING = "https://geocoding-api.open-meteo.com/v1/search";
  */
 const PLACES = ttlCache({ ttlMs: 6 * 3600_000, max: 600 });
 
+/** How many names are held, for the health report. */
+export const placeCacheSize = () => PLACES.size;
+
 /**
  * Words that look like place names but are not, so a question about the weather
  * does not resolve to a town called Storm. Every one of these is a real

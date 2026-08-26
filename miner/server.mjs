@@ -5,18 +5,18 @@ import { createServer } from "node:http";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { forecast, hoursIn } from "./lib/forecast.mjs";
-import { locate } from "./lib/geocode.mjs";
+import { forecast, hoursIn, seriesCacheSize } from "./lib/forecast.mjs";
+import { locate, placeCacheSize } from "./lib/geocode.mjs";
 import { assessRoute } from "./lib/route.mjs";
 import { bucket, ttlCache } from "./lib/cache.mjs";
 import { drawCard } from "./lib/card.mjs";
+import { book, policies } from "./lib/book.mjs";
 
 /** Where this deployment lives, for the absolute URLs crawlers require. */
 const SITE = process.env.AMANAT_SITE_URL ?? "https://amanat-miner.vercel.app";
 
 /** Rendered cards, keyed on the board they were drawn from. */
 const CARDS = ttlCache({ ttlMs: 30 * 60_000, max: 4 });
-import { book, policies } from "./lib/book.mjs";
 
 /**
  * What one instance will spend on route requests in a minute.
@@ -89,7 +89,43 @@ export const server = createServer(async (req, res) => {
       return res.end(PAGE);
     }
 
-    if (pathname === "/health") return send(res, 200, { status: "ok", miner: "amanat", time: new Date().toISOString() });
+    // Health, with enough in it to act on.
+    //
+    // "ok" alone answers one question — is the process up — and none of the
+    // ones that actually take this miner off the network: whether the upstream
+    // quota is being eaten, whether the board has stopped refreshing, whether
+    // the caches are absorbing anything. The node's own liveness check only
+    // reads `status`, so the rest costs nothing it cares about.
+    if (pathname === "/health") {
+      const board = await fetch(BOARD_URL, { signal: AbortSignal.timeout(4000) })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
+
+      const ageHours = board ? (Date.now() - Date.parse(board.generated_at)) / 3600e3 : null;
+      return send(res, 200, {
+        status: "ok",
+        miner: "amanat",
+        time: new Date().toISOString(),
+        board: board
+          ? {
+              generated_at: board.generated_at,
+              age_hours: Number(ageHours.toFixed(1)),
+              // The schedule runs every twelve hours, so past a day the run has
+              // stopped rather than merely been slow.
+              stale: ageHours > 26,
+              lanes: board.lanes?.length ?? 0,
+            }
+          : { published: false },
+        upstream: {
+          // What one instance has left before it starts refusing route requests.
+          // The forecast endpoint the network scores is never rate limited; this
+          // is the budget that keeps it that way.
+          route_requests_available: Math.floor(routeBudget.available),
+          cached_points: seriesCacheSize(),
+          cached_places: placeCacheSize(),
+        },
+      });
+    }
 
     // The social preview card, drawn from the live board.
     //

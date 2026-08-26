@@ -125,10 +125,12 @@ Telegraph miner:
   "mcpServers": {
     "telegraph": {
       "command": "npx",
-      "args": ["-y", "@telegraphprotocol/telegraph-mcp"],
+      "args": ["-y", "telegraph-protocol-mcp"],
       "env": {
-        "TELEGRAPH_NODE": "https://devnode.telegraphprotocol.com",
-        "EVM_PRIVATE_KEY": "0x..."
+        "TELEGRAPH_NODE_URL": "https://devnode.telegraphprotocol.com",
+        "TELEGRAPH_ENGINE_URL": "https://devnode.telegraphprotocol.com",
+        "TELEGRAPH_DAEMON_URL": "https://devnode.telegraphprotocol.com",
+        "TELEGRAPH_EVM_PRIVATE_KEY": "0x..."
       }
     }
   }
@@ -137,6 +139,20 @@ Telegraph miner:
 
 The key pays the $0.01 per call over x402. Node 20 or newer — the x402 packages
 sign with WebCrypto, which Node 18 does not expose.
+
+This block was wrong until it was run. It named `@telegraphprotocol/telegraph-mcp`,
+which is not a package — npm answers 404 — and two environment variables the
+server does not read. Anyone who copied it got nothing, and we would not have
+known, because documenting a route is not the same as taking it.
+
+What a handshake against the server actually reports:
+
+```
+initialize   {"name":"telegraph","version":"1.0.0"}
+             Found 92 integrations
+tools        188
+             tg_amanat_weather_risk_forecast   <- ours
+```
 
 ## 3. Through the Engine, letting the protocol route
 
