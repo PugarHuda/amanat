@@ -230,7 +230,13 @@ test.describe("the page @ui", () => {
     await expect(page.locator("h1")).toContainText("One reading, one line");
   });
 
-  test("plots live readings against the trigger line", async ({ page }) => {
+  // The gauge is drawn from the published board, so it costs one cached request
+  // rather than five live forecasts per visitor. At a 10 000-a-day upstream
+  // quota, those five were the ceiling on how many people could use the site.
+  test("plots the published lanes against the trigger line", async ({ page }) => {
+    let forecasts = 0;
+    page.on("request", (r) => { if (r.url().includes("/forecast")) forecasts++; });
+
     await page.goto(BASE);
     const readings = page.locator(".reading");
     await expect(readings.first()).toBeVisible({ timeout: 30_000 });
@@ -247,6 +253,14 @@ test.describe("the page @ui", () => {
       const over = (await el.getAttribute("class")).includes("over");
       expect(over, `${risk} marked over=${over}`).toBe(risk >= 0.75);
     }
+
+    // Each column names the lane it came from, and the stamp is the board's own
+    // generation time rather than the moment this page happened to load.
+    for (const label of await page.locator(".reading .place").allTextContents()) {
+      expect(label, "a column must name its lane").toMatch(/\S+→\S+/);
+    }
+    await expect(page.locator("#plotstamp")).toHaveText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC$/);
+    expect(forecasts, "drawing the gauge must not cost an upstream call").toBe(0);
   });
 
   test("checks a coordinate pair and shows the reading", async ({ page }) => {

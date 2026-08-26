@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Amanat — weather cover that pays itself</title>
 <meta name="description" content="A contract that buys a verified storm reading and pays the claim itself. Built on Telegraph Protocol, settled on Base.">
-<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="%23E9EDE6"/><line x1="3" y1="11" x2="29" y2="11" stroke="%23B93F27" stroke-width="3"/><circle cx="16" cy="23" r="4.5" fill="%231E6049"/></svg>'>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="%23E9EDE6"/><line x1="3" y1="11" x2="29" y2="11" stroke="%23AE3A24" stroke-width="3"/><circle cx="16" cy="23" r="4.5" fill="%231E6049"/></svg>'>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:wght@400;500&display=swap">
@@ -213,11 +213,11 @@ footer a{color:var(--muted)}
       Nobody can decline it out of turn.
     </p>
 
-    <div class="gauge" aria-label="Live storm readings against the payout trigger">
+    <div class="gauge" aria-label="Storm risk on the watched shipping lanes, against the payout trigger">
       <div class="gauge-inner">
         <div class="trigger-line" role="presentation"></div>
         <div class="trigger-tag">pays at 0.75</div>
-        <div class="quiet-band">nothing here means nothing is owed</div>
+        <div class="quiet-band">worst hour on each lane · nothing here means nothing is owed</div>
         <div class="plot" id="plot"></div>
       </div>
     </div>
@@ -389,14 +389,6 @@ const TRIGGER = 0.75;
 const PLOT_TOP = 1.0;            // the gauge is drawn from 0 to 1
 const TRIGGER_TOP_PCT = 25;      // the red line sits at 25% from the top => 0.75
 
-const WATCH = [
-  { name: "Cebu",      at: "10.32, 123.89" },
-  { name: "Manila",    at: "14.60, 120.98" },
-  { name: "Hong Kong", at: "22.30, 114.17" },
-  { name: "Jakarta",   at: "-6.20, 106.85" },
-  { name: "Miami",     at: "25.78, -80.19" },
-];
-
 const $ = (id) => document.getElementById(id);
 
 /**
@@ -462,20 +454,38 @@ function drawPlot(rows) {
   }));
 }
 
+/**
+ * The gauge reads the published board, not five live forecasts.
+ *
+ * It used to ask the miner about five stations on every page load. That is five
+ * upstream calls per visitor against a 10 000-a-day quota — about two thousand
+ * visits before the miner stops answering anyone, validators included. The
+ * board is screened on a schedule through Telegraph, so one cached request now
+ * does what five live ones did, and every column has a signal hash behind it
+ * rather than an unverified reading.
+ *
+ * The lanes are the better thing to show anyway: they are what the contract
+ * covers. Five arbitrary cities never were.
+ */
 async function loadPlot() {
-  const rows = [];
-  for (const site of WATCH) {
-    try {
-      const r = await read(site.at);
-      rows.push({ name: site.name, risk: r.risk });
-    } catch {
-      // A reading that did not arrive is not a calm one. Plotting 0 here would
-      // draw a flat, reassuring column for a station that answered nothing.
-      rows.push({ name: site.name, risk: null });
-    }
-    drawPlot(rows);
+  let board;
+  try {
+    const res = await fetch("/api/board");
+    board = await res.json();
+    if (!res.ok) throw new Error(board.error || `board ${res.status}`);
+  } catch (err) {
+    // No columns rather than invented ones. A gauge drawn from nothing is the
+    // same lie as a reading of zero.
+    $("plot").replaceChildren(el("p", { className: "err", text: err.message }));
+    $("plotstamp").textContent = "no board published";
+    return;
   }
-  $("plotstamp").textContent = new Date().toISOString().replace("T", " ").slice(0, 16) + " UTC";
+
+  drawPlot(board.lanes.map((lane) => ({
+    name: lane.name.replace(" → ", "→"),
+    risk: lane.worst ? lane.worst.risk : null,
+  })));
+  $("plotstamp").textContent = board.generated_at.replace("T", " ").slice(0, 16) + " UTC";
 }
 
 function showResult(r) {
