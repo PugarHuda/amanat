@@ -83,8 +83,12 @@ async function main() {
   const workers = Array.from({ length: 8 }, async () => {
     while (queue.length) {
       const m = queue.shift();
-      const yaml = cache[m.yaml_url] ?? await fetchText(yamlUrlToHttp(m.yaml_url));
-      if (yaml) cache[m.yaml_url] = yaml;
+      // Cache the promise, not the result. Reading the cache, awaiting a fetch
+      // and then writing it back leaves a gap in which another worker reads a
+      // miss for the same URL and fetches it a second time — the miners share
+      // gateways, so that is a duplicate round trip to somebody else's IPFS.
+      cache[m.yaml_url] ??= fetchText(yamlUrlToHttp(m.yaml_url));
+      const yaml = await cache[m.yaml_url];
       const onChain = yaml ? topLevelBlock(yaml, "on_chain") : null;
       rows.push({
         id: m.id,

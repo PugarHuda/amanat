@@ -71,8 +71,8 @@ function readPaid(signer, ledger) {
     if (ledger.spent + 0.01 > ledger.budget) throw new Error("run budget reached");
 
     const when = hours === 0 ? "right now" : `in ${hours} hours`;
-    let answer = null;
-    let why = null;
+    let answer;
+    let why;
     try {
       answer = await ask(
         `What is the storm risk at latitude ${lat}, longitude ${lon} ${when}? ` +

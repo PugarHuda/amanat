@@ -11,6 +11,8 @@
   "scripts": {
     "miner": "node miner/server.mjs",
     "test": "node miner/test.mjs && node agent/test.mjs && node scripts/check-sources.mjs && cd scorer && cargo test",
+    "lint": "eslint . && solhint \"onchain/src/**/*.sol\"",
+    "typecheck": "tsc -p jsconfig.json",
     "audit": "node agent/audit-jobable.mjs",
     "build:scorer": "cd scorer && cargo build --release --target wasm32-unknown-unknown",
     "bench": "node scorer/harness.mjs scorer/dist/*.wasm scorer/champions/*.wasm",
@@ -35,7 +37,11 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.62.1",
+    "eslint": "^10.9.1",
+    "globals": "^17.11.0",
+    "solhint": "^6.2.4",
     "typescript": "^7.0.2",
     "yaml": "^2.9.0"
   }

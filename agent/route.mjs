@@ -64,8 +64,8 @@ function readPaid(signer, ledger) {
       `What is the storm risk at latitude ${lat}, longitude ${lon} ${when}? ` +
       `Report wind speed, gusts, precipitation and an overall risk between 0 and 1.`;
 
-    let answer = null;
-    let why = null;
+    let answer;
+    let why;
     try {
       answer = await ask(question, { signer });
       ledger.calls++;

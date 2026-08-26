@@ -51,7 +51,7 @@ function readYaml(text) {
   try {
     doc = parseYaml(text);
   } catch (e) {
-    throw new Error(`the YAML does not parse, so the node will reject it: ${e.message}`);
+    throw new Error(`the YAML does not parse, so the node will reject it: ${e.message}`, { cause: e });
   }
   if (doc === null || typeof doc !== "object") throw new Error("the YAML is not a mapping");
 

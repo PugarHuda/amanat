@@ -320,6 +320,8 @@ test.describe("the page @ui", () => {
     // panel use — with a hostile string. Coordinates are written on-chain by
     // whoever opened the policy, so this is the shape of the real risk, and
     // testing a copy of the logic would prove nothing about the page.
+    // eslint-env browser
+    /* global el */
     const outcome = await page.evaluate(() => {
       window.__xss = false;
       const hostile = '<img src=x onerror="window.__xss=true">';

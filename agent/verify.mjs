@@ -104,10 +104,13 @@ async function main() {
       "are not recoverable from this response, so the commitment cannot be checked\n" +
       "independently. Worth raising — a commitment you cannot re-derive is a promise."
     );
-    process.exitCode = 1;
+    return 1;
   }
+  return 0;
 }
 
 if (process.argv[1] && import.meta.url === (await import("node:url")).pathToFileURL(process.argv[1]).href) {
-  main().catch((e) => { console.error(e.message); process.exit(1); });
+  main()
+    .then((code) => { process.exitCode = code; })
+    .catch((e) => { console.error(e.message); process.exit(1); });
 }

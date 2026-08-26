@@ -18,6 +18,10 @@ const TEXT = /\.(mjs|js|sol|rs|html|yaml|yml|json|md|toml)$/;
 
 // Tab, newline and carriage return are legitimate. Everything else in the C0
 // range is a mistake — most often a mangled escape sequence.
+//
+// The no-control-regex rule exists to catch stray control characters in a
+// pattern. This is the pattern that hunts them, so naming them is the job.
+// eslint-disable-next-line no-control-regex
 const FORBIDDEN = /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g;
 const NAME = {
   "\x08": "backspace (a mangled \\b)",
