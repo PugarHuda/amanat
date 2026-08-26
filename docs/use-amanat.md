@@ -90,7 +90,7 @@ that it currently cannot, which is worth knowing before you rely on it.
 ## 4. From a contract, over ERC-8183
 
 Your contract escrows USDC, opens a job against an intent, and receives the
-answer through a callback. [`onchain/Amanat.sol`](../onchain/Amanat.sol) is a
+answer through a callback. [`onchain/src/Amanat.sol`](../onchain/src/Amanat.sol) is a
 working receiver — `subnetMessage` decodes the reading and settles a claim on it.
 
 ```solidity

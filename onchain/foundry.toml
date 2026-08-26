@@ -1,0 +1,9 @@
+# The contract holds real USDC and had no tests. Foundry was already installed;
+# this is it being used.
+[profile.default]
+src = "src"
+test = "test"
+libs = ["lib"]
+solc = "0.8.36"
+optimizer = true
+optimizer_runs = 200

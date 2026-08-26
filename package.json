@@ -25,7 +25,8 @@
     "deploy": "node --env-file=.env agent/deploy.mjs",
     "policy": "node --env-file=.env agent/policy.mjs",
     "test:e2e": "playwright test",
-    "test:e2e:live": "playwright test --config playwright.config.mjs"
+    "test:e2e:live": "playwright test --config playwright.config.mjs",
+    "build:contract": "node onchain/build.mjs"
   },
   "dependencies": {
     "ethers": "^6.13.0"

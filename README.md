@@ -68,7 +68,7 @@ two shapes at once:
 ```
 
 The sentence is what a text-comparing scorer can grade. The scalars are what
-[`Amanat.sol`](onchain/Amanat.sol) acts on, mapped through `on_chain.fields` in
+[`Amanat.sol`](onchain/src/Amanat.sol) acts on, mapped through `on_chain.fields` in
 [`amanat-miner.yaml`](miner/amanat-miner.yaml). Serving only one of the two is
 why the network currently has the gap it does.
 
@@ -180,7 +180,7 @@ honest "12 millimetres" at 0.66.
 
 ## Track 3 — the application
 
-[`onchain/Amanat.sol`](onchain/Amanat.sol) is a parametric weather cover where
+[`onchain/src/Amanat.sol`](onchain/src/Amanat.sol) is a parametric weather cover where
 **the contract is the customer of the intelligence**, not a front end calling an
 API:
 

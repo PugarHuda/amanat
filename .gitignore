@@ -7,3 +7,5 @@ scorer/champions/*.wasm
 onchain/out/
 test-results/
 playwright-report/
+onchain/lib/
+onchain/cache/

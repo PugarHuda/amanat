@@ -199,6 +199,10 @@ contract Amanat {
 
     /// Release a policy whose answer never arrived, so a silent rail cannot
     /// hold the book hostage.
+    /// @dev `block.timestamp` is validator-influenceable by seconds. Against a
+    ///      24-hour timeout that buys an attacker nothing: the only thing they
+    ///      could do is release a reserve a few seconds early or late, and the
+    ///      reserve returns to the book either way.
     function expire(uint256 policyId) external {
         Policy storage p = policies[policyId];
         if (p.status != Status.Active) revert WrongStatus();
