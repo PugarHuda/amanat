@@ -232,7 +232,7 @@ built-in WebAssembly, so comparing against a champion needs no extra toolchain.
 ## On-chain so far
 
 **The loop closes.** `Amanat.sol` is deployed at
-[`0x1649ce04…Bc6e`](https://sepolia.basescan.org/address/0x1649ce04B8b9D56285a62Afb2b442602EE0bBc6e)
+[`0x51fa7d66…7B3c`](https://sepolia.basescan.org/address/0x51fa7d66af31dE4d94Bd14e0404465fd2D0c7B3c)
 and settles claims with nobody in the loop:
 
 ```
@@ -264,6 +264,13 @@ On job 9 it changed the outcome. The Engine screen for Manila read risk
 came back **0.361**, the value for Null Island, and the contract declined the
 claim. A contract that paid a dollar for a signal acted on a reading of
 somewhere else. Written up in [`docs/bug-report.md`](docs/bug-report.md).
+
+**Previous deployment.** `0x1649ce04B8b9D56285a62Afb2b442602EE0bBc6e` ran the
+same contract before it adopted SafeERC20, and its eleven policies and four
+settled jobs are still readable on Base Sepolia. It was replaced rather than
+left in place because the tests only prove the code in this repo, and a
+deployment running different code from the one under test is the sort of gap
+this project keeps finding in other people's systems.
 
 ### Two things that cost a transaction to learn
 

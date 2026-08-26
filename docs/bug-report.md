@@ -1,7 +1,7 @@
 # Bug report: ERC-8183 job params do not reach the miner
 
 **Miner:** `amanat-weather-risk`, registration 179, id `20260821`
-**Contract:** [`0x1649ce04B8b9D56285a62Afb2b442602EE0bBc6e`](https://sepolia.basescan.org/address/0x1649ce04B8b9D56285a62Afb2b442602EE0bBc6e)
+**Contract:** [`0x51fa7d66af31dE4d94Bd14e0404465fd2D0c7B3c`](https://sepolia.basescan.org/address/0x51fa7d66af31dE4d94Bd14e0404465fd2D0c7B3c)
 **Jobs:** 7, 8, 9 on Base Sepolia
 
 ## What happens
