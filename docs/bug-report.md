@@ -253,3 +253,24 @@ Two changes would remove the whole class:
 The first is what turns a fifteen-minute outage into a one-line fix. Anyone
 generating YAML programmatically will hit this, because flow mappings are what
 a serialiser reaches for and punctuation in a description is normal.
+
+## Update, 26 August: two jobs still sitting in `Funded`
+
+The 3 July announcement said job results are now "automatically delivered and
+recorded directly on-chain" and that "the full cycle from request to on-chain
+settlement is closed and confirmed working end to end". Both jobs we have open
+were created well after that and neither has moved:
+
+| Job | Budget | State | Open for |
+|---|---|---|---|
+| 12 | 1.0 USDC | `Funded` | 11 h |
+| 13 | 1.0 USDC | `Funded` | 2 h |
+
+Jobs 7–11 all reached `Terminal`, so the callback path does work — it worked
+for us four days ago. Something about 12 and 13 is different, and from the
+outside there is no way to tell what: `getJob` exposes a state and nothing
+about why it is stuck, and 2 USDC is escrowed against them meanwhile.
+
+What would make this diagnosable from a contract's side: a reason on the job
+record, or an event when the node picks a job up and when it fails to route
+one. Right now `Funded` covers both "queued" and "abandoned".
