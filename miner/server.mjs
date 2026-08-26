@@ -8,7 +8,16 @@ import { dirname, join } from "node:path";
 import { forecast, hoursIn } from "./lib/forecast.mjs";
 import { locate } from "./lib/geocode.mjs";
 import { assessRoute } from "./lib/route.mjs";
+import { bucket } from "./lib/cache.mjs";
 import { book, policies } from "./lib/book.mjs";
+
+/**
+ * What one instance will spend on route requests in a minute.
+ *
+ * Twenty is far more than a person clicking a form and far less than what it
+ * takes to burn 10 000 upstream calls in a day.
+ */
+const routeBudget = bucket({ perMinute: Number(process.env.AMANAT_ROUTE_PER_MINUTE ?? 20) });
 
 // Where the scheduled agent publishes. An orphan branch, so a data refresh
 // carries no source changes and triggers no build.
@@ -147,6 +156,19 @@ export const server = createServer(async (req, res) => {
     // Storm risk along a route. A shipment is not exposed to the weather at its
     // origin, so each leg is forecast for the hour the cargo reaches it.
     if (pathname === "/api/route") {
+      // A route is the only endpoint that turns one request into many upstream
+      // calls — twelve legs and two geocoded endpoints is twenty — so it is the
+      // only one that can exhaust the day's quota. When that goes, /forecast
+      // goes with it, and /forecast is what the network scores. A convenience
+      // endpoint must never be able to take the miner off the network.
+      if (!routeBudget.take()) {
+        res.writeHead(429, { "Content-Type": "application/json", "Retry-After": "60" });
+        return res.end(JSON.stringify({
+          error: "too many route requests this minute — the upstream quota is shared with /forecast, " +
+            "which the network scores. Try again shortly, or ask about one point at a time.",
+        }));
+      }
+
       const body = req.method === "POST" ? await readJson(req) : {};
       const from = await endpointOf(body.from ?? searchParams.get("from"), "from");
       const to = await endpointOf(body.to ?? searchParams.get("to"), "to");

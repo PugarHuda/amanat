@@ -11,7 +11,19 @@
 // forecast, so a name resolved here and a reading taken there agree about where
 // they are.
 
+import { ttlCache } from "./cache.mjs";
+
 const GEOCODING = "https://geocoding-api.open-meteo.com/v1/search";
+
+/**
+ * Where places are.
+ *
+ * Six hours, because Cebu does not move. locate() tries up to four candidates
+ * per name and a route resolves two ends, so eight lookups can come out of one
+ * route request — and the misses are worth caching as hard as the hits, since
+ * "Will" and "Storm" are asked about far more often than any real place.
+ */
+const PLACES = ttlCache({ ttlMs: 6 * 3600_000, max: 600 });
 
 /**
  * Words that look like place names but are not, so a question about the weather
@@ -84,17 +96,22 @@ export function placeCandidates(text) {
 
 /** Resolve one name. Returns null when the API knows no such place. */
 async function lookup(name) {
-  const url = `${GEOCODING}?name=${encodeURIComponent(name)}&count=1&language=en&format=json`;
-  const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
-  if (!res.ok) throw new Error(`geocoding ${res.status}`);
+  return PLACES.through(name.toLowerCase(), async () => {
+    const url = `${GEOCODING}?name=${encodeURIComponent(name)}&count=1&language=en&format=json`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) throw new Error(`geocoding ${res.status}`);
 
-  const [hit] = (await res.json()).results ?? [];
-  if (!hit) return null;
-  return {
-    lat: hit.latitude,
-    lon: hit.longitude,
-    place: [hit.name, hit.admin1, hit.country].filter(Boolean).join(", "),
-  };
+    const [hit] = (await res.json()).results ?? [];
+    // A miss is cached as hard as a hit. locate() walks up to four candidates
+    // per question and most of them are words like "Will" and "Storm" that will
+    // never be places — those repeat far more often than any real name does.
+    if (!hit) return null;
+    return {
+      lat: hit.latitude,
+      lon: hit.longitude,
+      place: [hit.name, hit.admin1, hit.country].filter(Boolean).join(", "),
+    };
+  });
 }
 
 /**

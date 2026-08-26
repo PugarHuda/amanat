@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { riskScore, summarise, forecast, hoursIn, condition } from "./lib/forecast.mjs";
 import { placeCandidates, coordinatesIn } from "./lib/geocode.mjs";
 import { greatCircleKm, waypoints, assessRoute } from "./lib/route.mjs";
+import { ttlCache, bucket } from "./lib/cache.mjs";
 import { server } from "./server.mjs";
 
 // risk: each driver alone can reach the ceiling, and the worst one wins.
@@ -229,6 +230,108 @@ assert.ok(spiky.verdict.startsWith("Severe"));
   }
 }
 console.log("routes assessed leg by leg");
+
+// ── the cache and the budget that keep /forecast alive ──────────────────────
+// One route request can ask for twelve legs and geocode two endpoints: twenty
+// upstream calls out of one HTTP request, against a shared 10 000-a-day quota.
+// When that quota goes, /forecast goes with it, and /forecast is what the
+// network scores. These two are what stand between a convenience endpoint and
+// the miner falling off the network.
+{
+  const c = ttlCache({ ttlMs: 60, max: 3 });
+
+  c.set("a", 1);
+  assert.equal(c.get("a"), 1);
+  await new Promise((r) => setTimeout(r, 90));
+  assert.equal(c.get("a"), undefined, "an expired entry is gone, not stale");
+
+  for (const k of ["a", "b", "c", "d"]) c.set(k, k);
+  assert.equal(c.size, 3, "bounded: an unbounded cache keyed on user input is a memory leak");
+  assert.equal(c.get("a"), undefined, "the oldest goes first");
+
+  // Reading a key moves it to the back of the eviction queue, so a hot key is
+  // not thrown away for being old.
+  c.get("b");
+  c.set("e", "e");
+  assert.equal(c.get("b"), "b", "a key in use must survive an eviction");
+
+  // The promise is cached, not the result. Otherwise every concurrent caller
+  // misses in the window between the miss and the write — a route asking about
+  // eight legs at once would send eight identical upstream requests.
+  let calls = 0;
+  const slow = async () => { calls++; await new Promise((r) => setTimeout(r, 30)); return "v"; };
+  const [x, y, z] = await Promise.all([c.through("k", slow), c.through("k", slow), c.through("k", slow)]);
+  assert.equal(calls, 1, "three concurrent callers must share one upstream request");
+  assert.ok(x === y && y === z);
+
+  // A failure must not be cached as an answer, or one bad minute poisons the
+  // next ten.
+  let attempts = 0;
+  const failing = async () => { attempts++; throw new Error("upstream down"); };
+  await assert.rejects(() => c.through("f", failing));
+  await assert.rejects(() => c.through("f", failing));
+  assert.equal(attempts, 2, "a rejected fetch is evicted, so the next caller retries");
+
+  // null is a real answer — "this word is not a place" — and caching it is the
+  // point: locate() walks candidates like "Will" and "Storm" far more often
+  // than it walks real names.
+  const nulls = ttlCache({ ttlMs: 1000 });
+  let produced = 0;
+  const none = async () => { produced++; return null; };
+  assert.equal(await nulls.through("will", none), null);
+  assert.equal(await nulls.through("will", none), null);
+  assert.equal(produced, 1, "a cached null must not be re-fetched as if it were a miss");
+}
+
+{
+  const b = bucket({ perMinute: 5 });
+  let allowed = 0;
+  for (let i = 0; i < 8; i++) if (b.take()) allowed++;
+  assert.equal(allowed, 5, "a burst is capped at the bucket size");
+  assert.equal(b.take(), false);
+  assert.ok(b.available < 1);
+
+  // Tokens refill continuously rather than resetting on a window boundary, so
+  // a caller who waits is served rather than punished for arriving at :59.
+  const slowRefill = bucket({ perMinute: 600 }); // 10 a second
+  for (let i = 0; i < 600; i++) slowRefill.take();
+  assert.equal(slowRefill.take(), false, "drained");
+  await new Promise((r) => setTimeout(r, 250));
+  assert.equal(slowRefill.take(), true, "and refills without a reset");
+}
+console.log("cache and budget hold");
+
+// The route endpoint refuses rather than draining the quota, and the endpoint
+// the network scores keeps answering while it does.
+{
+  const burst = await Promise.all(Array.from({ length: 30 }, () =>
+    fetch(`http://127.0.0.1:${port2}/api/route`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ from: "Cebu", to: "Manila", max_legs: 2 }),
+    }).then((r) => r.status)));
+
+  const refused = burst.filter((s) => s === 429).length;
+  assert.ok(refused > 0, "a 30-request burst must not all get through");
+  assert.ok(burst.filter((s) => s === 200).length > 0, "and honest traffic still gets served");
+
+  const limited = await fetch(`http://127.0.0.1:${port2}/api/route`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ from: "Cebu", to: "Manila" }),
+  });
+  if (limited.status === 429) {
+    assert.equal(limited.headers.get("retry-after"), "60", "a refusal must say when to come back");
+    assert.match((await limited.json()).error, /quota|forecast/i, "and why");
+  }
+
+  // The whole point: the scored endpoint is unaffected.
+  const scored = await fetch(`http://127.0.0.1:${port2}/forecast`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ lat: 10.32, lon: 123.89 }),
+  });
+  assert.equal(scored.status, 200, "/forecast must survive a flood aimed at /api/route");
+}
+console.log("a route flood cannot take the scored endpoint down");
+
 
 
 server.close();

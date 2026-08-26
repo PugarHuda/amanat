@@ -6,7 +6,19 @@
 // server and the serverless handlers are two thin entry points over one
 // implementation, instead of two implementations.
 
+import { ttlCache } from "./cache.mjs";
+
 const OPEN_METEO = "https://api.open-meteo.com/v1/forecast";
+
+/**
+ * The hourly series per point.
+ *
+ * Ten minutes: Open-Meteo publishes on the hour, so a shorter window buys
+ * nothing and a longer one risks serving the previous hour after a boundary.
+ * The hour index is recomputed on every read, so a cached series still answers
+ * for the right hour right up to expiry.
+ */
+const SERIES = ttlCache({ ttlMs: 10 * 60_000, max: 400 });
 
 /**
  * WMO 4677 present-weather codes, the vocabulary Open-Meteo reports conditions
@@ -107,12 +119,23 @@ export async function forecast({ lat, lon, hours = 0, place }) {
   if (!Number.isFinite(lon) || lon < -180 || lon > 180) throw new RangeError("lon must be between -180 and 180");
   if (!Number.isInteger(hours) || hours < 0 || hours > 168) throw new RangeError("hours must be an integer 0..168");
 
-  const url = `${OPEN_METEO}?latitude=${lat}&longitude=${lon}` +
-    `&hourly=temperature_2m,wind_speed_10m,wind_gusts_10m,precipitation,weather_code` +
-    `&daily=temperature_2m_max,temperature_2m_min&forecast_days=8&timezone=UTC`;
-  const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
-  if (!res.ok) throw new Error(`open-meteo ${res.status}`);
-  const d = await res.json();
+  // One upstream call carries eight days of hourly readings, so the whole
+  // series is cached per point rather than per (point, hour). A route asking
+  // about the same place at hour 0 and hour 15 then costs one call, not two,
+  // and a second visitor asking about anywhere already looked at costs none.
+  //
+  // Rounded to four decimals — about eleven metres. Two callers naming the same
+  // place to more precision than that are asking the same question, and giving
+  // each of them their own cache entry is how a cache becomes a memory leak.
+  const key = `${lat.toFixed(4)},${lon.toFixed(4)}`;
+  const d = await SERIES.through(key, async () => {
+    const url = `${OPEN_METEO}?latitude=${lat}&longitude=${lon}` +
+      `&hourly=temperature_2m,wind_speed_10m,wind_gusts_10m,precipitation,weather_code` +
+      `&daily=temperature_2m_max,temperature_2m_min&forecast_days=8&timezone=UTC`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+    if (!res.ok) throw new Error(`open-meteo ${res.status}`);
+    return res.json();
+  });
 
   // Open-Meteo indexes hourly from 00:00 UTC today, so `hours` has to be
   // measured from the current hour, not from the start of the array.
