@@ -12,3 +12,4 @@ onchain/cache/
 
 .vercel
 .env*
+board.json

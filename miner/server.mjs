@@ -13,6 +13,11 @@ import { book, policies } from "./lib/book.mjs";
 // Callers name the question field differently and the protocol does not fix
 // one. Accepting the whole set costs a lookup and turns "unsupported request"
 // into an answer.
+// Where the scheduled agent publishes. An orphan branch, so a data refresh
+// carries no source changes and triggers no build.
+const BOARD_URL = process.env.AMANAT_BOARD_URL
+  ?? "https://raw.githubusercontent.com/PugarHuda/amanat/board/board.json";
+
 const QUESTION_FIELDS = ["question", "q", "query", "prompt", "text", "input", "place", "location", "city"];
 
 /**
@@ -115,6 +120,30 @@ export const server = createServer(async (req, res) => {
       return send(res, 200, await forecast({ lat, lon, hours, place }));
     }
 
+    // The storm board, as the scheduled agent last published it.
+    //
+    // Fetched from the branch rather than read off disk: the file is written by
+    // a workflow every twelve hours, and a deployment bundles whatever existed
+    // at build time. Reading it here means the board is current without a
+    // redeploy, which matters more than it sounds — the free tier allows a
+    // hundred deployments a day, and a data refresh must never cost one.
+    if (pathname === "/api/board") {
+      const upstream = await fetch(BOARD_URL, { signal: AbortSignal.timeout(8000) });
+      if (upstream.status === 404) {
+        return send(res, 503, { error: "the board has not been published yet — the schedule writes it every 12 hours" });
+      }
+      if (!upstream.ok) throw new Error(`board ${upstream.status}`);
+
+      const board = await upstream.json();
+      res.writeHead(200, {
+        "Content-Type": "application/json",
+        // Half the publish interval: fresh enough to be current, long enough
+        // that a busy page does not hammer the branch.
+        "Cache-Control": "public, max-age=1800",
+      });
+      return res.end(JSON.stringify(board));
+    }
+
     // Storm risk along a route. A shipment is not exposed to the weather at its
     // origin, so each leg is forecast for the hour the cargo reaches it.
     if (pathname === "/api/route") {
@@ -133,7 +162,7 @@ export const server = createServer(async (req, res) => {
       }));
     }
 
-    send(res, 404, { error: "not found", endpoints: ["/forecast", "/api/route", "/health"] });
+    send(res, 404, { error: "not found", endpoints: ["/forecast", "/api/route", "/api/board", "/health"] });
   } catch (e) {
     // A validation mistake is the caller's; anything else is ours. Both are
     // real HTTP errors so Telegraph does not charge for them or store a signal.

@@ -1,0 +1,72 @@
+name: storm board
+
+# Screen the shipping lanes through Telegraph and publish the result.
+#
+# The board is committed to its own `board` branch, never to `main`. That is
+# deliberate: a data commit on main would trigger a Vercel build for every
+# refresh, and the free tier allows a hundred deployments a day — a schedule
+# that quietly eats them would take the miner offline for the worst possible
+# reason. The miner serves this file by fetching the branch, so the data can
+# change as often as it likes without a single redeploy.
+
+on:
+  schedule:
+    # Every twelve hours. At five lanes and three legs that is 15 paid calls a
+    # run, about $0.15, so roughly $0.30 a day — the cadence is a budget
+    # decision as much as a freshness one.
+    - cron: "0 */12 * * *"
+  workflow_dispatch:
+    inputs:
+      budget:
+        description: "Hard spend cap for this run, in USD"
+        default: "0.35"
+      legs:
+        description: "Waypoints per lane (2-12)"
+        default: "3"
+
+concurrency:
+  # Two runs screening the same lanes would double the spend and race on the
+  # branch. The later one waits; it does not get cancelled, because a cancelled
+  # run may already have paid for calls it never published.
+  group: storm-board
+  cancel-in-progress: false
+
+jobs:
+  screen:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - run: npm ci
+
+      - name: Screen the lanes
+        env:
+          AGENT_PRIVATE_KEY: ${{ secrets.AGENT_PRIVATE_KEY }}
+          TELEGRAPH_NODE: https://devnode.telegraphprotocol.com
+          BASE_SEPOLIA_RPC: https://base-sepolia-rpc.publicnode.com
+          TELEGRAPH_DIAMOND: "0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8"
+          USDC: "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+          AMANAT_MINER_URL: https://amanat-miner.vercel.app
+        run: |
+          node agent/board.mjs \
+            --legs "${{ inputs.legs || '3' }}" \
+            --budget "${{ inputs.budget || '0.35' }}"
+
+      - name: Publish to the board branch
+        run: |
+          git config user.name "amanat-board"
+          git config user.email "board@amanat.invalid"
+
+          # An orphan branch holding one file: no history to grow, nothing to
+          # merge, and no path by which a data refresh can touch the source.
+          git checkout --orphan board-tmp
+          git rm -rf --cached . >/dev/null
+          git add -f board.json
+          git commit -m "board $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push --force origin board-tmp:board
