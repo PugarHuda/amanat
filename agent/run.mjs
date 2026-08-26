@@ -16,7 +16,7 @@
 import { ethers } from "ethers";
 import { readFile } from "node:fs/promises";
 import {
-  NODE, wallet, provider, diamond, usdc, ask, intentId, waitForJob,
+  NODE, wallet, provider, diamond, usdc, ask, intentId, waitForJob, recentSignals,
 } from "./telegraph.mjs";
 
 const ADDRESS = process.env.AMANAT_CONTRACT;
@@ -53,11 +53,38 @@ async function openPolicies(book) {
   return out;
 }
 
+/** Pull a risk out of an answer whose shape is not ours to assume. */
+function readRisk(result) {
+  const direct = result?.risk;
+  if (typeof direct === "number") return direct;
+  const fractions = [...JSON.stringify(result ?? {}).matchAll(/0\.\d+/g)].map((m) => Number(m[0]));
+  return fractions.length ? Math.max(...fractions) : null;
+}
+
+/**
+ * The free rail, tried before any paid one.
+ *
+ * The Daemon answers its own questions on a schedule whether or not anyone is
+ * asking, and those answers cost nothing to read. When one of them is recent and
+ * on an intent we care about, it is worth knowing before spending a cent — not
+ * because it is about our exact point, but because a network that has just seen
+ * no storm activity at all is a network we do not need to interrogate twice.
+ *
+ * Returns the signals rather than a verdict: this rail informs the pass, it does
+ * not replace it.
+ */
+async function freeContext(intents) {
+  try {
+    return await recentSignals({ intents, maxAgeMinutes: 180, limit: 60 });
+  } catch {
+    return [];
+  }
+}
+
 /**
  * Ask the network what the weather is at a point, and read a risk out of the
  * answer. The miner is whichever one the Engine routes to, so the shape of the
- * reply is not ours to assume — pull a number if one is there, and say so when
- * there is not.
+ * reply is not ours to assume.
  */
 async function screen(policy, signer) {
   const answer = await ask(

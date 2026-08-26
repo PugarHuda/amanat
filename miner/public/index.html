@@ -355,6 +355,17 @@ const WATCH = [
 
 const $ = (id) => document.getElementById(id);
 
+/**
+ * Escape anything that came from outside this file before it touches innerHTML.
+ *
+ * The ledger renders strings written on-chain by whoever opened the policy, and
+ * the result panel renders a sentence built by a miner. Neither is ours, so
+ * neither goes into markup unescaped — a coordinate is a string, and a string
+ * can be a <script> tag.
+ */
+const esc = (v) => String(v).replace(/[&<>"']/g, (c) =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
 async function read(lat, lon) {
   const res = await fetch("/forecast", {
     method: "POST",
@@ -381,7 +392,7 @@ function drawPlot(rows) {
       <div class="val">${r.risk.toFixed(3)}</div>
       <div class="dot"></div>
       <div class="stem" style="height:${pct}%"></div>
-      <div class="place">${r.name}</div>
+      <div class="place">${esc(r.name)}</div>
     </div>`;
   }).join("");
 }
@@ -409,13 +420,13 @@ function showResult(lat, lon, r) {
       <span class="num">${r.risk.toFixed(3)}</span>
       <span>${over ? "the contract pays this claim" : "below the line — no payout"}</span>
     </div>
-    <p class="summary">${r.summary}</p>
+    <p class="summary">${esc(r.summary)}</p>
     <div class="figures">
-      <div>temperature<b>${r.temp_c.toFixed(1)} °C</b></div>
-      <div>wind<b>${r.wind_kmh.toFixed(1)} km/h</b></div>
-      <div>gusts<b>${r.gust_kmh.toFixed(1)} km/h</b></div>
-      <div>precipitation<b>${r.precip_mm.toFixed(1)} mm</b></div>
-      <div>valid at<b>${r.valid_at}</b></div>
+      <div>temperature<b>${esc(Number(r.temp_c).toFixed(1))} °C</b></div>
+      <div>wind<b>${esc(Number(r.wind_kmh).toFixed(1))} km/h</b></div>
+      <div>gusts<b>${esc(Number(r.gust_kmh).toFixed(1))} km/h</b></div>
+      <div>precipitation<b>${esc(Number(r.precip_mm).toFixed(1))} mm</b></div>
+      <div>valid at<b>${esc(r.valid_at)}</b></div>
     </div>`;
 }
 
@@ -430,7 +441,7 @@ $("form").addEventListener("submit", async (e) => {
   } catch (err) {
     const el = $("result");
     el.className = "result shown";
-    el.innerHTML = `<p class="err">${err.message}</p>`;
+    el.innerHTML = `<p class="err">${esc(err.message)}</p>`;
   } finally {
     go.disabled = false;
     go.textContent = "Read the risk";
@@ -455,12 +466,12 @@ fetch("/api/policies")
       return;
     }
     $("ledgerbody").innerHTML = rows.map((p) => `<tr>
-      <td class="m">${p.id}</td>
-      <td class="m">${p.lat}, ${p.lon}</td>
-      <td class="m">${p.payout}</td>
-      <td class="m">${p.jobId ? p.jobId : "—"}</td>
-      <td class="m">${p.jobId ? p.risk.toFixed(3) : "—"}</td>
-      <td><span class="tag ${STATUS_TAG[p.status] ?? ""}">${p.status.toLowerCase()}</span></td>
+      <td class="m">${esc(p.id)}</td>
+      <td class="m">${esc(p.lat)}, ${esc(p.lon)}</td>
+      <td class="m">${esc(p.payout)}</td>
+      <td class="m">${p.jobId ? esc(p.jobId) : "—"}</td>
+      <td class="m">${p.jobId ? esc(Number(p.risk).toFixed(3)) : "—"}</td>
+      <td><span class="tag ${STATUS_TAG[p.status] ?? ""}">${esc(String(p.status).toLowerCase())}</span></td>
     </tr>`).join("");
   })
   .catch(() => {
@@ -471,7 +482,7 @@ fetch("/api/book")
   .then((r) => r.json())
   .then((b) => {
     $("bookstat").textContent =
-      `${b.policies} policies written · ${b.jobBudget} USDC left for jobs`;
+      `${esc(b.policies)} policies written · ${esc(b.jobBudget)} USDC left for jobs`;
   })
   .catch(() => { $("bookstat").textContent = "book unavailable"; });
 
