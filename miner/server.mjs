@@ -7,12 +7,34 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { forecast, hoursIn } from "./lib/forecast.mjs";
 import { locate } from "./lib/geocode.mjs";
+import { assessRoute } from "./lib/route.mjs";
 import { book, policies } from "./lib/book.mjs";
 
 // Callers name the question field differently and the protocol does not fix
 // one. Accepting the whole set costs a lookup and turns "unsupported request"
 // into an answer.
 const QUESTION_FIELDS = ["question", "q", "query", "prompt", "text", "input", "place", "location", "city"];
+
+/**
+ * One end of a route: a place name, "lat, lon", or { lat, lon }.
+ *
+ * Named so the error says which end failed. "no place found" is a much worse
+ * message when the caller gave two places and one of them was fine.
+ */
+async function endpointOf(spec, which) {
+  if (spec && typeof spec === "object" && spec.lat !== undefined && spec.lon !== undefined) {
+    const lat = Number(spec.lat);
+    const lon = Number(spec.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new RangeError(`${which} has non-numeric coordinates`);
+    return { lat, lon, place: `${lat.toFixed(2)}, ${lon.toFixed(2)}` };
+  }
+  if (typeof spec !== "string" || spec.trim() === "") {
+    throw new RangeError(`${which} is required — a place name, "lat, lon", or {lat, lon}`);
+  }
+  const hit = await locate(spec);
+  if (!hit) throw new RangeError(`no place found for ${which}: "${spec.slice(0, 80)}"`);
+  return hit;
+}
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 // One file, read once. The page is static and the server has no build step.
@@ -93,7 +115,25 @@ export const server = createServer(async (req, res) => {
       return send(res, 200, await forecast({ lat, lon, hours, place }));
     }
 
-    send(res, 404, { error: "not found", endpoints: ["/forecast", "/health"] });
+    // Storm risk along a route. A shipment is not exposed to the weather at its
+    // origin, so each leg is forecast for the hour the cargo reaches it.
+    if (pathname === "/api/route") {
+      const body = req.method === "POST" ? await readJson(req) : {};
+      const from = await endpointOf(body.from ?? searchParams.get("from"), "from");
+      const to = await endpointOf(body.to ?? searchParams.get("to"), "to");
+
+      const speedKmh = Number(body.speed_kmh ?? searchParams.get("speed_kmh") ?? 37);
+      // Each leg costs an upstream call, and Open-Meteo's free tier is what
+      // pays for it. The ceiling is a real limit, not a round number.
+      const max = Math.min(12, Math.max(2, Number(body.max_legs ?? searchParams.get("max_legs") ?? 8)));
+
+      return send(res, 200, await assessRoute({
+        from, to, speedKmh, max,
+        read: ({ lat, lon, hours }) => forecast({ lat, lon, hours }),
+      }));
+    }
+
+    send(res, 404, { error: "not found", endpoints: ["/forecast", "/api/route", "/health"] });
   } catch (e) {
     // A validation mistake is the caller's; anything else is ours. Both are
     // real HTTP errors so Telegraph does not charge for them or store a signal.

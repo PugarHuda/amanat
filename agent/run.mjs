@@ -16,7 +16,7 @@
 import { ethers } from "ethers";
 import { readFile } from "node:fs/promises";
 import {
-  NODE, wallet, provider, diamond, usdc, ask, askDirect, intentId, waitForJob, recentSignals,
+  NODE, wallet, provider, diamond, usdc, ask, askDirect, intentId, waitForJob, recentSignals, readRisk,
   POLICY_STATUS,
 } from "./telegraph.mjs";
 import { flag, has, reject } from "./args.mjs";
@@ -53,24 +53,6 @@ async function openPolicies(book) {
     if (Number(p.status) === 1) out.push({ id, lat: p.lat, lon: p.lon, payout: p.payout });
   }
   return out;
-}
-
-/**
- * Pull a risk out of an answer whose shape is not ours to assume.
- *
- * The Engine routes probabilistically, so a screening call can land on any
- * miner serving the intent and come back as a declared `risk` field, as a
- * sentence, or as something else. A declared number is taken as given;
- * otherwise the largest figure between 0 and 1 the reply states is the best
- * available reading of it. Returns null when it states none, which the caller
- * must treat as "no reading" and never as zero.
- */
-function readRisk(result) {
-  const direct = result?.risk;
-  if (typeof direct === "number" && direct >= 0 && direct <= 1) return direct;
-
-  const fractions = [...JSON.stringify(result ?? {}).matchAll(/0.d+/g)].map((m) => Number(m[0]));
-  return fractions.length ? Math.max(...fractions) : null;
 }
 
 /**

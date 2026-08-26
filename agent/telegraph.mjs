@@ -186,6 +186,24 @@ export async function recentSignals({ intents = [], maxAgeMinutes = 240, limit =
     }));
 }
 
+/**
+ * Pull a risk out of an answer whose shape is not ours to assume.
+ *
+ * The Engine routes probabilistically, so a question can land on any miner
+ * serving the intent and come back as a declared `risk` field, as a sentence,
+ * or as something else. A declared number in range is taken as given;
+ * otherwise the largest figure between 0 and 1 the reply states is the best
+ * available reading of it. Returns null when it states none — which callers
+ * must treat as "no reading", never as zero.
+ */
+export function readRisk(result) {
+  const direct = result?.risk;
+  if (typeof direct === "number" && direct >= 0 && direct <= 1) return direct;
+
+  const fractions = [...JSON.stringify(result ?? {}).matchAll(/0.d+/g)].map((m) => Number(m[0]));
+  return fractions.length ? Math.max(...fractions) : null;
+}
+
 /** The settlement header is base64 JSON: who paid, and the transaction that did it. */
 function decodeSettlement(header) {
   if (!header) return null;

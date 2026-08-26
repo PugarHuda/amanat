@@ -3,6 +3,7 @@
 import assert from "node:assert/strict";
 import { riskScore, summarise, forecast, hoursIn, condition } from "./lib/forecast.mjs";
 import { placeCandidates, coordinatesIn } from "./lib/geocode.mjs";
+import { greatCircleKm, waypoints, assessRoute } from "./lib/route.mjs";
 import { server } from "./server.mjs";
 
 // risk: each driver alone can reach the ceiling, and the worst one wins.
@@ -150,5 +151,84 @@ console.log("both routes name the point identically");
   assert.equal(condition(4242), null, "an unknown code names nothing rather than guessing");
 }
 console.log("condition and daily range reported");
+
+// ── routes ──────────────────────────────────────────────────────────────────
+const CEBU = { lat: 10.32, lon: 123.89 };
+const MANILA = { lat: 14.60, lon: 120.98 };
+const ROTTERDAM = { lat: 51.92, lon: 4.48 };
+
+// Known distances, to about a percent.
+assert.ok(Math.abs(greatCircleKm(CEBU, MANILA) - 571) < 12, String(greatCircleKm(CEBU, MANILA)));
+assert.ok(Math.abs(greatCircleKm(CEBU, ROTTERDAM) - 11012) < 120);
+assert.equal(greatCircleKm(CEBU, CEBU), 0);
+
+// Endpoints are included exactly, and the samples run in order.
+const w = waypoints(CEBU, MANILA, { max: 4 });
+assert.equal(w.length, 4);
+assert.ok(Math.abs(w[0].lat - CEBU.lat) < 0.05 && Math.abs(w[3].lat - MANILA.lat) < 0.05);
+assert.equal(w[0].km_from_start, 0);
+for (let i = 1; i < w.length; i++) assert.ok(w[i].km_from_start > w[i - 1].km_from_start);
+
+// The sphere is the point. A linear average puts the Cebu-Rotterdam midpoint in
+// Afghanistan; the great circle puts it in the Altai, nearly 2000 km away.
+const mid = waypoints(CEBU, ROTTERDAM, { max: 3 })[1];
+const naive = { lat: (CEBU.lat + ROTTERDAM.lat) / 2, lon: (CEBU.lon + ROTTERDAM.lon) / 2 };
+assert.ok(greatCircleKm(mid, naive) > 1000, "great circle must not be a linear average: " + JSON.stringify(mid));
+
+// Coincident endpoints have no bearing to interpolate along.
+assert.equal(waypoints(CEBU, CEBU).length, 1);
+await assert.rejects(() => assessRoute({ from: CEBU, to: MANILA, speedKmh: 0, read: async () => ({}) }), RangeError);
+
+// A leg past the forecast horizon is reported as such, never clamped to hour
+// 168 and served as a reading of next Tuesday.
+const far = await assessRoute({
+  from: CEBU, to: ROTTERDAM, speedKmh: 37, max: 4,
+  read: async ({ hours }) => { assert.ok(hours <= 168, "must not read beyond the horizon: " + hours); return { risk: 0.1 }; },
+});
+assert.ok(far.legs.some((l) => l.beyond_horizon), "a 297-hour route must have legs beyond the horizon");
+assert.ok(far.legs.filter((l) => l.beyond_horizon).every((l) => l.risk === null));
+assert.ok(far.unread > 0);
+
+// A leg that could not be read is not a calm leg.
+const broken = await assessRoute({
+  from: CEBU, to: MANILA, speedKmh: 37, max: 3,
+  read: async ({ hours }) => { if (hours > 0) throw new Error("upstream down"); return { risk: 0.9 }; },
+});
+assert.equal(broken.unread, 2);
+assert.equal(broken.worst.risk, 0.9, "the worst leg is the worst READ leg");
+assert.ok(broken.verdict.includes("2 of 3 legs could not be read"));
+
+// The verdict is about the worst point, not the average: one severe hour in an
+// otherwise calm crossing is the hour the cargo has to survive.
+const spiky = await assessRoute({
+  from: CEBU, to: MANILA, speedKmh: 37, max: 3,
+  read: async ({ hours }) => ({ risk: hours === 8 ? 0.88 : 0.01 }),
+});
+assert.equal(spiky.breach, true, "one severe leg breaches the whole route");
+assert.ok(spiky.verdict.startsWith("Severe"));
+
+// Live, through the miner: the forecast hour moves with the cargo.
+{
+  const live = await fetch("http://127.0.0.1:" + port2 + "/api/route", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ from: "Cebu", to: "Manila", speed_kmh: 37, max_legs: 4 }),
+  });
+  assert.equal(live.status, 200);
+  const lr = await live.json();
+  assert.equal(lr.legs.length, 4);
+  assert.equal(lr.legs[0].eta_hours, 0);
+  assert.ok(lr.legs[3].eta_hours > 0, "later legs are forecast later");
+  for (const leg of lr.legs) assert.equal(typeof leg.risk, "number", "every leg of a short route should read");
+  assert.ok(lr.verdict.length > 20);
+
+  for (const bad of [{}, { from: "Cebu" }, { from: "Cebu", to: "zzzqqq" }]) {
+    const r = await fetch("http://127.0.0.1:" + port2 + "/api/route", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(bad),
+    });
+    assert.equal(r.status, 400, "route must refuse " + JSON.stringify(bad));
+  }
+}
+console.log("routes assessed leg by leg");
+
 
 server.close();

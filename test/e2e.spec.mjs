@@ -385,6 +385,89 @@ test.describe("the page", () => {
   });
 });
 
+test.describe("routes", () => {
+  // Cargo is not exposed to the weather at the port it left. Each leg is
+  // forecast for the hour the shipment reaches it, and the verdict is the worst
+  // hour on the way rather than an average that hides it.
+  test("forecasts each leg for the hour the cargo arrives", async ({ request }) => {
+    const res = await request.post(`${BASE}/api/route`, { data: { from: "Cebu", to: "Manila", speed_kmh: 37, max_legs: 4 } });
+    expect(res.status(), await res.text()).toBe(200);
+    const r = await res.json();
+
+    expect(r.legs).toHaveLength(4);
+    expect(r.legs[0].eta_hours).toBe(0);
+    expect(r.legs[3].eta_hours).toBeGreaterThan(0);
+    expect(r.distance_km).toBeGreaterThan(400);
+    expect(r.distance_km).toBeLessThan(750);
+
+    for (let i = 1; i < r.legs.length; i++) {
+      expect(r.legs[i].km_from_start).toBeGreaterThan(r.legs[i - 1].km_from_start);
+      expect(r.legs[i].eta_hours).toBeGreaterThanOrEqual(r.legs[i - 1].eta_hours);
+    }
+    // Each leg is forecast for a different hour, so the timestamps must differ.
+    // If they were all equal the route would be a weather report, not a risk
+    // assessment, and the whole feature would be decoration.
+    const stamps = new Set(r.legs.map((l) => l.valid_at));
+    expect(stamps.size, "legs must not all be forecast for the same hour").toBeGreaterThan(1);
+
+    expect(r.worst.risk).toBe(Math.max(...r.legs.map((l) => l.risk)));
+    expect(r.breach).toBe(r.worst.risk >= 0.75);
+  });
+
+  test("a slower vehicle meets later weather", async ({ request }) => {
+    const fast = await request.post(`${BASE}/api/route`, { data: { from: "Cebu", to: "Manila", speed_kmh: 80, max_legs: 3 } });
+    const slow = await request.post(`${BASE}/api/route`, { data: { from: "Cebu", to: "Manila", speed_kmh: 20, max_legs: 3 } });
+    const f = await fast.json();
+    const s = await slow.json();
+    expect(s.duration_hours).toBeGreaterThan(f.duration_hours);
+    expect(s.legs[2].eta_hours).toBeGreaterThan(f.legs[2].eta_hours);
+  });
+
+  test("reports a leg beyond the forecast horizon instead of clamping it", async ({ request }) => {
+    const res = await request.post(`${BASE}/api/route`, { data: { from: "Cebu", to: "Rotterdam", speed_kmh: 37, max_legs: 5 } });
+    expect(res.status()).toBe(200);
+    const r = await res.json();
+    expect(r.duration_hours).toBeGreaterThan(168);
+
+    const far = r.legs.filter((l) => l.beyond_horizon);
+    expect(far.length).toBeGreaterThan(0);
+    for (const leg of far) expect(leg.risk).toBeNull();
+    expect(r.unread).toBeGreaterThan(0);
+  });
+
+  for (const [name, data, pattern] of [
+    ["an empty request", {}, /from is required/],
+    ["a route with no destination", { from: "Cebu" }, /to is required/],
+    ["a destination that is nowhere", { from: "Cebu", to: "zzzqqq" }, /no place found for to/],
+    ["an origin that is nowhere", { from: "zzzqqq", to: "Cebu" }, /no place found for from/],
+    ["a stationary vehicle", { from: "Cebu", to: "Manila", speed_kmh: 0 }, /speed_kmh must be/],
+  ]) {
+    test(`refuses ${name}`, async ({ request }) => {
+      const res = await request.post(`${BASE}/api/route`, { data });
+      expect(res.status()).toBe(400);
+      expect((await res.json()).error).toMatch(pattern);
+    });
+  }
+
+  test("the page draws the route leg by leg", async ({ page }) => {
+    await page.goto(BASE);
+    await page.click('#routepresets button[data-from="Cebu"]');
+    await expect(page.locator("#routeresult .leg").first()).toBeVisible({ timeout: 45_000 });
+
+    expect(await page.locator("#routeresult .leg").count()).toBeGreaterThan(2);
+    await expect(page.locator("#routeresult .verdict .num")).toHaveText(/^\d\.\d{3}$/);
+    await expect(page.locator("#routeresult .figures")).toContainText("distance");
+  });
+
+  test("says so when a route names nowhere, rather than drawing an empty one", async ({ page }) => {
+    await page.goto(BASE);
+    await page.fill("#routeto", "zzzqqq");
+    await page.click("#routego");
+    await expect(page.locator("#routeresult .err")).toContainText("no place found", { timeout: 45_000 });
+    await expect(page.locator("#routego")).toBeEnabled();
+  });
+});
+
 test.describe("the registration YAML", () => {
   // Registration is terminal and costs a transaction. Registration 217 was
   // rejected with "YAML schema validation failed: []" — an empty list, because

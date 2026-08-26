@@ -124,6 +124,22 @@ button[disabled]{opacity:.55; cursor:progress}
 .figures b{display:block; font-size:1.02rem; color:var(--ink); font-weight:500; margin-top:3px}
 .err{color:var(--trigger); font-family:"IBM Plex Mono",monospace; font-size:.86rem}
 
+/* ── a route, leg by leg ──────────────────────────── */
+.legs{margin:18px 0 0; display:flex; flex-direction:column; gap:2px}
+.leg{display:grid; grid-template-columns:5.5rem 3.2rem 1fr 3.6rem; gap:0 12px; align-items:center;
+  font-family:"IBM Plex Mono",monospace; font-size:.78rem; color:var(--muted); padding:5px 0}
+.leg .bar{height:9px; background:var(--rule-2); border-radius:1px; position:relative; overflow:hidden}
+.leg .bar i{display:block; height:100%; background:var(--trace)}
+.leg.over .bar i{background:var(--trigger)}
+.leg .risk{text-align:right; color:var(--ink); font-size:.86rem}
+.leg.over .risk{color:var(--trigger)}
+.leg.unread .risk{font-style:italic; opacity:.6}
+/* The trigger sits at 0.75 of the bar, the same line the gauge draws. */
+.leg .bar::after{content:""; position:absolute; left:75%; top:0; bottom:0; width:1px; background:var(--trigger); opacity:.45}
+.legs-head{display:grid; grid-template-columns:5.5rem 3.2rem 1fr 3.6rem; gap:0 12px;
+  font-family:"IBM Plex Mono",monospace; font-size:.66rem; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--muted); padding-bottom:6px; border-bottom:1px solid var(--rule-2)}
+
 /* ── how it settles ───────────────────────────────── */
 .steps{margin:104px 0 0}
 .steps h2{font-size:1.9rem; font-weight:700}
@@ -176,6 +192,7 @@ footer a{color:var(--muted)}
     <div class="mark">Amanat<span>parametric weather cover</span></div>
     <nav>
       <a href="#check">Check a location</a>
+      <a href="#route">Check a route</a>
       <a href="#settles">How it settles</a>
       <a href="#ledger">Ledger</a>
       <a href="#use">Use it</a>
@@ -232,6 +249,31 @@ footer a{color:var(--muted)}
       <button data-ask="Will Riyadh exceed 40 degrees tomorrow?">Ask a question</button>
     </div>
     <div class="result" id="result" aria-live="polite"></div>
+  </section>
+
+  <section class="check" id="route">
+    <div class="check-head">
+      <h2>Check a route</h2>
+      <p>
+        Cargo is not exposed to the weather at the port it left. Each leg is
+        forecast for the hour the shipment actually reaches it, so the time axis
+        moves with the cargo — and the verdict is the worst hour on the way,
+        because that is the one it has to survive.
+      </p>
+    </div>
+    <form id="routeform">
+      <input id="routefrom" class="mono" value="Cebu" aria-label="Origin" placeholder="from">
+      <input id="routeto" class="mono" value="Manila" aria-label="Destination" placeholder="to">
+      <input id="routespeed" class="mono" value="37" aria-label="Speed in km/h" placeholder="km/h" style="flex:0 1 7rem">
+      <button type="submit" id="routego">Read the route</button>
+    </form>
+    <div class="presets" id="routepresets">
+      <button data-from="Cebu" data-to="Manila" data-speed="37">Cebu → Manila</button>
+      <button data-from="Singapore" data-to="Jakarta" data-speed="37">Singapore → Jakarta</button>
+      <button data-from="Hong Kong" data-to="Manila" data-speed="37">Hong Kong → Manila</button>
+      <button data-from="Jakarta" data-to="Surabaya" data-speed="80">Jakarta → Surabaya by road</button>
+    </div>
+    <div class="result" id="routeresult" aria-live="polite"></div>
   </section>
 
   <section class="steps" id="settles">
@@ -480,6 +522,86 @@ $("presets").addEventListener("click", (e) => {
   if (!b) return;
   $("ask").value = b.dataset.ask;
   $("form").requestSubmit();
+});
+
+
+async function readRoute(from, to, speed) {
+  const res = await fetch("/api/route", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ from, to, speed_kmh: Number(speed), max_legs: 8 }),
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || "the miner answered " + res.status);
+  return body;
+}
+
+function showRoute(r) {
+  const panel = $("routeresult");
+  panel.className = "result shown" + (r.breach ? " breach" : "");
+
+  const head = el("div", { className: "legs-head" }, [
+    el("span", { text: "position" }),
+    el("span", { text: "hour" }),
+    el("span", { text: "risk against the 0.75 trigger" }),
+    el("span", { text: "", attrs: { style: "text-align:right" } }),
+  ]);
+
+  const rows = r.legs.map((leg) => {
+    const unread = typeof leg.risk !== "number";
+    const over = !unread && leg.risk >= TRIGGER;
+    const label = unread ? (leg.beyond_horizon ? "beyond" : "unread") : leg.risk.toFixed(3);
+
+    return el("div", { className: "leg" + (over ? " over" : "") + (unread ? " unread" : "") }, [
+      el("span", { text: leg.km_from_start + " km" }),
+      el("span", { text: "h+" + leg.eta_hours }),
+      el("span", { className: "bar" }, [
+        el("i", { attrs: { style: "width:" + (unread ? 0 : Math.round(leg.risk * 100)) + "%" } }),
+      ]),
+      el("span", { className: "risk", text: label }),
+    ]);
+  });
+
+  panel.replaceChildren(
+    el("div", { className: "verdict" }, [
+      el("span", { className: "num", text: r.worst ? r.worst.risk.toFixed(3) : "—" }),
+      el("span", { text: r.breach ? "the contract pays this claim" : "worst hour on the way" }),
+    ]),
+    el("p", { className: "summary", text: r.verdict }),
+    el("div", { className: "legs" }, [head, ...rows]),
+    el("div", { className: "figures" }, [
+      el("div", { text: "distance" }, [el("b", { text: r.distance_km + " km" })]),
+      el("div", { text: "speed" }, [el("b", { text: r.speed_kmh + " km/h" })]),
+      el("div", { text: "underway" }, [el("b", { text: r.duration_hours + " h" })]),
+      el("div", { text: "legs read" }, [el("b", { text: (r.legs.length - r.unread) + " of " + r.legs.length })]),
+    ]),
+  );
+}
+
+$("routeform").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const go = $("routego");
+  go.disabled = true;
+  go.textContent = "Reading…";
+  try {
+    showRoute(await readRoute($("routefrom").value, $("routeto").value, $("routespeed").value));
+  } catch (err) {
+    const panel = $("routeresult");
+    panel.className = "result shown";
+    panel.replaceChildren(el("p", { className: "err", text: err.message }));
+  } finally {
+    go.disabled = false;
+    go.textContent = "Read the route";
+  }
+});
+
+$("routepresets").addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  $("routefrom").value = b.dataset.from;
+  $("routeto").value = b.dataset.to;
+  $("routespeed").value = b.dataset.speed;
+  $("routeform").requestSubmit();
 });
 
 const STATUS_TAG = { Claimed: "", Declined: "declined", Active: "active", Expired: "declined" };

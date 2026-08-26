@@ -94,3 +94,42 @@ A `Dockerfile` and `fly.toml` are here for hosting it anywhere else.
 10 000 calls/day. That quota is declared in `amanat-miner.yaml` as an
 `ACCOUNT_QUOTA` limitation so the node refuses a call that would exhaust it
 *before* charging the caller.
+
+## POST /api/route
+
+Storm risk along a route, not at a point.
+
+```bash
+curl -X POST https://amanat-miner.vercel.app/api/route \
+  -H "Content-Type: application/json" \
+  -d '{"from": "Cebu", "to": "Manila", "speed_kmh": 37}'
+```
+
+```
+  km     0  h+  0   10.33,123.75   risk 0.468   Light drizzle
+  km   187  h+  5   11.76,122.84   risk 0.229   Light drizzle
+  km   375  h+ 10   13.18,121.92   risk 0.320   Overcast
+  km   562  h+ 15   14.60,120.98   risk 0.524   Light drizzle
+
+Elevated: risk 0.524 at 14.6042, 120.9822 at hour 15.
+```
+
+Each end is a place name, a `"lat, lon"` pair, or `{lat, lon}`. `speed_kmh`
+defaults to 37 — about 20 knots, a loaded container ship. `max_legs` is 2 to 12.
+
+Three things it does that a point forecast cannot:
+
+**The hour moves with the cargo.** A leg 375 km out at 37 km/h is reached in ten
+hours, so it is forecast for hour 10. A route assessed entirely at hour zero is
+a weather report, not a risk assessment — and in the run above the destination
+at arrival reads 0.524 while the origin reads 0.468, which is the difference the
+whole feature exists to show.
+
+**The samples sit on the great circle.** Interpolating latitude and longitude
+linearly is the tempting shortcut and it is wrong: the Cebu–Rotterdam midpoint
+comes out in Afghanistan instead of the Altai, nearly 2000 km off the path
+anything actually travels.
+
+**A leg past the 168-hour horizon says so.** It is never clamped to hour 168 and
+served as a reading, and a leg that failed to read is never reported as calm —
+that is exactly the leg you should not assume is safe.
