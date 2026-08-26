@@ -316,3 +316,41 @@ What would make this diagnosable from a miner's side: the ground truth the
 canonical scorer graded against, or at least whether one was found. A score of
 zero currently covers "your answer was wrong", "your answer never arrived" and
 "there was nothing to compare it to", and a miner cannot act on the difference.
+
+## Update, 27 August: a third job, a fresh contract, still `Funded`
+
+Job 14 was opened against `STORM_ALERT` — the intent this miner currently ranks
+first on — from a contract deployed hours earlier with a correct callback. It
+has not moved.
+
+| Job | Contract | Opened | State |
+|---|---|---|---|
+| 12 | `0x51fa7d66…7B3c` | 26 h ago | `Funded` |
+| 13 | `0x51fa7d66…7B3c` | 17 h ago | `Funded` |
+| 14 | `0x0700c930…590c` | 2 h ago | `Funded` |
+
+Every condition that could plausibly have been ours has since changed, and the
+outcome has not:
+
+- the miner answers plain-language questions now, not only coordinate pairs;
+- it is ranked **1** on the intent the job targets, so routing has every reason
+  to reach it;
+- its registration declares an `on_chain.request` mapping, which most miners
+  omit;
+- the callback address is a contract deployed after the previous two jobs, with
+  its own escrow, and `subnetMessage` is reachable — the same contract shape
+  settled jobs 7 through 11 four days ago.
+
+Jobs 7–11 reaching `Terminal` is the part that matters: this rail worked, and
+then stopped. Something between 22 and 26 August changed, and from outside
+there is no way to see what. `getJob` exposes a state and nothing about why a
+job sits in it, so `Funded` covers "queued", "no miner matched", "the miner was
+called and failed" and "abandoned" without distinguishing them.
+
+That is 3 USDC escrowed against jobs that have returned nothing. Our contract's
+escrow is now zero, so we cannot open a fourth without funding more into a sink
+that has no withdrawal path — which is the other half of this report.
+
+What would make this actionable for anyone building on the on-chain rail: a
+reason on the job record, or an event when the node picks a job up and when it
+fails to route one.
