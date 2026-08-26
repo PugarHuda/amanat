@@ -17,7 +17,9 @@ import { ethers } from "ethers";
 import { readFile } from "node:fs/promises";
 import {
   NODE, wallet, provider, diamond, usdc, ask, intentId, waitForJob, recentSignals,
+  POLICY_STATUS,
 } from "./telegraph.mjs";
+import { flag, has, reject } from "./args.mjs";
 
 const ADDRESS = process.env.AMANAT_CONTRACT;
 const SETTLE_INTENT = process.env.AMANAT_INTENT ?? "STORM_ALERT";
@@ -34,13 +36,6 @@ const ESCALATE_AT = Number(process.env.AMANAT_ESCALATE_AT ?? 0.45);
  * per run with AMANAT_MAX_SPEND when you actually mean to.
  */
 const MAX_SPEND = Number(process.env.AMANAT_MAX_SPEND ?? 0.5);
-
-const STATUS = ["None", "Active", "Claimed", "Declined", "Expired"];
-
-function arg(flag, fallback) {
-  const i = process.argv.indexOf(flag);
-  return i === -1 ? fallback : process.argv[i + 1];
-}
 
 /** Every policy the contract still owes on. */
 async function openPolicies(book) {
@@ -146,7 +141,7 @@ async function cycle(book, signer, n) {
       console.log(`      above ${ESCALATE_AT} but escrow cannot cover a job — call fundEscrow`);
       continue;
     }
-    if (process.argv.includes("--dry")) {
+    if (has(process.argv, "--dry")) {
       console.log(`      above ${ESCALATE_AT}: would open a job (--dry, nothing sent)`);
       escalated++;
       continue;
@@ -167,7 +162,7 @@ async function cycle(book, signer, n) {
 
       const { state } = await waitForJob(jobId, { timeoutMs: 10 * 60_000 });
       const after = await book.policies(policy.id);
-      console.log(`      job ${jobId} ${state} -> policy ${policy.id} ${STATUS[Number(after.status)]} ` +
+      console.log(`      job ${jobId} ${state} -> policy ${policy.id} ${POLICY_STATUS[Number(after.status)]} ` +
         `(risk ${Number(after.riskReported) / 10000})`);
     } catch (e) {
       console.log(`      job failed: ${e.shortMessage ?? e.message}`);
@@ -180,13 +175,14 @@ async function cycle(book, signer, n) {
 }
 
 async function main() {
+  reject(process.argv.slice(2), ["--dry", "--cycles", "--interval"]);
   if (!ADDRESS) throw new Error("AMANAT_CONTRACT is not set — deploy first");
   const signer = wallet();
   const abi = JSON.parse(await readFile(new URL("../onchain/Amanat.abi.json", import.meta.url), "utf8"));
   const book = new ethers.Contract(ADDRESS, abi, signer);
 
-  const cycles = Number(arg("--cycles", 1));
-  const interval = Number(arg("--interval", 300));
+  const cycles = Number(flag(process.argv, "--cycles", 1));
+  const interval = Number(flag(process.argv, "--interval", 300));
 
   console.log(`node       ${NODE}`);
   console.log(`contract   ${ADDRESS}`);

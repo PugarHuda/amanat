@@ -14,6 +14,7 @@
 
 import { ethers } from "ethers";
 import { NODE, ask } from "./telegraph.mjs";
+import { reject } from "./args.mjs";
 
 /**
  * Serialise the way Go's encoding/json does, which is what the node hashes:
@@ -65,6 +66,7 @@ export async function verify(signalHash) {
 }
 
 async function main() {
+  reject(process.argv.slice(2), ["--ask"]);
   const args = process.argv.slice(2);
   let hash = args.find((a) => a.startsWith("0x"));
 

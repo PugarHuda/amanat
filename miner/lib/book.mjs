@@ -18,16 +18,43 @@ const ESCROW_BALANCE = "0x55af6353";
 
 const STATUS = ["None", "Active", "Claimed", "Declined", "Expired"];
 
-async function call(to, data) {
+/**
+ * One or many `eth_call`s in a single request.
+ *
+ * JSON-RPC batching is in the spec and every public endpoint supports it, so a
+ * page showing eleven policies costs one round trip rather than eleven. Sending
+ * them one at a time was both slow and a good way to get rate-limited by a free
+ * endpoint.
+ *
+ * Returns results positionally, with `null` where that individual call failed —
+ * a batch is not all-or-nothing, and pretending otherwise loses ten good answers
+ * to one bad one.
+ */
+async function callMany(calls) {
+  if (!calls.length) return [];
   const res = await fetch(RPC, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_call", params: [{ to, data }, "latest"] }),
-    signal: AbortSignal.timeout(10_000),
+    body: JSON.stringify(calls.map((c, i) => ({
+      jsonrpc: "2.0", id: i, method: "eth_call", params: [{ to: c.to, data: c.data }, "latest"],
+    }))),
+    signal: AbortSignal.timeout(15_000),
   });
+  if (!res.ok) throw new Error(`rpc ${res.status}`);
+
   const body = await res.json();
-  if (body.error) throw new Error(body.error.message);
-  return body.result.replace(/^0x/, "");
+  const list = Array.isArray(body) ? body : [body];
+  const out = new Array(calls.length).fill(null);
+  for (const entry of list) {
+    if (typeof entry?.id === "number" && entry.result) out[entry.id] = entry.result.replace(/^0x/, "");
+  }
+  return out;
+}
+
+async function call(to, data) {
+  const [result] = await callMany([{ to, data }]);
+  if (result === null) throw new Error("eth_call returned no result");
+  return result;
 }
 
 const word = (hex, i) => hex.slice(i * 64, i * 64 + 64);
@@ -65,23 +92,32 @@ function decodePolicy(id, hex) {
   };
 }
 
-/** Every policy the contract has written, newest first. */
+/**
+ * Every policy the contract has written, newest first.
+ *
+ * Throws when the chain cannot be read at all, and reports per-policy failures
+ * separately in `unreadable`. A page that cannot reach the chain and a book with
+ * nothing in it are different situations, and returning an empty list for both
+ * would tell a reader the wrong one.
+ */
 export async function policies({ limit = 40 } = {}) {
-  const next = Number(await call(AMANAT, NEXT_POLICY_ID).then((h) => uint(h, 0)));
+  const next = Number(uint(await call(AMANAT, NEXT_POLICY_ID), 0));
   const ids = [];
   for (let id = next - 1; id >= 1 && ids.length < limit; id--) ids.push(id);
 
-  const out = [];
-  // Sequential on purpose: a public RPC rate-limits a burst, and this page is
-  // read far less often than it is rendered.
-  for (const id of ids) {
+  const results = await callMany(ids.map((id) => ({ to: AMANAT, data: POLICIES + padUint(id) })));
+
+  const rows = [];
+  let unreadable = 0;
+  results.forEach((hex, i) => {
+    if (hex === null) { unreadable++; return; }
     try {
-      out.push(decodePolicy(id, await call(AMANAT, POLICIES + padUint(id))));
+      rows.push(decodePolicy(ids[i], hex));
     } catch {
-      // A policy that will not decode is left out rather than shown as blank.
+      unreadable++;
     }
-  }
-  return out;
+  });
+  return { total: next - 1, rows, unreadable };
 }
 
 /** Policies written so far, and what is left to spend on jobs. */

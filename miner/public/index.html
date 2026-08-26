@@ -459,13 +459,16 @@ $("presets").addEventListener("click", (e) => {
 const STATUS_TAG = { Claimed: "", Declined: "declined", Active: "active", Expired: "declined" };
 
 fetch("/api/policies")
-  .then((r) => r.json())
-  .then((rows) => {
+  .then((r) => { if (!r.ok) throw new Error("chain unreachable"); return r.json(); })
+  .then(({ rows, unreadable }) => {
     if (!rows.length) {
       $("ledgerbody").innerHTML = `<tr><td colspan="6" class="m" style="color:var(--muted)">no policies yet</td></tr>`;
       return;
     }
-    $("ledgerbody").innerHTML = rows.map((p) => `<tr>
+    const note = unreadable
+      ? `<tr><td colspan="6" class="m" style="color:var(--trigger)">${esc(unreadable)} policies could not be read</td></tr>`
+      : "";
+    $("ledgerbody").innerHTML = note + rows.map((p) => `<tr>
       <td class="m">${esc(p.id)}</td>
       <td class="m">${esc(p.lat)}, ${esc(p.lon)}</td>
       <td class="m">${esc(p.payout)}</td>

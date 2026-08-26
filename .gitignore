@@ -4,3 +4,4 @@ scorer/target/
 .yaml-cache.json
 .env
 scorer/champions/*.wasm
+onchain/out/

@@ -15,6 +15,7 @@
 
 import { ethers } from "ethers";
 import { wallet, provider, DIAMOND } from "./telegraph.mjs";
+import { reject } from "./args.mjs";
 
 const WASM_URL = process.env.AMANAT_WASM_URL
   ?? "https://raw.githubusercontent.com/PugarHuda/amanat/main/scorer/dist/amanat_scorer.wasm";
@@ -26,6 +27,7 @@ const ABI = [
 ];
 
 async function main() {
+  reject(process.argv.slice(2), ["--dry"]);
   const intent = process.argv[2];
   const dry = process.argv.includes("--dry");
   if (!intent) {

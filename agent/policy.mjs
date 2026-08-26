@@ -14,19 +14,21 @@
 
 import { ethers } from "ethers";
 import { readFile } from "node:fs/promises";
-import { wallet, provider, diamond, usdc, intentId, waitForJob, DIAMOND } from "./telegraph.mjs";
+import { wallet, provider, diamond, usdc, intentId, waitForJob, POLICY_STATUS } from "./telegraph.mjs";
+import { flag, positionals, reject } from "./args.mjs";
 
 const ADDRESS = process.env.AMANAT_CONTRACT;
 const INTENT = process.env.AMANAT_INTENT ?? "STORM_ALERT";
 
 async function main() {
+  reject(process.argv.slice(2), ["--policy"]);
   // Pull flags out before reading positionals, or "--policy 1" is read as a
   // policy name and a latitude — which is exactly what it did once.
   const argv = process.argv.slice(2);
-  const flagIdx = argv.indexOf("--policy");
-  const reuseId = flagIdx === -1 ? null : BigInt(argv[flagIdx + 1]);
-  const positional = flagIdx === -1 ? argv : [...argv.slice(0, flagIdx), ...argv.slice(flagIdx + 2)];
-  const [name = "Cebu port cover", lat = "10.32", lon = "123.89", hoursArg = "1"] = positional;
+  const reuse = flag(argv, "--policy");
+  const reuseId = reuse === undefined ? null : BigInt(reuse);
+  const [name = "Cebu port cover", lat = "10.32", lon = "123.89", hoursArg = "1"] =
+    positionals(argv, ["--policy"]);
   const hours = BigInt(hoursArg);
   if (!ADDRESS) throw new Error("AMANAT_CONTRACT is not set — deploy first");
 
@@ -84,8 +86,7 @@ async function main() {
 
   // Whatever happened, read it from the contract rather than assuming.
   const policy = await book.policies(policyId);
-  const STATUS = ["None", "Active", "Claimed", "Declined", "Expired"];
-  console.log(`\npolicy ${policyId}: ${STATUS[Number(policy.status)]}`);
+  console.log(`\npolicy ${policyId}: ${POLICY_STATUS[Number(policy.status)]}`);
   console.log(`risk reported: ${Number(policy.riskReported) / 10000}`);
   console.log(`book now:      ${u(await usdc(p).balanceOf(ADDRESS))} USDC`);
   console.log(`holder now:    ${u(await usdc(p).balanceOf(me))} USDC`);

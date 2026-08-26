@@ -19,6 +19,7 @@
 import { ethers } from "ethers";
 import { readFile } from "node:fs/promises";
 import { wallet, provider, DIAMOND } from "./telegraph.mjs";
+import { reject } from "./args.mjs";
 
 const ABI = [
   "function registerMiner(string yamlUrl, bytes32 yamlHash, address feeAddress, uint256 minPriceUsdc, string[] supportedIntents) returns (uint256)",
@@ -40,6 +41,7 @@ function readYaml(text) {
 }
 
 async function main() {
+  reject(process.argv.slice(2), ["--dry", "--update"]);
   const dry = process.argv.includes("--dry");
   if (!YAML_URL) throw new Error("AMANAT_YAML_URL is not set — point it at an immutable raw URL for the YAML");
   if (!FEE_ADDRESS) throw new Error("FEE_ADDRESS is not set");

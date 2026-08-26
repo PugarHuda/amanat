@@ -16,19 +16,16 @@
 
 import { ethers } from "ethers";
 import { wallet, diamond, provider, NODE } from "./telegraph.mjs";
+import { flag, reject } from "./args.mjs";
 
 const WS_URL = process.env.TELEGRAPH_WS ?? NODE.replace(/^http/, "ws") + "/engine/ws";
 
-function arg(flag, fallback) {
-  const i = process.argv.indexOf(flag);
-  return i === -1 ? fallback : process.argv[i + 1];
-}
-
-const INTENTS = arg("--intents", "WEATHER_FORECAST,STORM_ALERT,WEATHER_CHECK").split(",");
-const MINUTES = Number(arg("--minutes", 5));
-const SPEND_LIMIT = Number(arg("--spend-limit", 500000)); // raw µUSDC, so 0.50
+const INTENTS = flag(process.argv, "--intents", "WEATHER_FORECAST,STORM_ALERT,WEATHER_CHECK").split(",");
+const MINUTES = Number(flag(process.argv, "--minutes", 5));
+const SPEND_LIMIT = Number(flag(process.argv, "--spend-limit", 500000)); // raw µUSDC, so 0.50
 
 async function main() {
+  reject(process.argv.slice(2), ["--intents", "--minutes", "--spend-limit"]);
   const signer = wallet();
   const address = await signer.getAddress();
 

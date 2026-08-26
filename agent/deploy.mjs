@@ -15,11 +15,13 @@
 import { ethers } from "ethers";
 import { readFile } from "node:fs/promises";
 import { wallet, provider, DIAMOND, USDC, diamond, usdc } from "./telegraph.mjs";
+import { reject } from "./args.mjs";
 
 const BOOK_USDC = ethers.parseUnits(process.env.AMANAT_BOOK_USDC ?? "5", 6);
 const ESCROW_USDC = ethers.parseUnits(process.env.AMANAT_ESCROW_USDC ?? "5", 6);
 
 async function main() {
+  reject(process.argv.slice(2), ["--dry"]);
   const dry = process.argv.includes("--dry");
   const signer = wallet();
   const me = await signer.getAddress();

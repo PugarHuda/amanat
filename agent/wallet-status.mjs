@@ -8,11 +8,13 @@
 
 import { ethers } from "ethers";
 import { wallet, provider, diamond, usdc, USDC, DIAMOND } from "./telegraph.mjs";
+import { reject } from "./args.mjs";
 
 const JOB_PRICE = 1n * 10n ** 6n; // 1 USDC, from getJobBasePrice()
 const GAS_FLOOR = ethers.parseEther("0.0005");
 
 async function main() {
+  reject(process.argv.slice(2), []);
   const w = wallet();
   const address = await w.getAddress();
   const p = provider();

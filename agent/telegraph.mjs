@@ -17,7 +17,7 @@ export const RPC = process.env.BASE_SEPOLIA_RPC ?? "https://sepolia.base.org";
 export const DIAMOND = process.env.TELEGRAPH_DIAMOND ?? "0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8";
 export const USDC = process.env.USDC ?? "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
 
-export const DIAMOND_ABI = [
+const DIAMOND_ABI = [
   "function createJob(bytes32 intentId, (address[] addresses, uint256[] integers, string[] strings, bool[] bools) params, address callback) returns (uint256 jobId)",
   "function getJob(uint256 jobId) view returns (address agent, bytes32 intentId, address callback, uint256 budget, uint256 minerShare, uint256 fee, uint8 state, uint256 createdAt)",
   "function depositUSDC(uint256 amount)",
@@ -27,7 +27,7 @@ export const DIAMOND_ABI = [
   "event JobCreated(uint256 indexed jobId, address indexed agent, bytes32 intentId, address callback)",
 ];
 
-export const ERC20_ABI = [
+const ERC20_ABI = [
   "function approve(address spender, uint256 amount) returns (bool)",
   "function transfer(address to, uint256 amount) returns (bool)",
   "function balanceOf(address account) view returns (uint256)",
@@ -35,7 +35,17 @@ export const ERC20_ABI = [
 ];
 
 /** Job lifecycle states as the Diamond reports them. */
-export const JOB_STATE = ["Funded", "Terminal", "Cancelled"];
+const JOB_STATE = ["Funded", "Terminal", "Cancelled"];
+
+/**
+ * Policy states, in the order Amanat.sol declares them.
+ *
+ * The miner serves a copy of this in lib/book.mjs rather than importing it:
+ * only `miner/` is deployed to Vercel, so an import across that boundary would
+ * work locally and break in production. Two copies, one boundary, stated here so
+ * the second one is a decision rather than an accident.
+ */
+export const POLICY_STATUS = ["None", "Active", "Claimed", "Declined", "Expired"];
 
 /**
  * Intents whose id is simply the hash of their name. For these the protocol
@@ -72,14 +82,6 @@ export const diamond = (runner) => new ethers.Contract(DIAMOND, DIAMOND_ABI, run
 export const usdc = (runner) => new ethers.Contract(USDC, ERC20_ABI, runner);
 
 // ── Free rail: what the Daemon already knows ────────────────────────────────
-
-/** Signals the Daemon produced on its own. No payment, no auth. */
-export async function daemonSignals({ limit = 20, intent } = {}) {
-  const res = await fetch(`${NODE}/daemon/api/questions?limit=${limit}`);
-  if (!res.ok) throw new Error(`daemon feed ${res.status}`);
-  const { results = [] } = await res.json();
-  return intent ? results.filter((r) => r.routing?.intent === intent) : results;
-}
 
 /** Live miner catalogue, filtered server-side. */
 export async function miners({ intent } = {}) {
@@ -185,7 +187,7 @@ export async function recentSignals({ intents = [], maxAgeMinutes = 240, limit =
 }
 
 /** The settlement header is base64 JSON: who paid, and the transaction that did it. */
-export function decodeSettlement(header) {
+function decodeSettlement(header) {
   if (!header) return null;
   try {
     return JSON.parse(Buffer.from(header, "base64").toString("utf8"));
@@ -195,15 +197,6 @@ export function decodeSettlement(header) {
 }
 
 // ── On-chain rail ───────────────────────────────────────────────────────────
-
-/** Top up the agent's USDC escrow on the Diamond. Approve first, then deposit. */
-export async function fundEscrow(signer, amountUsdc) {
-  const amount = ethers.parseUnits(String(amountUsdc), 6);
-  const approve = await usdc(signer).approve(DIAMOND, amount);
-  await approve.wait();
-  const deposit = await diamond(signer).depositUSDC(amount);
-  return deposit.wait();
-}
 
 /** Poll a job until it leaves Funded, or give up. Returns the decoded record. */
 export async function waitForJob(jobId, { timeoutMs = 20 * 60_000, everyMs = 15_000 } = {}) {

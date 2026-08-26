@@ -11,7 +11,10 @@
 // ponytail: hand-rolled indent scan instead of a YAML parser — we need three
 // keys, not a document model. Swap in `yaml` if we ever need real parsing.
 
-const NODE = process.env.TELEGRAPH_NODE ?? "https://devnode.telegraphprotocol.com";
+import { miners, NAME_HASHED_INTENTS } from "./telegraph.mjs";
+import { reject } from "./args.mjs";
+
+const NAME_HASHED = new Set(NAME_HASHED_INTENTS);
 const IPFS_GATEWAYS = [
   "https://gateway.pinata.cloud/ipfs/",
   "https://ipfs.io/ipfs/",
@@ -19,16 +22,6 @@ const IPFS_GATEWAYS = [
   "https://cloudflare-ipfs.com/ipfs/",
   "https://4everland.io/ipfs/",
 ];
-
-// Intents whose id is keccak256(name) — the protocol picks the miner for these.
-// Anything else needs a registration-derived intentId, which pins one miner.
-const NAME_HASHED = new Set([
-  "LANGUAGE_GENERATION", "CHAT_COMPLETION", "WEATHER_CHECK", "STORM_ALERT",
-  "WEATHER_FORECAST", "TASK_COMPLETION", "AGENT_TASK", "WEB_SEARCH",
-  "NEWS_SEARCH", "FACT_CHECK", "AI_TEXT_DETECTION", "CONTENT_VERIFICATION",
-  "DEEPFAKE_DETECTION", "MEDIA_AUTHENTICITY_CHECK", "IMAGE_VERIFICATION",
-  "VIDEO_VERIFICATION",
-]);
 
 function yamlUrlToHttp(url) {
   if (!url) return [];
@@ -80,12 +73,13 @@ async function saveCache(c) {
 }
 
 async function main() {
-  const miners = await (await fetch(`${NODE}/api/miners`)).json();
+  reject(process.argv.slice(2), ["--json"]);
+  const catalogue = await miners();
   const cache = await loadCache();
   const rows = [];
 
   // ponytail: 8 at a time — polite to IPFS gateways, still finishes in seconds.
-  const queue = [...miners];
+  const queue = [...catalogue];
   const workers = Array.from({ length: 8 }, async () => {
     while (queue.length) {
       const m = queue.shift();
@@ -120,9 +114,9 @@ async function main() {
   const unreachable = rows.filter((r) => !r.yaml_reachable);
 
   console.log(`\nMiner terdaftar          : ${rows.length}`);
-  console.log(`YAML tidak terjangkau    : ${unreachable.length}`);
-  console.log(`Punya blok on_chain      : ${rows.filter((r) => r.has_on_chain).length}`);
-  console.log(`Job-able (on_chain.request): ${jobable.length}`);
+  console.log(`YAML unreachable            ${unreachable.length}`);
+  console.log(`declare an on_chain block   ${rows.filter((r) => r.has_on_chain).length}`);
+  console.log(`job-able (on_chain.request) ${jobable.length}`);
   console.log(`Job-able DAN routable lewat keccak256(nama intent): ${both.length}\n`);
 
   const w = (s, n) => String(s).padEnd(n).slice(0, n);
@@ -142,7 +136,7 @@ async function main() {
   for (const [i, slugs] of Object.entries(byIntent).sort()) {
     console.log(`  ${w(i, 26)} ${slugs.length} miner: ${slugs.join(", ")}`);
   }
-  if (!both.length) console.log("  (belum ada — lihat README: inilah celah yang Amanat isi)");
+  if (!both.length) console.log("  (none yet — this is the gap Amanat fills)");
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

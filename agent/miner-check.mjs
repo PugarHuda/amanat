@@ -8,12 +8,23 @@
 // check: registration is terminal, and a miner whose endpoints fail the node's
 // sandbox test is rejected with no retry.
 
+import { reject } from "./args.mjs";
+
 const BASE = process.env.AMANAT_MINER_URL ?? "https://amanat-miner.vercel.app";
 
 async function probe(path, init = {}) {
   const res = await fetch(`${BASE}${path}`, { ...init, redirect: "manual" });
   const body = await res.text();
   return { status: res.status, body, location: res.headers.get("location") };
+}
+
+try {
+  reject(process.argv.slice(2), []);
+} catch (e) {
+  // Top-level throw prints a stack trace, which tells a reader nothing they can
+  // act on. The message is the whole content of this failure.
+  console.error(e.message);
+  process.exit(2);
 }
 
 const health = await probe("/health");

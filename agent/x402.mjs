@@ -13,6 +13,24 @@
 
 import { ethers } from "ethers";
 
+/** Pull whatever the node or facilitator said about a refusal. */
+function describeRefusal(body, settleHeader) {
+  const parts = [];
+  for (const raw of [body, settleHeader && Buffer.from(settleHeader, "base64").toString("utf8"), settleHeader]) {
+    if (!raw) continue;
+    try {
+      const json = JSON.parse(raw);
+      const said = json.errorReason ?? json.error ?? json.message ?? json.reason;
+      if (said) parts.push(String(said));
+      if (json.success === false && !said) parts.push("facilitator reported success: false");
+    } catch {
+      const text = String(raw).trim();
+      if (text && text.length < 200 && !text.startsWith("ey")) parts.push(text);
+    }
+  }
+  return [...new Set(parts)].join("; ");
+}
+
 export function decodeChallenge(header) {
   return JSON.parse(Buffer.from(header, "base64").toString("utf8"));
 }
@@ -100,12 +118,17 @@ export async function fetchWithPayment(url, init, wallet, { chainId = 84532 } = 
     headers: { ...(init.headers ?? {}), "PAYMENT-SIGNATURE": payment.header },
   });
 
-  // A second 402 means the facilitator rejected the payment. It looks identical
-  // to never having paid, so say which one it was.
+  // A second 402 means the facilitator rejected the payment, and it looks
+  // identical on the wire to never having paid. Say which it was, and say why:
+  // the reason is in the body or the settlement header, and discarding it leaves
+  // the caller with "it failed" and nowhere to go.
   if (retry.status === 402) {
+    const body = await retry.text().catch(() => "");
+    const settle = retry.headers.get("payment-response") ?? retry.headers.get("x-payment-settle-response");
+    const reason = describeRefusal(body, settle);
     throw new Error(
-      `payment was signed and refused: the facilitator did not accept it ` +
-      `(${payment.amount} of ${payment.asset} to ${payment.payTo})`,
+      `payment signed and refused${reason ? `: ${reason}` : ""} ` +
+      `(${payment.amount} of ${payment.asset} to ${payment.payTo} from ${wallet.address})`,
     );
   }
 
