@@ -587,3 +587,41 @@ test.describe("how the site looks to a crawler", () => {
     await expect(footer.locator('a[href*="creativecommons.org"]')).toHaveCount(1);
   });
 });
+
+test.describe("health reports what an operator needs", () => {
+  // "ok" alone answers whether the process is up and none of the questions that
+  // actually take this miner off the network.
+  test("says how old the board is and how much budget is left", async ({ request }) => {
+    const res = await request.get(`${BASE}/health`);
+    expect(res.status()).toBe(200);
+    const h = await res.json();
+
+    // The node's own liveness check reads only these two, so they must not move.
+    expect(h.status).toBe("ok");
+    expect(h.miner).toBe("amanat");
+    expect(Date.parse(h.time)).toBeGreaterThan(Date.now() - 60_000);
+
+    expect(h.board).toBeDefined();
+    if (h.board.published === false) {
+      expect(h.board.generated_at).toBeUndefined();
+    } else {
+      expect(Date.parse(h.board.generated_at)).not.toBeNaN();
+      expect(typeof h.board.age_hours).toBe("number");
+      expect(h.board.stale).toBe(h.board.age_hours > 26);
+      expect(h.board.lanes).toBeGreaterThan(0);
+    }
+
+    expect(h.upstream.route_requests_available).toBeGreaterThanOrEqual(0);
+    expect(h.upstream.route_requests_available).toBeLessThanOrEqual(20);
+    expect(typeof h.upstream.cached_points).toBe("number");
+    expect(typeof h.upstream.cached_places).toBe("number");
+  });
+
+  test("the caches fill as the miner is used", async ({ request }) => {
+    const before = (await (await request.get(`${BASE}/health`)).json()).upstream.cached_points;
+    // Somewhere the suite has not asked about, so the count has to move.
+    await request.post(`${BASE}/forecast`, { data: { lat: -33.87, lon: 151.21 } });
+    const after = (await (await request.get(`${BASE}/health`)).json()).upstream.cached_points;
+    expect(after).toBeGreaterThan(before);
+  });
+});
