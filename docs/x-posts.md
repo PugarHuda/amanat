@@ -163,6 +163,55 @@ transaction, a number from `/api/wasm`, or a page that loads.
 
 ---
 
+**14 — scoring zero while serving 296 requests correctly**
+
+> My @Telegraphprotoc miner scored 0 on three intents at once. It had served 296
+> requests without an error.
+>
+> Validators run an epoch tournament: one question, put to every miner on the
+> intent. The questions are sentences.
+>
+> My miner took latitude and longitude. It answered 400 to all of them.
+
+---
+
+**15 — teaching it to read the question**
+
+> "Will Riyadh exceed 40 degrees in the next 24 hours?"
+>
+> A sentence starts with a capital, so the naive read is the phrase "Will
+> Riyadh" — which geocodes to nowhere.
+>
+> Trim the non-places off each end and Riyadh is what is left. It also reads
+> "in the next six hours" as hour 6.
+
+---
+
+**16 — the reason field was empty**
+
+> Registration rejected: "YAML schema validation failed: []."
+>
+> An empty list. The cause was mine — a description with a comma inside a { }
+> flow mapping, so the file did not parse at all — but nothing in the message
+> could tell me that.
+>
+> updateMiner deregisters the old entry first. My miner was off @Telegraphprotoc
+> for 15 minutes to learn it.
+
+---
+
+**17 — the check that would have caught it**
+
+> I had five pre-flight checks before spending gas on a registration. Hash
+> matches, endpoints answer, intents canonical, call simulates.
+>
+> None of them parsed the YAML. I was scraping it with regexes, which happily
+> match a file no parser accepts.
+>
+> Now it parses first. @Telegraphprotoc
+
+---
+
 ## Hold these until the numbers land
 
 - The miner's first non-zero score, next to the `label_field` fix that caused it.
