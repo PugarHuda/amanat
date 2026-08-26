@@ -274,3 +274,44 @@ about why it is stuck, and 2 USDC is escrowed against them meanwhile.
 What would make this diagnosable from a contract's side: a reason on the job
 record, or an event when the node picks a job up and when it fails to route
 one. Right now `Funded` covers both "queued" and "abandoned".
+
+## Every weather miner scored exactly 0.000000 at epoch 280
+
+Epoch 280 evaluated fine: 141 miner-intent pairs were scored network-wide and
+46 came back above zero.
+
+```
+telegraph-chatbot      TASK_COMPLETION       0.996
+bedrock-nova-2-lite    LANGUAGE_GENERATION   0.970
+litellm                CHAT_COMPLETION       0.153
+degenlens-onchain      ONCHAIN_TX_LOOKUP     0.009
+```
+
+Every weather miner in the same epoch scored `0.000000`, without exception:
+
+| Intent | Miners | Any score above zero |
+|---|---|---|
+| `WEATHER_FORECAST` | 9 | none |
+| `WEATHER_CHECK` | 8 | none |
+| `STORM_ALERT` | 3 | none |
+
+Three epochs earlier the same intents produced real spread — `amanat-weather-risk`
+0.009192, `skywire-storm-alert` 0.008503, `bittensor-sn18-zeus` 0.006845 on
+STORM_ALERT at epoch 277 — so the miners can be told apart and were.
+
+Two things stand out.
+
+**A whole intent family at exactly zero is not a ranking, it is an absence.**
+The leaderboard still assigns ranks 1..9 on top of it, so a miner can show as
+`#1` in an intent where nothing was measured. That reads as an achievement on
+the explorer and is not one.
+
+**The scale is nothing like the text intents.** `TASK_COMPLETION` pays 0.996
+while a good weather answer at epoch 277 paid 0.009 — two orders of magnitude.
+If the miner track normalises within an intent that is fair, but any figure
+compared across intents is not comparing the same thing.
+
+What would make this diagnosable from a miner's side: the ground truth the
+canonical scorer graded against, or at least whether one was found. A score of
+zero currently covers "your answer was wrong", "your answer never arrived" and
+"there was nothing to compare it to", and a miner cannot act on the difference.
