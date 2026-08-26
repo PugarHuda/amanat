@@ -44,7 +44,7 @@ async function audit(page, context) {
 // status-pill contrast failure hid: a manual check passed because no policy was
 // Active at the time. Every status is pinned here so every pill is audited on
 // every run, and a slow RPC can no longer make an accessibility result flaky.
-const BOOK = { contract: "0x51fa7d66af31dE4d94Bd14e0404465fd2D0c7B3c", policies: 4, outstanding: "4.0", jobBudget: "2.0" };
+const BOOK = { contract: "0x0700c9300D5cfD8A4b2C7fBbaB2703087AB0590c", policies: 4, outstanding: "4.0", jobBudget: "2.0" };
 const POLICIES = {
   total: 4,
   unreadable: 0,

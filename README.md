@@ -232,7 +232,7 @@ built-in WebAssembly, so comparing against a champion needs no extra toolchain.
 ## On-chain so far
 
 **The loop closes.** `Amanat.sol` is deployed at
-[`0x51fa7d66…7B3c`](https://sepolia.basescan.org/address/0x51fa7d66af31dE4d94Bd14e0404465fd2D0c7B3c)
+[`0x0700c930…590c`](https://sepolia.basescan.org/address/0x0700c9300D5cfD8A4b2C7fBbaB2703087AB0590c)
 and settles claims with nobody in the loop:
 
 ```
