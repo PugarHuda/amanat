@@ -217,3 +217,49 @@ test.describe("forms refuse what they cannot answer @ui", () => {
     await expect(page.locator("#go")).toBeEnabled();
   });
 });
+
+test.describe("the board can go stale, and must say so @ui", () => {
+  const lanes = (generated_at) => ({
+    generated_at,
+    rail: "paid (Telegraph Engine, verified)",
+    trigger: 0.75,
+    lanes: [
+      { name: "Cebu → Manila", worst: { risk: 0.42, eta_hours: 15, lat: 14.6, lon: 121 }, legs: [], breach: false },
+      { name: "Singapore → Jakarta", worst: { risk: 0.28, eta_hours: 12, lat: -6, lon: 106 }, legs: [], breach: false },
+    ],
+    telegraph: { calls: 6, spent_usd: 0.06, routed: 6, schema_fallback: 0 },
+  });
+
+  test("a fresh board reads as a plain timestamp", async ({ page }) => {
+    await page.route("**/api/board", (route) =>
+      route.fulfill({ json: lanes(new Date(Date.now() - 3600e3).toISOString()) }));
+
+    await page.goto(BASE);
+    await expect(page.locator("#plotstamp")).toHaveText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC$/);
+    await expect(page.locator("#plotstamp")).not.toHaveClass(/stale/);
+  });
+
+  // The schedule writes every twelve hours. If it stops — a missing secret, a
+  // disabled workflow — the board keeps serving the last run forever, and a
+  // storm reading from two days ago shown as current is worse than none.
+  test("a board older than the schedule says so, in the colour that means trouble", async ({ page }) => {
+    await page.route("**/api/board", (route) =>
+      route.fulfill({ json: lanes(new Date(Date.now() - 48 * 3600e3).toISOString()) }));
+
+    await page.goto(BASE);
+    await expect(page.locator("#plotstamp")).toContainText("stale");
+    await expect(page.locator("#plotstamp")).toHaveClass(/stale/);
+    // and it still draws the lanes: stale is not the same as absent
+    expect(await page.locator("#plot .reading").count()).toBe(2);
+  });
+
+  test("no board at all draws nothing and says why", async ({ page }) => {
+    await page.route("**/api/board", (route) =>
+      route.fulfill({ status: 503, json: { error: "the board has not been published yet" } }));
+
+    await page.goto(BASE);
+    await expect(page.locator("#plot .err")).toContainText("not been published");
+    expect(await page.locator("#plot .reading").count()).toBe(0);
+    await expect(page.locator("#plotstamp")).toHaveText("no board published");
+  });
+});

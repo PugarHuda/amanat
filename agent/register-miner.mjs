@@ -99,8 +99,19 @@ async function main() {
   const bytes = new Uint8Array(await res.arrayBuffer());
   const text = new TextDecoder().decode(bytes);
   const yamlHash = ethers.sha256(bytes); // SHA-256, not keccak — the node verifies with SHA-256
+  // Compared with line endings normalised, and only for this check.
+  //
+  // The hash sent on-chain is taken from the fetched bytes above, exactly as
+  // the node will re-fetch and re-hash them — that must never be normalised.
+  // This comparison is a different question: "did you forget to push?" On a
+  // Windows checkout with core.autocrlf=true the working copy holds CRLF while
+  // the repository and raw.githubusercontent hold LF, so a byte comparison here
+  // reports a difference on every single line and blocks a registration that is
+  // perfectly in sync. Same content, different newline convention, and only one
+  // of those is a reason to stop.
   const local = await readFile(new URL("../miner/amanat-miner.yaml", import.meta.url));
-  const same = Buffer.compare(Buffer.from(bytes), local) === 0;
+  const lf = (b) => Buffer.from(b.toString("utf8").replace(/\r\n/g, "\n"));
+  const same = Buffer.compare(lf(Buffer.from(bytes)), lf(local)) === 0;
 
   const y = readYaml(text);
   console.log(`yaml       ${YAML_URL}`);

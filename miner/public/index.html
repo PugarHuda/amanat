@@ -96,6 +96,7 @@ nav a:hover{color:var(--trace)}
 .reading .place{font-family:"IBM Plex Mono",monospace; font-size:.66rem; letter-spacing:.06em;
   text-transform:uppercase; color:var(--muted); margin-top:10px; white-space:nowrap;
   position:absolute; bottom:-4px; transform:translateY(100%)}
+.stale{color:var(--trigger)}
 .gauge-foot{display:flex; justify-content:space-between; gap:12px; padding:14px 0 0; font-size:.82rem; color:var(--muted); flex-wrap:wrap}
 
 /* ── check a location ─────────────────────────────── */
@@ -222,7 +223,7 @@ footer a{color:var(--muted)}
       </div>
     </div>
     <div class="gauge-foot">
-      <span>Live readings from the Amanat miner. A dot above the line is a claim the contract pays.</span>
+      <span>Shipping lanes screened through Telegraph. A dot above the line is a claim the contract pays.</span>
       <span class="mono" id="plotstamp">loading…</span>
     </div>
   </section>
@@ -485,7 +486,15 @@ async function loadPlot() {
     name: lane.name.replace(" → ", "→"),
     risk: lane.worst ? lane.worst.risk : null,
   })));
-  $("plotstamp").textContent = board.generated_at.replace("T", " ").slice(0, 16) + " UTC";
+  // A timestamp alone does not tell a reader whether they are looking at
+  // current weather. The board refreshes every twelve hours, so anything much
+  // older than that means the schedule has stopped — and a stale storm reading
+  // presented as current is worse than no reading at all.
+  const ageHours = (Date.now() - Date.parse(board.generated_at)) / 3600e3;
+  const when = board.generated_at.replace("T", " ").slice(0, 16) + " UTC";
+  const stamp = $("plotstamp");
+  stamp.textContent = ageHours > 26 ? `${when} — stale, the schedule has stopped` : when;
+  stamp.className = ageHours > 26 ? "mono stale" : "mono";
 }
 
 function showResult(r) {
