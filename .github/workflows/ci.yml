@@ -39,3 +39,13 @@ jobs:
       # Hits the real upstream, which is the point: a miner that cannot answer
       # is a miner the node will drop.
       - run: node miner/test.mjs
+      - run: npx playwright install --with-deps chromium
+      # Starts the miner itself and drives it end to end: 33 tests over the happy
+      # paths, every failure path, the rendered page, mobile layout and the
+      # injection surface.
+      - run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces
+          path: test-results/

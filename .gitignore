@@ -5,3 +5,5 @@ scorer/target/
 .env
 scorer/champions/*.wasm
 onchain/out/
+test-results/
+playwright-report/

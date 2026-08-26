@@ -23,9 +23,14 @@
     "register:wasm": "node --env-file=.env agent/register-wasm.mjs",
     "subscribe": "node --env-file=.env agent/subscribe.mjs",
     "deploy": "node --env-file=.env agent/deploy.mjs",
-    "policy": "node --env-file=.env agent/policy.mjs"
+    "policy": "node --env-file=.env agent/policy.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:live": "playwright test --config playwright.config.mjs"
   },
   "dependencies": {
     "ethers": "^6.13.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
   }
 }

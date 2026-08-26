@@ -356,15 +356,24 @@ const WATCH = [
 const $ = (id) => document.getElementById(id);
 
 /**
- * Escape anything that came from outside this file before it touches innerHTML.
+ * Build an element with text, never markup.
  *
- * The ledger renders strings written on-chain by whoever opened the policy, and
- * the result panel renders a sentence built by a miner. Neither is ours, so
- * neither goes into markup unescaped — a coordinate is a string, and a string
- * can be a <script> tag.
+ * The ledger renders strings written on-chain by whoever opened a policy, and
+ * the result panel renders a sentence built by a miner. Neither is ours. Hand
+ * escaping those into innerHTML is correct exactly as long as everyone
+ * remembers to call the escaper, and the first person to add a column and forget
+ * ships an injection. Assigning textContent cannot be forgotten into a
+ * vulnerability: a coordinate that says `<img onerror=…>` renders as those
+ * characters, because that is what it is.
  */
-const esc = (v) => String(v).replace(/[&<>"']/g, (c) =>
-  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function el(tag, { text, className, attrs } = {}, children = []) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = String(text);
+  for (const [k, v] of Object.entries(attrs ?? {})) node.setAttribute(k, String(v));
+  for (const child of children) node.appendChild(child);
+  return node;
+}
 
 async function read(lat, lon) {
   const res = await fetch("/forecast", {
@@ -384,17 +393,20 @@ function place(risk) {
 }
 
 function drawPlot(rows) {
-  $("plot").innerHTML = rows.map((r) => {
+  $("plot").replaceChildren(...rows.map((r) => {
     const pct = place(r.risk);
     const over = r.risk >= TRIGGER;
-    return `<div class="reading ${over ? "over" : ""}" style="justify-content:flex-end">
-      <div style="height:${100 - pct}%"></div>
-      <div class="val">${r.risk.toFixed(3)}</div>
-      <div class="dot"></div>
-      <div class="stem" style="height:${pct}%"></div>
-      <div class="place">${esc(r.name)}</div>
-    </div>`;
-  }).join("");
+    return el("div", {
+      className: `reading ${over ? "over" : ""}`,
+      attrs: { style: "justify-content:flex-end" },
+    }, [
+      el("div", { attrs: { style: `height:${100 - pct}%` } }),
+      el("div", { className: "val", text: r.risk.toFixed(3) }),
+      el("div", { className: "dot" }),
+      el("div", { className: "stem", attrs: { style: `height:${pct}%` } }),
+      el("div", { className: "place", text: r.name }),
+    ]);
+  }));
 }
 
 async function loadPlot() {
@@ -413,21 +425,24 @@ async function loadPlot() {
 
 function showResult(lat, lon, r) {
   const over = r.risk >= TRIGGER;
-  const el = $("result");
-  el.className = "result shown" + (over ? " breach" : "");
-  el.innerHTML = `
-    <div class="verdict">
-      <span class="num">${r.risk.toFixed(3)}</span>
-      <span>${over ? "the contract pays this claim" : "below the line — no payout"}</span>
-    </div>
-    <p class="summary">${esc(r.summary)}</p>
-    <div class="figures">
-      <div>temperature<b>${esc(Number(r.temp_c).toFixed(1))} °C</b></div>
-      <div>wind<b>${esc(Number(r.wind_kmh).toFixed(1))} km/h</b></div>
-      <div>gusts<b>${esc(Number(r.gust_kmh).toFixed(1))} km/h</b></div>
-      <div>precipitation<b>${esc(Number(r.precip_mm).toFixed(1))} mm</b></div>
-      <div>valid at<b>${esc(r.valid_at)}</b></div>
-    </div>`;
+  const panel = $("result");
+  panel.className = "result shown" + (over ? " breach" : "");
+
+  const figure = (label, value) => el("div", { text: label }, [el("b", { text: value })]);
+  panel.replaceChildren(
+    el("div", { className: "verdict" }, [
+      el("span", { className: "num", text: r.risk.toFixed(3) }),
+      el("span", { text: over ? "the contract pays this claim" : "below the line — no payout" }),
+    ]),
+    el("p", { className: "summary", text: r.summary }),
+    el("div", { className: "figures" }, [
+      figure("temperature", `${Number(r.temp_c).toFixed(1)} °C`),
+      figure("wind", `${Number(r.wind_kmh).toFixed(1)} km/h`),
+      figure("gusts", `${Number(r.gust_kmh).toFixed(1)} km/h`),
+      figure("precipitation", `${Number(r.precip_mm).toFixed(1)} mm`),
+      figure("valid at", r.valid_at),
+    ]),
+  );
 }
 
 $("form").addEventListener("submit", async (e) => {
@@ -439,9 +454,9 @@ $("form").addEventListener("submit", async (e) => {
     const r = await read($("lat").value, $("lon").value);
     showResult($("lat").value, $("lon").value, r);
   } catch (err) {
-    const el = $("result");
-    el.className = "result shown";
-    el.innerHTML = `<p class="err">${esc(err.message)}</p>`;
+    const panel = $("result");
+    panel.className = "result shown";
+    panel.replaceChildren(el("p", { className: "err", text: err.message }));
   } finally {
     go.disabled = false;
     go.textContent = "Read the risk";
@@ -462,30 +477,51 @@ fetch("/api/policies")
   .then((r) => { if (!r.ok) throw new Error("chain unreachable"); return r.json(); })
   .then(({ rows, unreadable }) => {
     if (!rows.length) {
-      $("ledgerbody").innerHTML = `<tr><td colspan="6" class="m" style="color:var(--muted)">no policies yet</td></tr>`;
+      $("ledgerbody").replaceChildren(el("tr", {}, [
+        el("td", { className: "m", text: "no policies yet", attrs: { colspan: 6, style: "color:var(--muted)" } }),
+      ]));
       return;
     }
-    const note = unreadable
-      ? `<tr><td colspan="6" class="m" style="color:var(--trigger)">${esc(unreadable)} policies could not be read</td></tr>`
-      : "";
-    $("ledgerbody").innerHTML = note + rows.map((p) => `<tr>
-      <td class="m">${esc(p.id)}</td>
-      <td class="m">${esc(p.lat)}, ${esc(p.lon)}</td>
-      <td class="m">${esc(p.payout)}</td>
-      <td class="m">${p.jobId ? esc(p.jobId) : "—"}</td>
-      <td class="m">${p.jobId ? esc(Number(p.risk).toFixed(3)) : "—"}</td>
-      <td><span class="tag ${STATUS_TAG[p.status] ?? ""}">${esc(String(p.status).toLowerCase())}</span></td>
-    </tr>`).join("");
+    const body = $("ledgerbody");
+    body.replaceChildren();
+
+    if (unreadable) {
+      body.appendChild(el("tr", {}, [
+        el("td", {
+          className: "m",
+          text: `${unreadable} ${unreadable === 1 ? "policy" : "policies"} could not be read`,
+          attrs: { colspan: 6, style: "color:var(--trigger)" },
+        }),
+      ]));
+    }
+
+    for (const p of rows) {
+      body.appendChild(el("tr", {}, [
+        el("td", { className: "m", text: p.id }),
+        el("td", { className: "m", text: `${p.lat}, ${p.lon}` }),
+        el("td", { className: "m", text: p.payout }),
+        el("td", { className: "m", text: p.jobId ? p.jobId : "—" }),
+        el("td", { className: "m", text: p.jobId ? Number(p.risk).toFixed(3) : "—" }),
+        el("td", {}, [
+          el("span", {
+            className: `tag ${STATUS_TAG[p.status] ?? ""}`,
+            text: String(p.status).toLowerCase(),
+          }),
+        ]),
+      ]));
+    }
   })
   .catch(() => {
-    $("ledgerbody").innerHTML = `<tr><td colspan="6" class="m" style="color:var(--trigger)">could not read the chain</td></tr>`;
+    $("ledgerbody").replaceChildren(el("tr", {}, [
+      el("td", { className: "m", text: "could not read the chain", attrs: { colspan: 6, style: "color:var(--trigger)" } }),
+    ]));
   });
 
 fetch("/api/book")
   .then((r) => r.json())
   .then((b) => {
     $("bookstat").textContent =
-      `${esc(b.policies)} policies written · ${esc(b.jobBudget)} USDC left for jobs`;
+      `${b.policies} policies written · ${b.jobBudget} USDC left for jobs`;
   })
   .catch(() => { $("bookstat").textContent = "book unavailable"; });
 

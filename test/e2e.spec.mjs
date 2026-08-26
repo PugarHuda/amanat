@@ -1,0 +1,290 @@
+// End-to-end tests against a running Amanat miner.
+//
+//   npm run test:e2e                    # against the local server
+//   E2E_BASE=https://amanat-miner.vercel.app npm run test:e2e
+//
+// These hit the real upstream and the real chain. That is the point: the miner's
+// job is to answer correctly about the actual weather, and the page's claim is
+// that its ledger is read from Base rather than typed in. A suite that mocked
+// either would test the mocks.
+//
+// The consequence is that a network failure fails the suite. That is the honest
+// trade — a green run here means the deployed thing worked, not that a fixture
+// did.
+
+import { test, expect } from "@playwright/test";
+
+const BASE = process.env.E2E_BASE ?? "http://127.0.0.1:8799";
+
+const CEBU = { lat: 10.32, lon: 123.89 };
+
+test.describe("miner API — happy paths", () => {
+  test("answers a valid forecast request", async ({ request }) => {
+    const res = await request.post(`${BASE}/forecast`, { data: { ...CEBU, hours: 1 } });
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+
+    for (const key of ["summary", "temp_c", "wind_kmh", "gust_kmh", "precip_mm", "risk", "breach", "valid_at", "source"]) {
+      expect(body, `response is missing ${key}`).toHaveProperty(key);
+    }
+    expect(body.risk).toBeGreaterThanOrEqual(0);
+    expect(body.risk).toBeLessThanOrEqual(1);
+    expect(typeof body.breach).toBe("boolean");
+    expect(body.breach).toBe(body.risk >= 0.75);
+    // The sentence and the scalars have to agree — they are one answer in two
+    // shapes, and a scorer grades the sentence while a contract acts on the
+    // scalars.
+    expect(body.summary).toContain(body.temp_c.toFixed(1));
+    expect(body.summary).toContain(body.risk.toFixed(3));
+  });
+
+  test("accepts coordinates as query parameters too", async ({ request }) => {
+    const res = await request.get(`${BASE}/forecast?lat=${CEBU.lat}&lon=${CEBU.lon}`);
+    expect(res.status()).toBe(200);
+    expect((await res.json()).risk).toBeGreaterThanOrEqual(0);
+  });
+
+  test("forecasts a time in the future, not one already past", async ({ request }) => {
+    const res = await request.post(`${BASE}/forecast`, { data: { ...CEBU, hours: 3 } });
+    const { valid_at } = await res.json();
+    const at = Date.parse(valid_at);
+    expect(at).toBeGreaterThan(Date.now() - 3600e3);
+    expect(Math.abs(at - (Date.now() + 3 * 3600e3))).toBeLessThanOrEqual(3600e3);
+  });
+
+  test("reports health as itself", async ({ request }) => {
+    const res = await request.get(`${BASE}/health`);
+    expect(res.status()).toBe(200);
+    expect(await res.json()).toMatchObject({ status: "ok", miner: "amanat" });
+  });
+
+  test("reads the book from chain", async ({ request }) => {
+    const res = await request.get(`${BASE}/api/book`);
+    expect(res.status()).toBe(200);
+    const book = await res.json();
+    expect(book.contract).toMatch(/^0x[0-9a-fA-F]{40}$/);
+    expect(book.policies).toBeGreaterThanOrEqual(0);
+    expect(Number(book.jobBudget)).not.toBeNaN();
+  });
+
+  test("reads policies from chain, newest first", async ({ request }) => {
+    const res = await request.get(`${BASE}/api/policies`);
+    expect(res.status()).toBe(200);
+    const { total, rows, unreadable } = await res.json();
+    expect(total).toBeGreaterThanOrEqual(rows.length);
+    expect(unreadable).toBe(0);
+
+    if (rows.length > 1) {
+      expect(rows[0].id).toBeGreaterThan(rows[1].id);
+    }
+    for (const p of rows) {
+      expect(p.holder).toMatch(/^0x[0-9a-fA-F]{40}$/);
+      expect(["None", "Active", "Claimed", "Declined", "Expired"]).toContain(p.status);
+      // Coordinates round-trip as the strings the contract stores.
+      expect(Number(p.lat)).not.toBeNaN();
+      expect(Number(p.lon)).not.toBeNaN();
+    }
+  });
+});
+
+test.describe("miner API — failure paths", () => {
+  // Absent is not zero. Every one of these answered 200 with a confident
+  // forecast for Null Island before the miner started refusing them.
+  for (const [name, data] of [
+    ["empty body", {}],
+    ["missing lat", { lon: 10 }],
+    ["missing lon", { lat: 10 }],
+    ["null coordinates", { lat: null, lon: null }],
+    ["empty-string coordinates", { lat: "", lon: "" }],
+  ]) {
+    test(`refuses ${name}`, async ({ request }) => {
+      const res = await request.post(`${BASE}/forecast`, { data });
+      expect(res.status()).toBe(400);
+      expect((await res.json()).error).toMatch(/required/);
+    });
+  }
+
+  for (const [name, data, pattern] of [
+    ["latitude above 90", { lat: 999, lon: 0 }, /lat must be between/],
+    ["latitude below -90", { lat: -999, lon: 0 }, /lat must be between/],
+    ["longitude above 180", { lat: 0, lon: 999 }, /lon must be between/],
+    ["non-numeric coordinates", { lat: "abc", lon: "def" }, /lat must be between/],
+    ["negative hours", { ...CEBU, hours: -5 }, /hours must be/],
+    ["hours beyond the forecast window", { ...CEBU, hours: 9999 }, /hours must be/],
+    ["fractional hours", { ...CEBU, hours: 1.5 }, /hours must be/],
+  ]) {
+    test(`refuses ${name}`, async ({ request }) => {
+      const res = await request.post(`${BASE}/forecast`, { data });
+      expect(res.status()).toBe(400);
+      expect((await res.json()).error).toMatch(pattern);
+    });
+  }
+
+  test("accepts the boundary coordinates themselves", async ({ request }) => {
+    for (const data of [{ lat: 90, lon: 0 }, { lat: -90, lon: 0 }, { lat: 0, lon: 180 }, { lat: 0, lon: -180 }]) {
+      const res = await request.post(`${BASE}/forecast`, { data });
+      expect(res.status(), `${JSON.stringify(data)} is a real place`).toBe(200);
+    }
+  });
+
+  test("refuses a body larger than the declared limit", async ({ request }) => {
+    const res = await request.post(`${BASE}/forecast`, {
+      data: { ...CEBU, padding: "x".repeat(70_000) },
+      failOnStatusCode: false,
+    });
+    expect(res.status()).toBe(400);
+  });
+
+  test("404s an unknown route and names the ones that exist", async ({ request }) => {
+    const res = await request.get(`${BASE}/nope`);
+    expect(res.status()).toBe(404);
+    expect((await res.json()).endpoints).toContain("/forecast");
+  });
+});
+
+test.describe("the page", () => {
+  test("loads and names itself", async ({ page }) => {
+    await page.goto(BASE);
+    await expect(page).toHaveTitle(/Amanat/);
+    await expect(page.locator("h1")).toContainText("One reading, one line");
+  });
+
+  test("plots live readings against the trigger line", async ({ page }) => {
+    await page.goto(BASE);
+    const readings = page.locator(".reading");
+    await expect(readings.first()).toBeVisible({ timeout: 30_000 });
+    await expect(readings).toHaveCount(5, { timeout: 60_000 });
+
+    for (const value of await page.locator(".reading .val").allTextContents()) {
+      const risk = Number(value);
+      expect(risk).toBeGreaterThanOrEqual(0);
+      expect(risk).toBeLessThanOrEqual(1);
+    }
+    // A dot is marked over only when it actually is.
+    for (const el of await page.locator(".reading").all()) {
+      const risk = Number(await el.locator(".val").textContent());
+      const over = (await el.getAttribute("class")).includes("over");
+      expect(over, `${risk} marked over=${over}`).toBe(risk >= 0.75);
+    }
+  });
+
+  test("checks a location and shows the reading", async ({ page }) => {
+    await page.goto(BASE);
+    await page.fill("#lat", "14.60");
+    await page.fill("#lon", "120.98");
+    await page.click("#go");
+
+    const result = page.locator("#result");
+    await expect(result).toBeVisible({ timeout: 30_000 });
+    await expect(result.locator(".num")).toHaveText(/^\d\.\d{3}$/);
+    await expect(result.locator(".summary")).toContainText("forecast for 14.60, 120.98");
+    await expect(result.locator(".figures")).toContainText("temperature");
+  });
+
+  test("a preset fills the form and runs it", async ({ page }) => {
+    await page.goto(BASE);
+    await page.click('#presets button[data-lat="22.30"]');
+    await expect(page.locator("#lat")).toHaveValue("22.30");
+    await expect(page.locator("#result .summary")).toContainText("22.30, 114.17", { timeout: 30_000 });
+  });
+
+  test("shows the miner's own message when a coordinate is out of range", async ({ page }) => {
+    await page.goto(BASE);
+    await page.fill("#lat", "999");
+    await page.click("#go");
+    await expect(page.locator("#result .err")).toContainText("lat must be between", { timeout: 30_000 });
+    // The button has to come back, or one bad input ends the session.
+    await expect(page.locator("#go")).toBeEnabled();
+    await expect(page.locator("#go")).toHaveText("Read the risk");
+  });
+
+  test("renders the ledger from chain, not from markup", async ({ page }) => {
+    await page.goto(BASE);
+    const rows = page.locator("#ledgerbody tr");
+    await expect(rows.first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.locator("#ledgerbody")).not.toContainText("reading the chain…", { timeout: 30_000 });
+
+    const api = await (await page.request.get(`${BASE}/api/policies`)).json();
+    await expect(rows).toHaveCount(api.rows.length + (api.unreadable ? 1 : 0));
+    if (api.rows.length) {
+      await expect(rows.first()).toContainText(String(api.rows[0].id));
+      await expect(rows.first()).toContainText(api.rows[0].lat);
+    }
+  });
+
+  test("reports the book on chain", async ({ page }) => {
+    await page.goto(BASE);
+    await expect(page.locator("#bookstat")).toContainText(/policies written/, { timeout: 30_000 });
+  });
+
+  test("cannot be injected through chain data", async ({ page }) => {
+    await page.goto(BASE);
+
+    // Drive the page's own element builder — the one the ledger and the result
+    // panel use — with a hostile string. Coordinates are written on-chain by
+    // whoever opened the policy, so this is the shape of the real risk, and
+    // testing a copy of the logic would prove nothing about the page.
+    const outcome = await page.evaluate(() => {
+      window.__xss = false;
+      const hostile = '<img src=x onerror="window.__xss=true">';
+      const cell = el("td", { text: hostile });
+      document.body.appendChild(cell);
+      return {
+        builderExists: typeof el === "function",
+        createdElement: cell.querySelector("img") !== null,
+        renderedAsText: cell.textContent === hostile,
+        childIsText: cell.firstChild?.nodeType === Node.TEXT_NODE,
+      };
+    });
+
+    expect(outcome.builderExists, "the page must build cells with el()").toBe(true);
+    expect(outcome.createdElement, "hostile input must not become an element").toBe(false);
+    expect(outcome.renderedAsText).toBe(true);
+    expect(outcome.childIsText).toBe(true);
+    await page.waitForTimeout(500);
+    expect(await page.evaluate(() => window.__xss)).toBe(false);
+  });
+
+  test("renders every ledger cell as text, never markup", async ({ page }) => {
+    await page.goto(BASE);
+    await expect(page.locator("#ledgerbody tr").first()).toBeVisible({ timeout: 30_000 });
+
+    // Not one cell in the ledger may contain a child element: every value there
+    // came off the chain, and an element means something was parsed as markup.
+    const withElements = await page.evaluate(() =>
+      [...document.querySelectorAll("#ledgerbody td")]
+        .filter((td) => td.children.length && !td.querySelector(".tag"))
+        .map((td) => td.innerHTML.slice(0, 60)));
+    expect(withElements).toEqual([]);
+  });
+
+  test("logs nothing to the console", async ({ page }) => {
+    const errors = [];
+    page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
+    page.on("pageerror", (e) => errors.push(e.message));
+    await page.goto(BASE);
+    await page.waitForTimeout(6000);
+    expect(errors).toEqual([]);
+  });
+
+  test("fits a phone without clipping the navigation", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(BASE);
+
+    const overflow = await page.evaluate(() =>
+      document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow, "the page must not scroll sideways").toBeLessThanOrEqual(1);
+
+    for (const link of await page.locator("nav a").all()) {
+      const box = await link.boundingBox();
+      expect(box.x + box.width, `${await link.textContent()} runs off the screen`).toBeLessThanOrEqual(391);
+    }
+  });
+
+  test("keyboard reaches the form and shows focus", async ({ page }) => {
+    await page.goto(BASE);
+    await page.locator("#lat").focus();
+    const outline = await page.locator("#lat").evaluate((el) => getComputedStyle(el).outlineStyle);
+    expect(outline).not.toBe("none");
+  });
+});
