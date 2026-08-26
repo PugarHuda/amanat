@@ -104,6 +104,45 @@ node --env-file=.env agent/policy.mjs "anywhere" 14.60 120.98 1
 The settled policy reports a forecast for `0.00, 0.00` whatever coordinates you
 pass.
 
+## `MAX_PARAM_VALUE` with `operator: lte` is evaluated backwards
+
+This one blocks calls today, and it is easy to reproduce.
+
+The miner declared its real constraint:
+
+```yaml
+limitations:
+  - code: MAX_PARAM_VALUE
+    message: hours must be an integer offset between 0 and 168
+    param: hours
+    property: value
+    value_num: 168
+    operator: lte
+```
+
+Direct calls through `POST /engine/v1/ask/{minerId}`:
+
+| `hours` | Result |
+|---|---|
+| omitted | 200 |
+| `0` | **422** — `parameter "hours" value 0.00 violates the miner's declared limit (lte 168.00)` |
+| `2` | **422** — same message, value 2.00 |
+| `200` | passes the node's check, then the miner rejects it with its own 400 |
+
+Values *inside* the limit are refused; a value *outside* it is let through. The
+comparison is inverted.
+
+The cost is not cosmetic. Pre-request validation runs before payment on the
+direct path and blocks the call, so a miner that declares an honest
+`MAX_PARAM_VALUE` has every valid call to that parameter refused. And it plausibly
+explains the hanging ERC-8183 jobs better than the missing coordinates did: every
+job this contract opens carries `hours = 1` in `integers[0]`, and 1 is inside the
+declared limit, so the node would refuse before the miner is ever called.
+
+Worked around by deleting the declaration — the miner validates the range itself
+and answers 400 — but that is the wrong direction to be pushed in. Declaring
+limits accurately is what the field is for.
+
 ## A signal commitment that cannot be re-derived
 
 Every paid call returns a `signal_hash`, and the docs say why that is useful:
