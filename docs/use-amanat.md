@@ -6,6 +6,8 @@ trust the answer.
 | Route | Cost | Verified by validators | Wallet needed |
 |---|---|---|---|
 | Direct HTTP | free | no | no |
+| Route assessment | free | no | no |
+| The published board | free | yes — it was already bought | no |
 | Telegraph MCP | $0.01 | yes | yes |
 | Engine over x402 | $0.01 | yes | yes |
 | ERC-8183 job | $1.00 | yes, delivered on-chain | yes |
@@ -61,6 +63,48 @@ from now, 0 to 168, and overrides whatever the question implies.
 `risk` is 0 to 1 from wind, gusts and precipitation against thresholds a
 reinsurer would recognise: Beaufort 8 at 62 km/h, 90 km/h gusts, 30 mm/h rain.
 `breach` is `risk >= 0.75`, the point at which the Amanat contract pays a claim.
+
+## 1b. A route, not a point
+
+Cargo is not exposed to the weather at the port it left, so each leg is
+forecast for the hour the shipment actually reaches it.
+
+```bash
+curl -X POST https://amanat-miner.vercel.app/api/route   -H "Content-Type: application/json"   -d "{\"from\": \"Cebu\", \"to\": \"Manila\", \"speed_kmh\": 37}"
+```
+
+```
+km     0  h+  0   risk 0.196   Overcast
+km   187  h+  5   risk 0.260   Overcast
+km   375  h+ 10   risk 0.300   Overcast
+km   562  h+ 15   risk 0.648   Drizzle
+
+Elevated: risk 0.648 at 14.6042, 120.9822 at hour 15.
+```
+
+The quay reads 0.196 and the arrival reads 0.648 fifteen hours later. A point
+forecast would have reported the first number and called it the answer.
+
+Each end is a place name, a `"lat, lon"` pair, or `{lat, lon}`. `speed_kmh`
+defaults to 37 — about 20 knots. A leg past the 168-hour horizon says so rather
+than being clamped, and a leg that failed to read is never reported as calm.
+
+For the same assessment over the paid, verified rail — one signal hash per leg:
+
+```bash
+npm run route -- "Cebu" "Manila" --legs 6
+```
+
+## 1c. The board: lanes already screened, free to read
+
+```bash
+curl https://amanat-miner.vercel.app/api/board
+```
+
+Five Southeast and East Asian shipping lanes, screened through Telegraph every
+twelve hours by `agent/board.mjs`. Each leg carries the signal hash of the paid
+call behind it, so reading the board costs nothing while the readings in it were
+still bought and verified. The gauge on the landing page is drawn from this.
 
 ## 2. From an agent, over MCP
 

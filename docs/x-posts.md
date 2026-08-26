@@ -260,6 +260,66 @@ transaction, a number from `/api/wasm`, or a page that loads.
 
 ---
 
+
+**26 — a gauge that cost every visitor five API calls**
+
+> My landing page asked the miner about five cities on every page load.
+>
+> Open-Meteo gives 10,000 calls a day. That is two thousand visits before the
+> miner stops answering anyone — including the validators scoring it.
+>
+> The ceiling on how many people could use the site was the decoration.
+> @Telegraphprotoc
+
+---
+
+**27 — what replaced it**
+
+> Now it reads a board screened through @Telegraphprotoc every twelve hours.
+>
+> One cached request instead of five live ones, and every column has a signal
+> hash behind it instead of an unverified reading.
+>
+> 15 paid calls buy something thousands of people can read for free.
+
+---
+
+**28 — every weather miner scored zero**
+
+> Epoch 280 on @Telegraphprotoc scored 141 miner-intent pairs. 46 came back
+> above zero — TASK_COMPLETION at 0.996.
+>
+> All 20 weather pairs came back 0.000000. Not near zero. Exactly zero.
+>
+> The leaderboard still ranks them 1 to 9 on top of that.
+
+---
+
+**29 — a rank is not a result**
+
+> I am #1 in two weather intents today. It means nothing: everyone scored zero,
+> so the rank is a tie-break.
+>
+> Three epochs ago I was #1 in STORM_ALERT at 0.009192, against 0.008503 and
+> 0.006845. That one was real.
+>
+> Worth knowing which is which. @Telegraphprotoc
+
+---
+
+**30 — the contract paid claims on a field it could not name**
+
+> My contract read bools[0] from a miner answer as "storm breached" and paid out.
+>
+> But @Telegraphprotoc picks the miner. bools[0] is whatever that miner put
+> first — on the registry today, as likely "is AI generated" as anything about
+> weather.
+>
+> It declines what it cannot identify now. A wrong payout is funded by the next
+> policyholder.
+
+---
+
 ## Hold these until the numbers land
 
 - The board of live shipping lanes, once the schedule has run long enough to show a storm move across it.
