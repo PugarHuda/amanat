@@ -163,10 +163,10 @@ transaction, a number from `/api/wasm`, or a page that loads.
 
 ---
 
-**14 — scoring zero while serving 296 requests correctly**
+**18 — the diagnosis**
 
-> My @Telegraphprotoc miner scored 0 on three intents at once. It had served 296
-> requests without an error.
+> Found it. My @Telegraphprotoc miner scored 0 on three intents while serving
+> 296 requests without a single error.
 >
 > Validators run an epoch tournament: one question, put to every miner on the
 > intent. The questions are sentences.
@@ -175,46 +175,94 @@ transaction, a number from `/api/wasm`, or a page that loads.
 
 ---
 
-**15 — teaching it to read the question**
+**19 — first place**
 
+> Epoch 276: 0.000, rank 6.
+> Epoch 277: 0.009192, rank 1.
+>
+> Amanat is now #1 in STORM_ALERT on @Telegraphprotoc.
+>
+> The fix was not a better forecast. It was answering the question in the form
+> it was asked.
+
+---
+
+**20 — what actually changed**
+
+> Two things, both about reading the question rather than the coordinates:
+>
 > "Will Riyadh exceed 40 degrees in the next 24 hours?"
 >
-> A sentence starts with a capital, so the naive read is the phrase "Will
-> Riyadh" — which geocodes to nowhere.
+> → a sentence starts with a capital, so the naive read is "Will Riyadh", which
+> geocodes to nowhere. Trim the non-places off each end.
+> → "in the next six hours" is hour 6, not now.
 >
-> Trim the non-places off each end and Riyadh is what is left. It also reads
-> "in the next six hours" as hour 6.
+> @Telegraphprotoc
 
 ---
 
-**16 — the reason field was empty**
+**21 — and one thing about the answer**
 
-> Registration rejected: "YAML schema validation failed: []."
+> The miners that scored led with a condition and a daily range. Mine led with
+> wind speed.
 >
-> An empty list. The cause was mine — a description with a comma inside a { }
-> flow mapping, so the file did not parse at all — but nothing in the message
-> could tell me that.
+> "31.4 °C with 0.1 mm precipitation" and "Light drizzle" describe the same
+> hour. Only one of them answers what a person asked.
 >
-> updateMiner deregisters the old entry first. My miner was off @Telegraphprotoc
-> for 15 minutes to learn it.
+> Same API call, same cost. It just says the thing first. @Telegraphprotoc
 
 ---
 
-**17 — the check that would have caught it**
+**22 — the rejection with no reason**
 
-> I had five pre-flight checks before spending gas on a registration. Hash
+> "YAML schema validation failed: []."
+>
+> An empty list. The cause was mine — a comma inside a { } flow mapping, so the
+> file did not parse at all — but nothing in that message could tell me.
+>
+> updateMiner deregisters the old entry first. My miner was off the network for
+> 15 minutes learning this. @Telegraphprotoc
+
+---
+
+**23 — the check I did not have**
+
+> I had five pre-flight checks before spending gas on a registration: hash
 > matches, endpoints answer, intents canonical, call simulates.
 >
 > None of them parsed the YAML. I was scraping it with regexes, which happily
 > match a file no parser accepts.
 >
-> Now it parses first. @Telegraphprotoc
+> It parses first now. @Telegraphprotoc
+
+---
+
+**24 — a point forecast is the wrong shape**
+
+> A shipment is not exposed to the weather at the port it left.
+>
+> Cebu → Manila at 20 knots: 0.468 at the quay, 0.524 on arrival fifteen hours
+> later. Each leg is forecast for the hour the cargo actually gets there.
+>
+> The time axis moves with the cargo. Built on @Telegraphprotoc.
+
+---
+
+**25 — the shortcut that puts you in Afghanistan**
+
+> To sample a route you interpolate between two points. Averaging the latitude
+> and longitude is the obvious way and it is wrong.
+>
+> Cebu → Rotterdam: the average lands in Afghanistan. The great circle lands in
+> the Altai. Nearly 2000 km off any path a ship takes.
+>
+> @Telegraphprotoc
 
 ---
 
 ## Hold these until the numbers land
 
-- The miner's first non-zero score, next to the `label_field` fix that caused it.
+- The board of live shipping lanes, once the schedule has run long enough to show a storm move across it.
 - Any registration that comes back champion.
 - Total Telegraph calls by the end of Track 3, as a count with the contract
   address beside it — that is the number being weighed.

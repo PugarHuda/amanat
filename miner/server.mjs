@@ -10,14 +10,14 @@ import { locate } from "./lib/geocode.mjs";
 import { assessRoute } from "./lib/route.mjs";
 import { book, policies } from "./lib/book.mjs";
 
-// Callers name the question field differently and the protocol does not fix
-// one. Accepting the whole set costs a lookup and turns "unsupported request"
-// into an answer.
 // Where the scheduled agent publishes. An orphan branch, so a data refresh
 // carries no source changes and triggers no build.
 const BOARD_URL = process.env.AMANAT_BOARD_URL
   ?? "https://raw.githubusercontent.com/PugarHuda/amanat/board/board.json";
 
+// Callers name the question field differently and the protocol does not fix
+// one. Accepting the whole set costs a lookup and turns "unsupported request"
+// into an answer.
 const QUESTION_FIELDS = ["question", "q", "query", "prompt", "text", "input", "place", "location", "city"];
 
 /**
