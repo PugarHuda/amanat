@@ -1,11 +1,28 @@
-# Bug report: ERC-8183 job params do not reach the miner
+# Bug report: what broke while building on the Telegraph testnet
+
+Everything below was found building three tracks against the live testnet
+between 21 and 27 August, and every claim is reproducible with the scripts in
+this repo. Ordered by what would cost a builder the most time.
+
+| # | Finding | Effect |
+|---|---|---|
+| 1 | [ERC-8183 job params do not reach the miner](#erc-8183-job-params-do-not-reach-the-miner) | A job carrying coordinates arrives as `lat=0, lon=0`. The contract acts on an answer about the wrong place. |
+| 2 | [Jobs sit in `Funded` and never route](#update-27-august-a-third-job-a-fresh-contract-still-funded) | Three jobs, two contracts, 3 USDC escrowed, nothing returned. Jobs 7–11 settled four days earlier, so the rail worked and then stopped. |
+| 3 | [The escrow has no exit](#the-escrow-has-no-exit) | `depositUSDC` exists; nothing withdraws. Funds in are funds gone. |
+| 4 | [A signal commitment that cannot be re-derived](#a-signal-commitment-that-cannot-be-re-derived) | `verified: true` is the node vouching for itself. Thirty variants, two miners, no match. |
+| 5 | [`MAX_PARAM_VALUE` with `operator: lte` is evaluated backwards](#max_param_value-with-operator-lte-is-evaluated-backwards) | A policy that means "at most" enforces "at least". |
+| 6 | [A whole intent family scored exactly zero](#every-weather-miner-scored-exactly-0000000-at-epoch-280) | Ranks 1..9 assigned on top of no measurement, so `#1` can mean nothing was graded. |
+| 7 | [A terminal rejection with an empty reason list](#a-terminal-rejection-with-an-empty-reason-list) | The one field that would say why is empty. |
+| 8 | [Two smaller things](#two-smaller-things-found-alongside) | A dead regex, and docs that describe a call the node does not make. |
+
+---
 
 **Miner:** `amanat-weather-risk`, registration 218, id `20260821`
 **Contract:** [`0x0700c9300D5cfD8A4b2C7fBbaB2703087AB0590c`](https://sepolia.basescan.org/address/0x0700c9300D5cfD8A4b2C7fBbaB2703087AB0590c)
 **Superseded:** the jobs below were opened by [`0x51fa7d66…7B3c`](https://sepolia.basescan.org/address/0x51fa7d66af31dE4d94Bd14e0404465fd2D0c7B3c), which this replaced.
 **Jobs:** 7, 8, 9 on Base Sepolia
 
-## What happens
+## ERC-8183 job params do not reach the miner
 
 A job created with coordinates in `strings[0]` and `strings[1]` reaches the
 miner as `lat=0, lon=0`. The miner answers about Null Island every time.
@@ -168,6 +185,14 @@ Example: signal
 `amanat-weather-risk`, payment
 [`0x0ccfe6f1…`](https://sepolia.basescan.org/tx/0x0ccfe6f1616ddbfc3903163e2f6305dd1f5abd959cb780d1fc82209d5582c838).
 
+On 27 August the same check was run against a different miner —
+`bittensor-sn18-zeus`, signal
+`0x73643031cc60762211d36b72d69509c6f86324ca26be4a1c23cfaa8ca66e947e`, payment
+[`0xe092350a…`](https://sepolia.basescan.org/tx/0xe092350a1343e91c045a9979e59d2552d9fe6cfc6499f5a42f6ea5ccf18659d2)
+— and the hash was again unreachable from the payload as served. So this is not
+one miner serialising its answer oddly: the node hashes bytes that no miner
+response exposes.
+
 This is not a claim that any answer is wrong. It is that `verified: true` is
 currently the node vouching for itself, and the independent check the docs
 describe is not reachable from the response. Either the exact bytes hashed
@@ -204,7 +229,7 @@ minimum escrow balance at connect time. Following either instruction puts USDC
 somewhere it cannot come back from. On testnet that is an annoyance. The same
 contract on mainnet would be something else.
 
-Ours currently holds 7.4 USDC that can only ever leave as job payments.
+Ours currently holds 8.28 USDC that can only ever leave as job payments.
 
 ## Two smaller things found alongside
 

@@ -39,6 +39,9 @@ participant, on 17 August. In a 77-hour window there were 44 `MinerRegistered`
 events and 2 `JobCreated`. Meanwhile the organisers name on-chain intelligence
 pipelines as the highest-value thing to build.
 
+By 27 August the count is 14, and 8 of those are ours. Five settled; the last
+three have not moved.
+
 **3. Almost no miner can receive a job at all.** A job hands the node raw
 `OnChainData` arrays; without an `on_chain.request` block in its YAML the node
 cannot turn those into an HTTP call. `npm run audit` fetches every registered
@@ -422,22 +425,34 @@ until it answers 200.
 
 ## Status
 
-**Track 1 — miner.** Registration 179, `amanat-weather-risk`, active on
-`WEATHER_FORECAST`, `WEATHER_CHECK` and `STORM_ALERT`, served from
-https://amanat-miner.vercel.app. The Engine routes real paid traffic to it. Not
-yet scored: epochs are 9 hours on testnet, having been 1 hour earlier the same
-day, so the first ranking lands at the next boundary.
+Read from the chain and the node on 27 August; every figure below is checkable
+at the addresses given.
+
+**Track 1 — miner.** Registration 218, `amanat-weather-risk`, id `20260821`,
+active on `WEATHER_FORECAST`, `WEATHER_CHECK` and `STORM_ALERT` and served from
+https://amanat-miner.vercel.app. Ranked **1** in all three — of 11, 9 and 4
+miners respectively. That rank is worth less than it looks: at epoch 280 every
+weather miner scored exactly 0.000000, so on those intents a rank is a tie-break
+over an absence. Three epochs earlier the same intents produced real spread and
+this miner led on merit at 0.009192. Both facts are in
+[`docs/bug-report.md`](docs/bug-report.md).
 
 **Track 2 — scoring modules.** Four champion slots held before the 23 August
 evaluator change superseded them; nine registrations since, all recorded on
 chain with their reasons. Eight profiles, every one at 37 of 38 ordering wins
 with 14 of 14 attacks held.
 
-**Track 3 — application.** Contract live, four jobs settled through the
-callback, all three rails exercised, 40-plus paid Engine calls and counting.
+**Track 3 — application.** Fourteen ERC-8183 jobs have ever been created on this
+network. **Eight of them are ours** — jobs 7 through 14, across two contracts.
+Jobs 7–11 settled through the callback and reached `Terminal`. Jobs 12, 13 and
+14 have sat in `Funded` since, the last of them opened against a freshly
+deployed contract on the intent this miner ranks first on. Nothing routed. The
+contract's escrow is now zero and there is no withdrawal path, so there will be
+no ninth job. 70-plus paid Engine calls.
 
-Everything above is checkable: registration ids and transactions on Base
-Sepolia, evaluation numbers at `/api/wasm`.
+What is not working is as much of the result as what is: the on-chain rail
+settled five jobs and then stopped, and from outside a job record says only
+`Funded` and never why.
 
 ## Reproducing any of it
 
