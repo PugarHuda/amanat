@@ -13,6 +13,7 @@ import { signPayment, decodeChallenge, DEFAULT_MAX_AMOUNT } from "./x402.mjs";
 import { intentId, NAME_HASHED_INTENTS, readRisk, POLICY_STATUS } from "./telegraph.mjs";
 import { flag, has, positionals, reject } from "./args.mjs";
 import { payloadFor } from "./crosscheck.mjs";
+import { rank } from "./survey.mjs";
 
 const USDC = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
 const PAY_TO = "0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8";
@@ -219,3 +220,32 @@ console.log("\nagent ok");
   assert.equal(payloadFor({ properties: { days: {} } }, { ...at, hours: 30 }).days, 2);
 }
 console.log("requests are built from what a miner declares, not from what ours has");
+
+// ── the survey ranks by a winnable slot, not by a loud number ────────────────
+{
+  const champ = {
+    WEAK: { eval: 0.53, registration: 636, author: "0xaaa" },
+    STRONG: { eval: 0.99, registration: 453, author: "0xaaa" },
+    ORPHAN: null,
+  };
+  const scores = { WEAK: [0.0089, 0], STRONG: [0.008, 0.001, 0] };
+  const rows = rank(champ, scores);
+
+  // Weakest incumbent first — that is the whole point of the ordering.
+  assert.deepEqual(rows.map((r) => r.intent), ["WEAK", "STRONG", "ORPHAN"]);
+
+  // An intent nobody holds sorts last. Read as eval 0 it would top the list of
+  // things to attack, which is the opposite of true: nothing scores it at all.
+  assert.equal(rows.at(-1).intent, "ORPHAN");
+
+  // `best` is the live ceiling, and an intent with no scores has none — not a
+  // zero, which would claim every miner tried and failed.
+  assert.equal(rows[0].live.best, 0.0089);
+  assert.equal(rows.at(-1).live.best, null);
+
+  // Zeros count as scored but not as nonzero: "nobody was graded above zero" and
+  // "nobody was graded" are the distinction this whole survey exists to make.
+  assert.equal(rows[1].live.scored, 3);
+  assert.equal(rows[1].live.nonzero, 2);
+}
+console.log("the survey ranks intents by how winnable the slot is");

@@ -31,7 +31,8 @@
     "test:e2e": "playwright test",
     "build:contract": "node onchain/build.mjs",
     "board": "node --env-file=.env agent/board.mjs",
-    "crosscheck": "node --env-file=.env agent/crosscheck.mjs"
+    "crosscheck": "node --env-file=.env agent/crosscheck.mjs",
+    "survey": "node agent/survey.mjs"
   },
   "dependencies": {
     "ethers": "^6.13.0"

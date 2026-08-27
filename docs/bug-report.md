@@ -6,14 +6,17 @@ this repo. Ordered by what would cost a builder the most time.
 
 | # | Finding | Effect |
 |---|---|---|
-| 1 | [ERC-8183 job params do not reach the miner](#erc-8183-job-params-do-not-reach-the-miner) | A job carrying coordinates arrives as `lat=0, lon=0`. The contract acts on an answer about the wrong place. |
-| 2 | [Jobs sit in `Funded` and never route](#update-27-august-a-third-job-a-fresh-contract-still-funded) | Three jobs, two contracts, 3 USDC escrowed, nothing returned. Jobs 7–11 settled four days earlier, so the rail worked and then stopped. |
-| 3 | [The escrow has no exit](#the-escrow-has-no-exit) | `depositUSDC` exists; nothing withdraws. Funds in are funds gone. |
-| 4 | [A signal commitment that cannot be re-derived](#a-signal-commitment-that-cannot-be-re-derived) | `verified: true` is the node vouching for itself. Thirty variants, two miners, no match. |
-| 5 | [`MAX_PARAM_VALUE` with `operator: lte` is evaluated backwards](#max_param_value-with-operator-lte-is-evaluated-backwards) | A policy that means "at most" enforces "at least". |
-| 6 | [A whole intent family scored exactly zero](#every-weather-miner-scored-exactly-0000000-at-epoch-280) | Ranks 1..9 assigned on top of no measurement, so `#1` can mean nothing was graded. |
-| 7 | [A terminal rejection with an empty reason list](#a-terminal-rejection-with-an-empty-reason-list) | The one field that would say why is empty. |
-| 8 | [Two smaller things](#two-smaller-things-found-alongside) | A dead regex, and docs that describe a call the node does not make. |
+| 1 | [Jobs sit in `Funded` and never route](#update-27-august-a-third-job-a-fresh-contract-still-funded) | Three jobs, two contracts, 3 USDC escrowed, nothing returned. Jobs 7–11 settled four days earlier, so the rail worked and then stopped. |
+| 2 | [Three gates, and the one that makes the real problem unfixable](#three-gates-and-the-one-that-makes-the-networks-real-problem-unfixable) | To replace the module scoring numeric answers at 1e-8, you must first rank answers the way it does. 42 of 45 slots sit with one author. |
+| 3 | [The bar moves between registrations, invisibly](#the-bar-moves-between-registrations-and-cannot-be-read-before-you-spend-one) | The same intent demanded 0.7859 then 0.9900. The number that would make registration a decision is published only after you pay to learn it. |
+| 4 | [The champion score on the board is not the champion's score](#the-champion-score-on-the-board-is-not-the-champions-score) | `WEATHER_FORECAST` displays 0.5302 and measures 0.9898. Ranked by the published number, the strongest incumbent looks like the weakest. |
+| 5 | [A whole intent family scored exactly zero](#a-whole-intent-family-scored-exactly-zero-and-it-is-not-only-weather) | 31 of 40 intents have no miner above 0.05; the other 9 reach 0.999. The split is by answer shape, not miner quality. |
+| 6 | [ERC-8183 job params do not reach the miner](#erc-8183-job-params-do-not-reach-the-miner) | A job carrying coordinates arrives as `lat=0, lon=0`. The contract acts on an answer about the wrong place. |
+| 7 | [The escrow has no exit](#the-escrow-has-no-exit) | `depositUSDC` exists; nothing withdraws. Funds in are funds gone. |
+| 8 | [A signal commitment that cannot be re-derived](#a-signal-commitment-that-cannot-be-re-derived) | `verified: true` is the node vouching for itself. Thirty variants, two miners, no match. |
+| 9 | [`MAX_PARAM_VALUE` with `operator: lte` is evaluated backwards](#max_param_value-with-operator-lte-is-evaluated-backwards) | A policy that means "at most" enforces "at least". |
+| 10 | [A terminal rejection with an empty reason list](#a-terminal-rejection-with-an-empty-reason-list) | The one field that would say why is empty. |
+| 11 | [Two smaller things](#two-smaller-things-found-alongside) | A dead regex, and docs that describe a call the node does not make. |
 
 ---
 
@@ -301,7 +304,7 @@ What would make this diagnosable from a contract's side: a reason on the job
 record, or an event when the node picks a job up and when it fails to route
 one. Right now `Funded` covers both "queued" and "abandoned".
 
-## Every weather miner scored exactly 0.000000 at epoch 280
+## A whole intent family scored exactly zero, and it is not only weather
 
 Epoch 280 evaluated fine: 141 miner-intent pairs were scored network-wide and
 46 came back above zero.
@@ -342,6 +345,28 @@ canonical scorer graded against, or at least whether one was found. A score of
 zero currently covers "your answer was wrong", "your answer never arrived" and
 "there was nothing to compare it to", and a miner cannot act on the difference.
 
+**It is not weather.** Reading every intent's live scores out of `/api/miners`
+on 27 August — `npm run survey` — the same shape covers the network. Of 40
+intents that produced a score, **31 have no miner above 0.05**. The other 9
+reach 0.89 to 0.999.
+
+| Intent | Best miner | Shape of a correct answer |
+|---|---|---|
+| `TASK_COMPLETION` | 0.9963 | prose |
+| `URL_SCAN` | 0.9991 | prose |
+| `LANGUAGE_GENERATION` | 0.9824 | prose |
+| `STOCK_PRICE` | 0.0196 | a number |
+| `TVL_LOOKUP` | 0.0182 | a number |
+| `GAS_PRICE` | 0.0054 | a number |
+| `CRYPTO_PRICE` | **1.37e-8** | a number |
+| `CVE_LOOKUP` | **2.13e-22** | an identifier |
+
+The division is not miner quality. It is whether the right answer is a sentence
+or a quantity. `CRYPTO_PRICE` is the cleanest case on the network — one asset,
+one number, checkable against any exchange — and its best miner scores 0.0000000137
+while a chat miner scores 0.996.
+
+
 ## Update, 27 August: a third job, a fresh contract, still `Funded`
 
 Job 14 was opened against `STORM_ALERT` — the intent this miner currently ranks
@@ -379,3 +404,97 @@ that has no withdrawal path — which is the other half of this report.
 What would make this actionable for anyone building on the on-chain rail: a
 reason on the job record, or an event when the node picks a job up and when it
 fails to route one.
+
+## The champion score on the board is not the champion's score
+
+`/api/wasm` publishes an `eval_score` against each champion, and the explorer
+shows it. It is not a description of that champion. It is the
+`candidate_margin` it recorded *on the day it won*, frozen — measured against
+whatever corpus and whatever incumbent existed at that moment.
+
+The bar a new registration actually clears is the `champion_margin` on the most
+recent entry: the same incumbent, re-measured on today's corpus. The two numbers
+drift apart badly.
+
+| Intent | Displayed `eval_score` | Measured bar | Off by |
+|---|---|---|---|
+| `WEATHER_FORECAST` | 0.5302 | **0.9898** | 0.4596 harder |
+| `IP_GEOLOCATION` | 0.8574 | 0.4935 | 0.3639 easier |
+| `ACADEMIC_SEARCH` | 0.6804 | 0.3344 | 0.3460 easier |
+| `GAS_PRICE` | 0.8078 | 0.4851 | 0.3227 easier |
+| `CONTENT_VERIFICATION` | 0.9904 | 0.6877 | 0.3027 easier |
+
+`WEATHER_FORECAST` is the case that costs money. Ranked by the published score
+it is the weakest champion on the board at 0.5302, and the obvious place to
+spend a registration. Measured, it is one of the strongest at 0.9898. We spent
+four registrations there before reading the entries rather than the summary.
+
+`npm run survey` in this repo prints both columns side by side, because the
+displayed one on its own is worse than no number at all.
+
+## The bar moves between registrations, and cannot be read before you spend one
+
+The same intent does not present the same target twice. Our four attempts on
+`WEATHER_FORECAST`, in order, were measured against these champion margins:
+
+| Registration | Our margin | Bar that day | Verdict |
+|---|---|---|---|
+| 203 | 0.8349 | 0.7859 | rejected — agreement −0.2585 |
+| 651 | 0.4310 | 0.5302 | rejected — separation |
+| 676 | 0.4625 | 0.5955 | rejected — separation |
+| 1112 | 0.8207 | **0.9900** | rejected — separation |
+
+Registration 203 cleared 0.7859 on separation and 1112 did not clear 0.9900 —
+the bar rose 26% between them, with the slot never changing hands. On
+`TEXT_AUTHENTICITY_CHECK` it sat at 0.4045 for three consecutive attempts and
+then jumped to 0.6586 for the fourth.
+
+A submission is therefore accepted or refused partly on when it was sent, and
+nothing in the API exposes the current bar before a registration is spent. The
+number that would make registration a decision rather than a lottery is already
+computed — it is `champion_margin` — and is only published *after* you have paid
+to learn it.
+
+## Three gates, and the one that makes the network's real problem unfixable
+
+A registration can be refused three separate ways, each sufficient on its own:
+
+- **separation** — average margin below the champion's;
+- **ordering** — fewer fixture cases ranked correctly than the champion;
+- **agreement** — Spearman correlation with the champion's ranking of *real
+  miner answers* below 0.60.
+
+All three have refused us. Registration 650 on `TEXT_AUTHENTICITY_CHECK` beat
+the champion on separation — 0.4252 against 0.4045 — and was refused on ordering
+anyway, 12 of 15 against 14. Registration 653 on `CHAT_COMPLETION` beat the
+champion on separation by a wide margin, 0.8449 against 0.5723, with 32 of 32
+ordering wins, and was refused for agreeing only 0.3005.
+
+The agreement gate is the one worth thinking about, because of what it does in
+combination with [finding 6](#a-whole-intent-family-scored-exactly-zero-and-it-is-not-only-weather).
+
+Across 40 intents that produced a score, **31 have no miner above 0.05** while
+the other 9 reach 0.89 to 0.999. The split is not by miner quality, it is by
+answer shape: prose intents score near 1, deterministic ones near 0.
+`CRYPTO_PRICE`, the most deterministic intent on the network, tops out at
+**1.37e-8**. `CVE_LOOKUP` at **2.13e-22**. The mean champion `eval_score` across
+those 31 dead intents is **0.9126** — the gate that awarded the slot says the
+module is excellent, and on real traffic it returns nothing.
+
+Now put the agreement gate next to that. To replace the module that scores
+numeric answers at 1e-8, a challenger must rank real miner answers *the way that
+module already ranks them*, at 0.60 or better. A scorer that reads numbers as
+measurements necessarily disagrees — ours scored −0.2585 on `WEATHER_FORECAST`,
+and the disagreement is the correction. The rule admits challengers in
+proportion to how little they change.
+
+That is the whole shape of the problem: **the deterministic half of the network
+is scored wrongly, and the mechanism for replacing a scoring module requires
+agreeing with the module that is scoring it wrongly.** One address holds 42 of
+45 champion slots out of 1153 registrations, which is what a rule like that
+produces given time.
+
+None of this needs new machinery to fix. Publish `champion_margin` alongside
+`eval_score`, and exempt a challenger from the agreement gate on any intent
+where the incumbent's live scores are all below some floor — an intent nobody
+scores has no ranking worth agreeing with.
