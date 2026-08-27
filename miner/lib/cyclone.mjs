@@ -35,10 +35,22 @@ export function parse(featureCollection) {
   for (const f of featureCollection?.features ?? []) {
     const p = f.properties ?? {};
     const [lon, lat] = f.geometry?.coordinates ?? [];
-    if (!p.iscurrent || !Number.isFinite(lat) || !Number.isFinite(lon)) continue;
-    const wind = Number(p.severitydata?.severity);
+
+    // The search endpoint ignores its own `eventtypes` filter: asked for TC it
+    // returns wildfires, earthquakes and floods alongside. The first live run
+    // reported "Tropical cyclone  (6069 km/h)" 314 km from Jakarta — a forest
+    // fire of 6069 hectares — and raised the storm risk on the strength of it.
+    // The type is checked per feature, and so is the unit of the severity.
+    if (p.eventtype !== "TC") continue;
+    // `iscurrent` arrives as the string "true" or "false", and a string "false"
+    // is truthy. Compared as text, or a dissipated storm stays on the map.
+    if (String(p.iscurrent) !== "true") continue;
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+
+    const sev = p.severitydata ?? {};
+    const wind = sev.severityunit === "km/h" ? Number(sev.severity) : NaN;
     out.push({
-      name: String(p.eventname ?? p.name ?? "unnamed"),
+      name: String(p.eventname || p.name || `TC-${p.eventid ?? "?"}`),
       alert: String(p.alertlevel ?? "Green"),
       max_wind_kmh: Number.isFinite(wind) ? Math.round(wind) : null,
       lat, lon,

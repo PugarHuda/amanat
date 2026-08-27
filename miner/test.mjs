@@ -486,12 +486,25 @@ console.log("places are read in the alphabet they are written in");
   // GDACS's own shape, reduced to what a reading needs. Dead storms are dropped:
   // the search returns recently dissipated ones and a dead storm 100 km away is
   // not a risk.
+  // Every field the way GDACS actually sends it: `iscurrent` is the string
+  // "true"/"false", and the search ignores its own eventtypes filter, so
+  // wildfires and earthquakes arrive in a TC query. The forest fire below is
+  // real — 6069 hectares near Jakarta — and read as a 6069 km/h cyclone on the
+  // first live run.
   const feed = { features: [
-    { geometry: { coordinates: [-38.7, 13.6] }, properties: { eventname: "DOLLY-26", alertlevel: "Green", iscurrent: true, todate: "2026-08-27T15:00:00", severitydata: { severity: 74.07 }, url: { report: "r" } } },
-    { geometry: { coordinates: [125.0, 12.0] }, properties: { eventname: "OLD-25", alertlevel: "Orange", iscurrent: false, severitydata: { severity: 150 } } },
+    { geometry: { coordinates: [-38.7, 13.6] }, properties: { eventtype: "TC", eventname: "DOLLY-26", alertlevel: "Green", iscurrent: "true", todate: "2026-08-27T15:00:00", severitydata: { severity: 74.07, severityunit: "km/h" }, url: { report: "r" } } },
+    { geometry: { coordinates: [125.0, 12.0] }, properties: { eventtype: "TC", eventname: "OLD-25", alertlevel: "Orange", iscurrent: "false", severitydata: { severity: 150, severityunit: "km/h" } } },
+    { geometry: { coordinates: [105.7, -3.6] }, properties: { eventtype: "WF", eventname: "", name: "Forest fires in Indonesia", alertlevel: "Green", iscurrent: "true", severitydata: { severity: 6069, severityunit: "ha" } } },
+    { geometry: { coordinates: [120.0, -8.0] }, properties: { eventtype: "EQ", eventname: "", iscurrent: "true", severitydata: { severity: 5.3, severityunit: "M" } } },
+    { geometry: { coordinates: [130.0, 15.0] }, properties: { eventtype: "TC", eventname: "", eventid: 1001999, alertlevel: "Orange", iscurrent: "true", severitydata: { severity: 120, severityunit: "kt" } } },
   ] };
   const live = parse(feed);
-  assert.equal(live.length, 1);
+  // The fire and the quake are gone, the dead storm is gone, and the unnamed
+  // storm with wind in an unexpected unit is kept — named by id, wind null —
+  // because a storm we cannot size is still a storm.
+  assert.equal(live.length, 2);
+  assert.deepEqual({ name: live[1].name, wind: live[1].max_wind_kmh }, { name: "TC-1001999", wind: null });
+  assert.equal(cycloneRisk({ ...live[1], distance_km: 0 }), 0, "an unsized storm adds no risk rather than a guessed one");
   assert.deepEqual(
     { name: live[0].name, wind: live[0].max_wind_kmh, lat: live[0].lat, lon: live[0].lon },
     { name: "DOLLY-26", wind: 74, lat: 13.6, lon: -38.7 },
