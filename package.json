@@ -32,7 +32,8 @@
     "build:contract": "node onchain/build.mjs",
     "board": "node --env-file=.env agent/board.mjs",
     "crosscheck": "node --env-file=.env agent/crosscheck.mjs",
-    "survey": "node agent/survey.mjs"
+    "survey": "node agent/survey.mjs",
+    "impact": "node agent/impact.mjs"
   },
   "dependencies": {
     "ethers": "^6.13.0"

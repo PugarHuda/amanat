@@ -7,16 +7,17 @@ this repo. Ordered by what would cost a builder the most time.
 | # | Finding | Effect |
 |---|---|---|
 | 1 | [Jobs sit in `Funded` and never route](#update-27-august-a-third-job-a-fresh-contract-still-funded) | Three jobs, two contracts, 3 USDC escrowed, nothing returned. Jobs 7–11 settled four days earlier, so the rail worked and then stopped. |
-| 2 | [Three gates, and the one that makes the real problem unfixable](#three-gates-and-the-one-that-makes-the-networks-real-problem-unfixable) | To replace the module scoring numeric answers at 1e-8, you must first rank answers the way it does. 42 of 45 slots sit with one author. |
-| 3 | [The bar moves between registrations, invisibly](#the-bar-moves-between-registrations-and-cannot-be-read-before-you-spend-one) | The same intent demanded 0.7859 then 0.9900. The number that would make registration a decision is published only after you pay to learn it. |
-| 4 | [The champion score on the board is not the champion's score](#the-champion-score-on-the-board-is-not-the-champions-score) | `WEATHER_FORECAST` displays 0.5302 and measures 0.9898. Ranked by the published number, the strongest incumbent looks like the weakest. |
-| 5 | [A whole intent family scored exactly zero](#a-whole-intent-family-scored-exactly-zero-and-it-is-not-only-weather) | 31 of 40 intents have no miner above 0.05; the other 9 reach 0.999. The split is by answer shape, not miner quality. |
-| 6 | [ERC-8183 job params do not reach the miner](#erc-8183-job-params-do-not-reach-the-miner) | A job carrying coordinates arrives as `lat=0, lon=0`. The contract acts on an answer about the wrong place. |
-| 7 | [The escrow has no exit](#the-escrow-has-no-exit) | `depositUSDC` exists; nothing withdraws. Funds in are funds gone. |
-| 8 | [A signal commitment that cannot be re-derived](#a-signal-commitment-that-cannot-be-re-derived) | `verified: true` is the node vouching for itself. Thirty variants, two miners, no match. |
-| 9 | [`MAX_PARAM_VALUE` with `operator: lte` is evaluated backwards](#max_param_value-with-operator-lte-is-evaluated-backwards) | A policy that means "at most" enforces "at least". |
-| 10 | [A terminal rejection with an empty reason list](#a-terminal-rejection-with-an-empty-reason-list) | The one field that would say why is empty. |
-| 11 | [Two smaller things](#two-smaller-things-found-alongside) | A dead regex, and docs that describe a call the node does not make. |
+| 2 | [The busiest miner on the network has been paid nothing](#the-busiest-miner-on-the-network-has-been-paid-nothing) | 359 requests served, the most of any miner, and 0.0000 USDC received. In 11.1 hours the Diamond took 1.30 USDC and paid registered miners 0.0032. |
+| 3 | [Three gates, and the one that makes the real problem unfixable](#three-gates-and-the-one-that-makes-the-networks-real-problem-unfixable) | To replace the module scoring numeric answers at 1e-8, you must first rank answers the way it does. 42 of 45 slots sit with one author. |
+| 4 | [The bar moves between registrations, invisibly](#the-bar-moves-between-registrations-and-cannot-be-read-before-you-spend-one) | The same intent demanded 0.7859 then 0.9900. The number that would make registration a decision is published only after you pay to learn it. |
+| 5 | [The champion score on the board is not the champion's score](#the-champion-score-on-the-board-is-not-the-champions-score) | `WEATHER_FORECAST` displays 0.5302 and measures 0.9898. Ranked by the published number, the strongest incumbent looks like the weakest. |
+| 6 | [A whole intent family scored exactly zero](#a-whole-intent-family-scored-exactly-zero-and-it-is-not-only-weather) | 31 of 40 intents have no miner above 0.05; the other 9 reach 0.999. The split is by answer shape, not miner quality. |
+| 7 | [ERC-8183 job params do not reach the miner](#erc-8183-job-params-do-not-reach-the-miner) | A job carrying coordinates arrives as `lat=0, lon=0`. The contract acts on an answer about the wrong place. |
+| 8 | [The escrow has no exit](#the-escrow-has-no-exit) | `depositUSDC` exists; nothing withdraws. Funds in are funds gone. |
+| 9 | [A signal commitment that cannot be re-derived](#a-signal-commitment-that-cannot-be-re-derived) | `verified: true` is the node vouching for itself. Thirty variants, two miners, no match. |
+| 10 | [`MAX_PARAM_VALUE` with `operator: lte` is evaluated backwards](#max_param_value-with-operator-lte-is-evaluated-backwards) | A policy that means "at most" enforces "at least". |
+| 11 | [A terminal rejection with an empty reason list](#a-terminal-rejection-with-an-empty-reason-list) | The one field that would say why is empty. |
+| 12 | [Two smaller things](#two-smaller-things-found-alongside) | A dead regex, and docs that describe a call the node does not make. |
 
 ---
 
@@ -537,7 +538,77 @@ holding it is not ranking those answers usefully — there is nothing there to
 agree with — and a challenger was refused for not reproducing that ranking.
 
 
+### How long a newcomer holds a slot
+
+Registration 1253 took `GAME_RESULT` at 0.7008 and was superseded 40 minutes
+later. The sequence on that intent, from the registry:
+
+| Time (UTC) | Reg | Author | Eval | Outcome |
+|---|---|---|---|---|
+| 03:43:42 | 1253 | us | 0.70077 | active |
+| 04:21:42 | 1260 | incumbent | 0.41745 | rejected |
+| 04:40:17 | 1264 | incumbent | 0.70881 | superseded |
+| 04:40:17 | 1265 | incumbent | 0.71505 | **active** |
+
+The first attempt to reclaim scored 0.41745 — the bar our registration had been
+measured against an hour earlier — and lost. The second and third were
+registered in the same second, both above 0.7008, and the higher took the slot.
+
+None of that is improper. Bracketing above a new champion is a legitimate move
+and theirs genuinely scored higher. It is recorded here because it measures
+something a builder needs to know before spending a registration: on this
+network a newcomer's slot lasted under an hour, and the response arrived within
+one. Combined with the agreement gate above, the concentration of 42 to 44 slots
+in one address is not obviously a story about who writes the best modules.
+
 None of this needs new machinery to fix. Publish `champion_margin` alongside
 `eval_score`, and exempt a challenger from the agreement gate on any intent
 where the incumbent's live scores are all below some floor — an intent nobody
 scores has no ranking worth agreeing with.
+
+## The busiest miner on the network has been paid nothing
+
+`/api/miners` reports `total_requests_served`. Ours says **359** — the highest of
+any miner on the network, and 21% of the 1738 requests served across all 95
+registrations. Our registered payout address holds **0.0000 USDC**.
+
+That is not a complaint about the amount. It is that the number is zero, and
+the ledger says the money arrived somewhere.
+
+Reading USDC `Transfer` logs against the Diamond over a verified 20 000-block
+window — **11.1 hours**, ending block 46019064:
+
+| Direction | Transfers | Value |
+|---|---|---|
+| In, from callers paying x402 | 130 | **1.3000 USDC** |
+| Out | 2 | **0.1600 USDC** |
+
+Of the 0.16 that left, **0.1568 went to `0x12ea7b8f…`, which is not a registered
+miner's payout address**, and **0.0032 went to `openweathermap`**, which is. So
+in eleven hours the whole network paid its registered miners about a quarter of
+one percent of what its callers paid it.
+
+The demand side is four addresses:
+
+| Payer | Calls | Paid |
+|---|---|---|
+| `0x145ab7c6…` | 96 | 0.9600 |
+| **`0x39d2bae5…` (us)** | **31** | **0.3100** |
+| `0xb3dcb836…` | 2 | 0.0200 |
+| `0x673a3328…` | 1 | 0.0100 |
+
+We are 24% of the paid demand and 21% of the requests served, and both sides of
+that netted us nothing.
+
+**What this is not.** It is not proof the protocol never settles. Base Sepolia's
+public RPC serves logs only about 20 000 to 40 000 blocks deep — a query at
+depth 95 000 returns zero USDC transfers on a token that had 4 357 in 4 000
+blocks at depth 5 000 — so a longer window cannot be checked from here, and a
+weekly or off-chain settlement would be invisible to this method. The window
+above is the one where the data is real.
+
+What would settle it: a payout record per miner, or a documented settlement
+cadence. A miner that has served 359 requests currently has no way to tell
+whether it has earned anything, is owed something, or has misconfigured the
+address it registered — the three have identical symptoms and very different
+fixes.

@@ -14,6 +14,7 @@ import { intentId, NAME_HASHED_INTENTS, readRisk, POLICY_STATUS } from "./telegr
 import { flag, has, positionals, reject } from "./args.mjs";
 import { payloadFor } from "./crosscheck.mjs";
 import { rank } from "./survey.mjs";
+import { split } from "./impact.mjs";
 
 const USDC = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
 const PAY_TO = "0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8";
@@ -249,3 +250,32 @@ console.log("requests are built from what a miner declares, not from what ours h
   assert.equal(rows[1].live.nonzero, 2);
 }
 console.log("the survey ranks intents by how winnable the slot is");
+
+// ── impact splits epochs by when the slot changed hands, not by number ───────
+{
+  const since = "2026-08-27T04:04:00Z";
+  const rows = [
+    { slug: "a", epoch: 286, rank: 1, score: 0.4, at: "2026-08-27T09:10:00Z" },
+    { slug: "b", epoch: 286, rank: 2, score: 0.2, at: "2026-08-27T09:10:00Z" },
+    { slug: "a", epoch: 285, rank: 1, score: 0.0169, at: "2026-08-27T00:47:40Z" },
+  ];
+  const out = split(rows, since);
+
+  // Newest first, and the epoch scored after the handover is the only one ours.
+  assert.deepEqual(out.map((e) => e.epoch), [286, 285]);
+  assert.equal(out[0].ours, true);
+  assert.equal(out[1].ours, false);
+
+  // Grouped, not flattened: an epoch is one row per miner and the comparison is
+  // between epochs, so losing the grouping loses the measurement.
+  assert.equal(out[0].rows.length, 2);
+
+  // An epoch scored at the instant of the handover counts as ours; the boundary
+  // has to fall somewhere and "graded by the new module" is the useful side.
+  assert.equal(split([{ ...rows[0], at: since }], since)[0].ours, true);
+
+  // No handover timestamp means nothing can be claimed as ours, rather than
+  // everything being claimed by an unparsed date comparing false-y.
+  assert.equal(split(rows, "")[0].ours, false);
+}
+console.log("impact separates the epochs our module scored from the ones it did not");

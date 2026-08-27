@@ -443,24 +443,26 @@ separates any of them from being measured at all — which is
 [finding 5](docs/bug-report.md#a-whole-intent-family-scored-exactly-zero-and-it-is-not-only-weather),
 and the reason Track 2 exists.
 
-**Track 2 — scoring modules.** **Champion on `GAME_RESULT`**, registration 1253,
-active since 27 August: margin 0.7008 against a bar of 0.4175, ordering 15 of 15,
-agreement 0.6868. Four earlier slots were held before the 23 August evaluator
-change superseded them. Eight profiles, every one at 37 of 38 ordering wins with
-14 of 14 attacks held.
+**Track 2 — scoring modules.** We took the `GAME_RESULT` champion slot on
+27 August and **held it for about forty minutes.**
 
-That slot came out of `npm run survey`, which reads what the board does not
-show. The published `eval_score` is the margin a champion recorded on the day it
-won, frozen — `WEATHER_FORECAST` displays 0.5302 and measures 0.9898, and four
-of our registrations went there before we read the entries instead of the
-summary.
+Registration 1253 went active at 0.7008 against a bar of 0.4175, ordering 15 of
+15, agreement 0.6868. At 04:21 the incumbent author tried to take it back and
+was rejected at 0.4175. At 04:40:17 they registered **two modules in the same
+second**, 0.7089 and 0.7150, and the higher one took the slot. Concentration
+went from 44 of 45 to 43, and back to 44.
 
-The five sent on 27 August are the more useful result, because only one of them
-was decided by the module:
+That is not a complaint — bracketing above a new champion is a legitimate move,
+and theirs scored higher. It is a measurement of how long a newcomer's slot
+lasts, and the answer is under an hour. `npm run impact` was written to watch
+for exactly this and reported it on its first run.
+
+The five sent that morning are the more useful result, because only one was
+decided by the module:
 
 | Reg | Intent | Bar when read | Bar when evaluated | Our margin | Result |
 |---|---|---|---|---|---|
-| 1253 | `GAME_RESULT` | 0.5459 | 0.4175 | 0.7008 | **active** |
+| 1253 | `GAME_RESULT` | 0.5459 | 0.4175 | 0.7008 | active, then superseded in 40 min |
 | 1250 | `GAS_PRICE` | 0.4851 | 0.4851 | 0.6446 | rejected — agreement 0.1288 |
 | 1251 | `TVL_LOOKUP` | 0.4989 | 0.5042 | 0.4885 | rejected — separation |
 | 1249 | `ACADEMIC_SEARCH` | 0.3344 | 0.5909 | 0.4707 | rejected — separation |
@@ -471,11 +473,11 @@ the one it was held to, which had doubled in between. `GAS_PRICE` beat the
 incumbent on separation and matched it on ordering, and was refused for ranking
 real answers differently — on an intent whose best live miner scores 0.0054.
 
-So the survey ranks targets and cannot predict verdicts, and says so. Both
-facts are findings
-[3](docs/bug-report.md#the-bar-moves-between-registrations-and-cannot-be-read-before-you-spend-one)
-and [2](docs/bug-report.md#three-gates-and-the-one-that-makes-the-networks-real-problem-unfixable),
-measured rather than argued.
+Four earlier slots were held before the 23 August evaluator change superseded
+them. Eight profiles, every one at 37 of 38 ordering wins with 14 of 14 attacks
+held. `npm run survey` ranks targets and cannot predict verdicts, and says so:
+the published `eval_score` is a frozen number, and `WEATHER_FORECAST` displays
+0.5302 while measuring 0.9898.
 
 **Track 3 — application.** Fourteen ERC-8183 jobs have ever been created on this
 network. **Eight of them are ours** — jobs 7 through 14, across two contracts.
