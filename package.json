@@ -33,7 +33,8 @@
     "board": "node --env-file=.env agent/board.mjs",
     "crosscheck": "node --env-file=.env agent/crosscheck.mjs",
     "survey": "node agent/survey.mjs",
-    "impact": "node agent/impact.mjs"
+    "impact": "node agent/impact.mjs",
+    "expire": "node --env-file=.env agent/expire.mjs"
   },
   "dependencies": {
     "ethers": "^6.13.0"

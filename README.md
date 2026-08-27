@@ -463,9 +463,14 @@ phrasing tried, on all three weather champions:
 | `STORM_ALERT` | reg 453 | 0.9978 |
 | `WEATHER_CHECK` | reg 510 | 0.9989 |
 
-Up from the 0.0050-0.0089 band. No figure added, none removed, every scalar a
-contract settles on untouched. The gain is a fact about the scorer, not about
-the wording, and both halves are written up in
+Those are local measurements against the champion binary. The network's own
+verdict came at epoch 286, the first scored after the change went live:
+`STORM_ALERT` 0.005034 → **0.007864**, rank 3 → 2; `WEATHER_FORECAST`
+0.005182 → 0.005971, rank 9 → 8; `WEATHER_CHECK` newly scored at 0.014812,
+rank 5. Real, and an order of magnitude short of what the local run predicted —
+so the node is not grading against the bare question, and the bug report says
+so in place rather than quietly. No figure was added or removed and every
+scalar a contract settles on is untouched. Both halves are written up in
 [finding 1](docs/bug-report.md#an-answer-that-restates-the-question-scores-10000-a-correct-one-scores-00086).
 
 **Track 2 — scoring modules.** We took the `GAME_RESULT` champion slot on
@@ -509,8 +514,20 @@ network. **Eight of them are ours** — jobs 7 through 14, across two contracts.
 Jobs 7–11 settled through the callback and reached `Terminal`. Jobs 12, 13 and
 14 have sat in `Funded` since, the last of them opened against a freshly
 deployed contract on the intent this miner ranks first on. Nothing routed. The
-contract's escrow is now zero and there is no withdrawal path, so there will be
-no ninth job. 70-plus paid Engine calls.
+contract's Diamond escrow is zero and the Diamond has no withdrawal path, so
+there will be no ninth job. 70-plus paid Engine calls.
+
+**The contract's own rail held.** Policies 1 and 2 were opened against jobs
+that never returned. Twenty-five hours later `npm run expire` called
+`expire()` on both — released at
+[`0xebaacad3…`](https://sepolia.basescan.org/tx/0xebaacad30632d5a5393946d3731508aeabb3f136fca513edd717312f07bed216)
+and
+[`0x073e9155…`](https://sepolia.basescan.org/tx/0x073e915544fca152a1048d4e6e732f3e46aa51c7a4148e33c59ae06129a235b0)
+— and `sweep()` returned the 2 USDC float to the underwriter at
+[`0x9876f5b7…`](https://sepolia.basescan.org/tx/0x9876f5b7463a137cdd0c433bed85e1299502d86376e8dffbb96604b0c186413b).
+The failure the timeout was written for had not happened before 26 August;
+when it did, the book was not held hostage. The Diamond's escrow, by contrast,
+still has no exit.
 
 What is not working is as much of the result as what is: the on-chain rail
 settled five jobs and then stopped, and from outside a job record says only

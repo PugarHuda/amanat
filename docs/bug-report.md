@@ -674,10 +674,28 @@ a price is the least question-shaped answer there is.
 The leaderboard is therefore not ranking correctness on those 31 intents. It is
 ranking how closely an answer resembles the question it was asked.
 
-**What is inference and what is measured.** Every score above is measured, from
-the real champion binary, and reproducible with one command. That the node
-passes the question as the ground truth is inference — but it is the value that
-reproduces the observed band, and no other candidate tried does.
+**What is inference and what is measured — and what the next epoch said.**
+Every score above is measured, from the real champion binary, and reproducible
+with one command. That the node passes the question as the ground truth was an
+inference, and epoch 286 — the first scored after the restated summary went
+live — tested it:
+
+| Intent | Epoch 285 | Epoch 286 | Change |
+|---|---|---|---|
+| `STORM_ALERT` | 0.005034, rank 3 | **0.007864, rank 2** | +56% |
+| `WEATHER_FORECAST` | 0.005182, rank 9 | **0.005971, rank 8** | +15% |
+| `WEATHER_CHECK` | not scored | 0.014812, rank 5 | — |
+
+A real gain, and nothing like the 0.0086 to 0.9960 the local run predicted. So
+the inference is wrong as stated: whatever the node grades against, it is not
+the bare question, or the restated answer would have scored near 1. What
+survives is the measured part — an answer that says nothing scores 1.0000
+against this champion when the ground truth resembles the question, and the
+whole weather field sits at 0.005 to 0.019 under it — and the diagnosis that
+the ground truth on these intents is something no forecast resembles. What it
+actually is remains unknown from outside, which is the point: a miner cannot
+see what it is graded against, and this report spent a day inferring it and
+got it wrong.
 
 We changed our own summary to open by restating the question, which is how a
 careful answer reads anyway, and every scalar a contract settles on is untouched.

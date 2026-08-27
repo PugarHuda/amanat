@@ -399,6 +399,27 @@ console.log("the social card is a valid PNG at the promised size");
 
 
 
+// ── the miner remembers what it was asked, and by which name ────────────────
+{
+  const r0 = await fetch(`http://127.0.0.1:${port2}/api/asked`);
+  assert.equal(r0.status, 200);
+  const before = (await r0.json()).count;
+
+  await fetch(`http://127.0.0.1:${port2}/forecast`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt: "Storm risk for Cebu in the next six hours?" }),
+  });
+  const { asked, count } = await (await fetch(`http://127.0.0.1:${port2}/api/asked`)).json();
+  assert.equal(count, before + 1);
+  // Newest first, with the field it arrived in — "prompt" here, which is not
+  // the field the docs name — and the coordinates it resolved to.
+  assert.equal(asked[0].field, "prompt");
+  assert.match(asked[0].question, /Cebu/);
+  assert.equal(asked[0].hours, 6);
+  assert.ok(Number.isFinite(asked[0].lat) && Number.isFinite(asked[0].lon));
+}
+console.log("what the network asked is on the record");
+
 server.close();
 
 // ── the answer opens with the question that was actually asked ──────────────

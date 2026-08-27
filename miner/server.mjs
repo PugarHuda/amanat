@@ -42,6 +42,28 @@ const SURVEY_URL = process.env.AMANAT_SURVEY_URL
 const QUESTION_FIELDS = ["question", "q", "query", "prompt", "text", "input", "place", "location", "city"];
 
 /**
+ * The last questions this miner was asked, newest first.
+ *
+ * Epoch 286 scored the restated summary at 0.0079 where the champion binary,
+ * run locally on the same answer, scored 0.99. The gap means the node is
+ * grading something other than what was reasoned about here, and from outside
+ * there was no way to see what it sends: not the field it uses, not the
+ * phrasing, not whether it names a place or a coordinate. This keeps the last
+ * fifty, with the field the question arrived in, so `/api/asked` can show
+ * exactly what the tournament asks rather than what the docs say it asks.
+ *
+ * A serverless instance keeps its own fifty and forgets them when it is
+ * recycled. That is enough: the question is what the node asks, not how often.
+ */
+const ASKED_MAX = 50;
+const ASKED = [];
+export const asked = () => ASKED.slice();
+function recordAsk({ field, question, lat, lon, hours, ua }) {
+  ASKED.unshift({ at: new Date().toISOString(), field, question: question?.slice(0, 200) ?? null, lat, lon, hours, ua: ua?.slice(0, 80) ?? null });
+  if (ASKED.length > ASKED_MAX) ASKED.length = ASKED_MAX;
+}
+
+/**
  * One end of a route: a place name, "lat, lon", or { lat, lon }.
  *
  * Named so the error says which end failed. "no place found" is a much worse
@@ -210,7 +232,8 @@ export const server = createServer(async (req, res) => {
       // exists to avoid. Say what is missing instead.
       const rawLat = field("lat");
       const rawLon = field("lon");
-      const question = QUESTION_FIELDS.map(field).find((v) => typeof v === "string" && v.trim() !== "");
+      const askedField = QUESTION_FIELDS.find((f) => { const v = field(f); return typeof v === "string" && v.trim() !== ""; });
+      const question = askedField === undefined ? undefined : field(askedField);
 
       let lat, lon, place;
       if (rawLat !== undefined || rawLon !== undefined) {
@@ -233,8 +256,13 @@ export const server = createServer(async (req, res) => {
       const hours = rawHours !== undefined ? Number(rawHours)
         : question !== undefined ? hoursIn(question)
         : 0;
+      recordAsk({ field: askedField ?? (rawLat !== undefined ? "lat/lon" : null), question, lat, lon, hours, ua: req.headers["user-agent"] });
       return send(res, 200, await forecast({ lat, lon, hours, place, question }));
     }
+
+    // What the network actually asks. Read this before reasoning about what a
+    // scorer sees, because the docs and the tournament do not agree.
+    if (pathname === "/api/asked") return send(res, 200, { count: ASKED.length, max: ASKED_MAX, asked: ASKED });
 
     // The storm board, as the scheduled agent last published it.
     //
@@ -304,7 +332,7 @@ export const server = createServer(async (req, res) => {
       }));
     }
 
-    send(res, 404, { error: "not found", endpoints: ["/forecast", "/api/route", "/api/board", "/api/survey", "/health"] });
+    send(res, 404, { error: "not found", endpoints: ["/forecast", "/api/route", "/api/board", "/api/survey", "/api/asked", "/health"] });
   } catch (e) {
     // A validation mistake is the caller's; anything else is ours. Both are
     // real HTTP errors so Telegraph does not charge for them or store a signal.
