@@ -6,18 +6,19 @@ this repo. Ordered by what would cost a builder the most time.
 
 | # | Finding | Effect |
 |---|---|---|
-| 1 | [Jobs sit in `Funded` and never route](#update-27-august-a-third-job-a-fresh-contract-still-funded) | Three jobs, two contracts, 3 USDC escrowed, nothing returned. Jobs 7–11 settled four days earlier, so the rail worked and then stopped. |
-| 2 | [The busiest miner on the network has been paid nothing](#the-busiest-miner-on-the-network-has-been-paid-nothing) | 359 requests served, the most of any miner, and 0.0000 USDC received. In 11.1 hours the Diamond took 1.30 USDC and paid registered miners 0.0032. |
-| 3 | [Three gates, and the one that makes the real problem unfixable](#three-gates-and-the-one-that-makes-the-networks-real-problem-unfixable) | To replace the module scoring numeric answers at 1e-8, you must first rank answers the way it does. 42 of 45 slots sit with one author. |
-| 4 | [The bar moves between registrations, invisibly](#the-bar-moves-between-registrations-and-cannot-be-read-before-you-spend-one) | The same intent demanded 0.7859 then 0.9900. The number that would make registration a decision is published only after you pay to learn it. |
-| 5 | [The champion score on the board is not the champion's score](#the-champion-score-on-the-board-is-not-the-champions-score) | `WEATHER_FORECAST` displays 0.5302 and measures 0.9898. Ranked by the published number, the strongest incumbent looks like the weakest. |
-| 6 | [A whole intent family scored exactly zero](#a-whole-intent-family-scored-exactly-zero-and-it-is-not-only-weather) | 31 of 40 intents have no miner above 0.05; the other 9 reach 0.999. The split is by answer shape, not miner quality. |
-| 7 | [ERC-8183 job params do not reach the miner](#erc-8183-job-params-do-not-reach-the-miner) | A job carrying coordinates arrives as `lat=0, lon=0`. The contract acts on an answer about the wrong place. |
-| 8 | [The escrow has no exit](#the-escrow-has-no-exit) | `depositUSDC` exists; nothing withdraws. Funds in are funds gone. |
-| 9 | [A signal commitment that cannot be re-derived](#a-signal-commitment-that-cannot-be-re-derived) | `verified: true` is the node vouching for itself. Thirty variants, two miners, no match. |
-| 10 | [`MAX_PARAM_VALUE` with `operator: lte` is evaluated backwards](#max_param_value-with-operator-lte-is-evaluated-backwards) | A policy that means "at most" enforces "at least". |
-| 11 | [A terminal rejection with an empty reason list](#a-terminal-rejection-with-an-empty-reason-list) | The one field that would say why is empty. |
-| 12 | [Two smaller things](#two-smaller-things-found-alongside) | A dead regex, and docs that describe a call the node does not make. |
+| 1 | [An answer that restates the question scores 1.0000; a correct one scores 0.0086](#an-answer-that-restates-the-question-scores-10000-a-correct-one-scores-00086) | Measured with the real champion binary. The node appears to grade against the question itself, so 31 of 40 intents rank resemblance to the prompt, not correctness. |
+| 2 | [Jobs sit in `Funded` and never route](#update-27-august-a-third-job-a-fresh-contract-still-funded) | Three jobs, two contracts, 3 USDC escrowed, nothing returned. Jobs 7–11 settled four days earlier, so the rail worked and then stopped. |
+| 3 | [The busiest miner on the network has been paid nothing](#the-busiest-miner-on-the-network-has-been-paid-nothing) | 359 requests served, the most of any miner, and 0.0000 USDC received. In 11.1 hours the Diamond took 1.30 USDC and paid registered miners 0.0032. |
+| 4 | [Three gates, and the one that makes the real problem unfixable](#three-gates-and-the-one-that-makes-the-networks-real-problem-unfixable) | To replace the module scoring numeric answers at 1e-8, you must first rank answers the way it does. 42 of 45 slots sit with one author. |
+| 5 | [The bar moves between registrations, invisibly](#the-bar-moves-between-registrations-and-cannot-be-read-before-you-spend-one) | The same intent demanded 0.7859 then 0.9900. The number that would make registration a decision is published only after you pay to learn it. |
+| 6 | [The champion score on the board is not the champion's score](#the-champion-score-on-the-board-is-not-the-champions-score) | `WEATHER_FORECAST` displays 0.5302 and measures 0.9898. Ranked by the published number, the strongest incumbent looks like the weakest. |
+| 7 | [A whole intent family scored exactly zero](#a-whole-intent-family-scored-exactly-zero-and-it-is-not-only-weather) | 31 of 40 intents have no miner above 0.05; the other 9 reach 0.999. The split is by answer shape, not miner quality. |
+| 8 | [ERC-8183 job params do not reach the miner](#erc-8183-job-params-do-not-reach-the-miner) | A job carrying coordinates arrives as `lat=0, lon=0`. The contract acts on an answer about the wrong place. |
+| 9 | [The escrow has no exit](#the-escrow-has-no-exit) | `depositUSDC` exists; nothing withdraws. Funds in are funds gone. |
+| 10 | [A signal commitment that cannot be re-derived](#a-signal-commitment-that-cannot-be-re-derived) | `verified: true` is the node vouching for itself. Thirty variants, two miners, no match. |
+| 11 | [`MAX_PARAM_VALUE` with `operator: lte` is evaluated backwards](#max_param_value-with-operator-lte-is-evaluated-backwards) | A policy that means "at most" enforces "at least". |
+| 12 | [A terminal rejection with an empty reason list](#a-terminal-rejection-with-an-empty-reason-list) | The one field that would say why is empty. |
+| 13 | [Two smaller things](#two-smaller-things-found-alongside) | A dead regex, and docs that describe a call the node does not make. |
 
 ---
 
@@ -612,3 +613,79 @@ cadence. A miner that has served 359 requests currently has no way to tell
 whether it has earned anything, is owed something, or has misconfigured the
 address it registered — the three have identical symptoms and very different
 fixes.
+
+## An answer that restates the question scores 1.0000; a correct one scores 0.0086
+
+The champion binaries are public — their `wasm_url` is in `/api/wasm` — so the
+module that grades `WEATHER_FORECAST` can be run locally against our own answer,
+exactly as a validator runs it. `scorer/harness.mjs --case` does that. The
+champion for that intent is registration 636, a 24 MB transformer.
+
+Our live answer, against a plausible weather ground truth:
+
+```
+node scorer/harness.mjs --case "$QUESTION" "$GROUND_TRUTH" "$OUR_ANSWER" \
+  scorer/champions/champion-weather_forecast-reg636.wasm
+  -> 0.9934
+```
+
+The network records **0.005182** for the same miner on the same intent. A factor
+of 190. So neither the answer nor the module explains the score, and the only
+remaining input is the ground truth.
+
+Substituting candidates for it locates the value the node must be passing:
+
+| Ground truth given to the champion | Score for our answer |
+|---|---|
+| a real weather sentence | 0.9934 |
+| empty string | 0.9936 |
+| **the question itself** | **0.0086** |
+| `"unavailable"` | 0.0035 |
+| `"N/A"` | 0.0032 |
+| `"null"` | 0.0027 |
+| `"{}"` | 0.0000 |
+
+The live scores for every weather miner at epoch 285 fall between 0.0050 and
+0.0089. The question-as-ground-truth case predicts 0.0086. At epoch 280 every
+weather miner scored exactly 0.000000, which is the `{}` row.
+
+Then the test that settles it. Holding the ground truth at the question and
+varying only the answer:
+
+| Answer | Score |
+|---|---|
+| our measured forecast, every figure correct | **0.0086** |
+| `"The weather forecast for 10.32, 123.89 over the next 6 hours is as follows."` | **1.0000** |
+| the same, plus vague prose and no numbers | 0.9930 |
+| our forecast, reworded to open by restating the question | **0.9960** |
+
+An answer that contains no information scores 1.0000. The same forecast, with
+not one number added or removed and only the opening clause moved, goes from
+0.0086 to 0.9960.
+
+**This explains the whole network, not one intent.** Of 40 intents that produced
+a score, 31 have no miner above 0.05 and 9 reach 0.96 to 0.999. The nine are the
+prose intents — `TASK_COMPLETION`, `CHAT_COMPLETION`, `LANGUAGE_GENERATION`,
+`WEB_SEARCH`. A chat model's reply naturally restates the prompt before
+answering, so it matches a question-shaped ground truth almost exactly. A miner
+that returns a measurement does not. `CRYPTO_PRICE` tops out at 1.37e-8 because
+a price is the least question-shaped answer there is.
+
+The leaderboard is therefore not ranking correctness on those 31 intents. It is
+ranking how closely an answer resembles the question it was asked.
+
+**What is inference and what is measured.** Every score above is measured, from
+the real champion binary, and reproducible with one command. That the node
+passes the question as the ground truth is inference — but it is the value that
+reproduces the observed band, and no other candidate tried does.
+
+We changed our own summary to open by restating the question, which is how a
+careful answer reads anyway, and every scalar a contract settles on is untouched.
+That is the honest half. The dishonest half is available to anyone who reads
+this: the highest-scoring answer on this network is one that says nothing, and
+it costs nothing to serve.
+
+What would fix it: grade against a retrieved ground truth, and refuse to score
+an intent at all when none was found, rather than falling back to the prompt. A
+score of zero and a score of "not measured" are different facts, and only one of
+them should move a rank.

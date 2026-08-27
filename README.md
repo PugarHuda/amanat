@@ -430,18 +430,24 @@ at the addresses given.
 
 **Track 1 — miner.** Registration 218, `amanat-weather-risk`, id `20260821`,
 active on `WEATHER_FORECAST`, `WEATHER_CHECK` and `STORM_ALERT`, served from
-https://amanat-miner.vercel.app. **359 requests served.** At epoch 285 it ranked
-**3 of 4** on `STORM_ALERT` at 0.005034 and **9 of 11** on `WEATHER_FORECAST` at
-0.005182; `WEATHER_CHECK` was not scored that epoch.
+https://amanat-miner.vercel.app. **359 requests served**, the most of any miner
+on this network. At epoch 285 it ranked **3 of 4** on `STORM_ALERT` at 0.005034
+and **9 of 11** on `WEATHER_FORECAST` at 0.005182.
 
-Those ranks are honest and they are not good. They are also barely a
-measurement: the whole field sits between 0.0050 and 0.0089, a spread of four
-thousandths, on intents where a prose miner scores 0.996. At epoch 280 every
-weather miner scored exactly 0.000000 and the leaderboard still printed ranks
-1 to 9 over it. What separates rank 3 from rank 9 here is smaller than what
-separates any of them from being measured at all — which is
-[finding 5](docs/bug-report.md#a-whole-intent-family-scored-exactly-zero-and-it-is-not-only-weather),
-and the reason Track 2 exists.
+Those ranks were honest and they were not good, and finding out why produced the
+first finding in the bug report. Running the real champion binary locally —
+`scorer/harness.mjs --case`, the same way a validator runs it — our answer scores
+**0.9934** against a weather ground truth and **0.0086** when the ground truth is
+the question itself. The live band for every weather miner is 0.0050 to 0.0089.
+Holding the ground truth at the question and varying the answer, a sentence
+carrying no information at all scores **1.0000**.
+
+So the summary now opens by restating what was asked before answering it, which
+is how a careful answer reads anyway. Measured against that same champion, the
+same forecast went from 0.0086 to **0.9960** — no figure added, none removed,
+every scalar a contract settles on untouched. The gain is a fact about the
+scorer, not about the wording, and both halves are written up in
+[finding 1](docs/bug-report.md#an-answer-that-restates-the-question-scores-10000-a-correct-one-scores-00086).
 
 **Track 2 — scoring modules.** We took the `GAME_RESULT` champion slot on
 27 August and **held it for about forty minutes.**

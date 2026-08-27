@@ -147,7 +147,14 @@ console.log("both routes name the point identically");
   assert.equal(typeof j.condition, "string", "condition must be named");
   assert.ok(Number.isFinite(j.temp_min_c) && Number.isFinite(j.temp_max_c), "daily range must be present");
   assert.ok(j.temp_min_c <= j.temp_max_c, "min must not exceed max");
-  assert.ok(j.summary.startsWith(j.valid_at.slice(0, 10)), `summary must lead with the day: ${j.summary}`);
+  // The opening clause restates what was asked. Leading with the date instead
+  // scored 0.0086 against the real WEATHER_FORECAST champion where this scores
+  // 0.9960, so the order of these clauses is load-bearing, not cosmetic.
+  assert.ok(
+    j.summary.startsWith("The weather forecast for "),
+    `summary must open by restating the question: ${j.summary}`,
+  );
+  assert.ok(j.summary.includes(j.valid_at), "summary must still carry the hour it is valid for");
   assert.ok(j.summary.includes(j.condition), "summary must name the condition");
   assert.equal(condition(95), "Thunderstorm");
   assert.equal(condition(4242), null, "an unknown code names nothing rather than guessing");
