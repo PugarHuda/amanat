@@ -276,7 +276,12 @@ test.describe("the page @ui", () => {
     const result = page.locator("#result");
     await expect(result).toBeVisible({ timeout: 30_000 });
     await expect(result.locator(".num")).toHaveText(/^\d\.\d{3}$/);
-    await expect(result.locator(".summary")).toContainText("forecast for 14.60, 120.98");
+    // The answer opens by restating what was typed, then answers it. It must
+    // name the point once: repeating the coordinates as a trailing scope clause
+    // gave "14.60, 120.98: … for 14.60, 120.98", which is how this was caught.
+    const summary = await result.locator(".summary").textContent();
+    expect(summary).toContain("14.60, 120.98");
+    expect(summary.match(/14\.60, 120\.98/g)).toHaveLength(1);
     await expect(result.locator(".figures")).toContainText("temperature");
   });
 

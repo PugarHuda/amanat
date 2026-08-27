@@ -25,7 +25,7 @@
 <meta name="twitter:title" content="Amanat — weather cover that pays itself">
 <meta name="twitter:description" content="A contract buys a verified storm reading from Telegraph and pays the claim itself when it crosses 0.75.">
 <meta name="twitter:image" content="https://amanat-miner.vercel.app/card.png">
-<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="%23E9EDE6"/><line x1="3" y1="11" x2="29" y2="11" stroke="%23AE3A24" stroke-width="3"/><circle cx="16" cy="23" r="4.5" fill="%231E6049"/></svg>'>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="7" fill="%23E9EDE6"/><g stroke="%23CBD6C8" stroke-width="1.5"><line x1="7" y1="18" x2="57" y2="18"/><line x1="7" y1="46" x2="57" y2="46"/></g><line x1="7" y1="32" x2="57" y2="32" stroke="%23AE3A24" stroke-width="1.6" stroke-dasharray="4 3.5" stroke-linecap="round"/><g fill="none" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><polyline points="10,53 16,48 21,49 27,40 31,32" stroke="%231E6049"/><polyline points="31,32 36,24 42,21 48,13 53,11" stroke="%23AE3A24"/></g><circle cx="53" cy="11" r="4.5" fill="%23AE3A24"/></svg>'>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:wght@400;500&display=swap">
@@ -80,8 +80,13 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 /* ── masthead ─────────────────────────────────────── */
 header{border-bottom:1px solid var(--rule); background:var(--paper-2)}
 .bar{display:flex; align-items:baseline; justify-content:space-between; gap:16px; padding:18px 0; flex-wrap:wrap}
-.mark{font-family:"Familjen Grotesk",sans-serif; font-weight:700; font-size:1.15rem; letter-spacing:.02em}
-.mark span{color:var(--muted); font-weight:400; font-size:.8rem; letter-spacing:.14em; text-transform:uppercase; margin-left:10px}
+.mark{font-family:"Familjen Grotesk",sans-serif; font-weight:700; font-size:1.15rem; letter-spacing:.02em;
+  display:flex; align-items:center; gap:10px}
+.mark .glyph{width:30px; height:30px; flex:0 0 auto; display:block}
+.mark span{color:var(--muted); font-weight:400; font-size:.8rem; letter-spacing:.14em; text-transform:uppercase}
+/* The name sits tight against the mark; only the tagline is set apart. */
+.mark .word{color:var(--ink); font-weight:700; font-size:1.15rem; letter-spacing:.02em; text-transform:none}
+@media (max-width:560px){ .mark span:not(.word){display:none} }
 nav{display:flex; gap:20px; font-size:.85rem; flex-wrap:wrap}
 /* Each link stays on one line and the row wraps between them, rather than
    every label breaking mid-phrase and the last one falling off the edge. */
@@ -210,7 +215,24 @@ footer a{color:var(--muted)}
 
 <header>
   <div class="wrap bar">
-    <div class="mark">Amanat<span>parametric weather cover</span></div>
+    <div class="mark">
+      <!-- The same geometry as /logo.svg, inlined so it takes the page's own
+           tokens and follows the theme rather than carrying a second palette. -->
+      <svg class="glyph" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+        <g stroke="var(--rule)" stroke-width="1.5">
+          <line x1="7" y1="18" x2="57" y2="18"/>
+          <line x1="7" y1="46" x2="57" y2="46"/>
+        </g>
+        <line x1="7" y1="32" x2="57" y2="32" stroke="var(--trigger)"
+              stroke-width="1.6" stroke-dasharray="4 3.5" stroke-linecap="round"/>
+        <g fill="none" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="10,53 16,48 21,49 27,40 31,32" stroke="var(--trace)"/>
+          <polyline points="31,32 36,24 42,21 48,13 53,11" stroke="var(--trigger)"/>
+        </g>
+        <circle cx="53" cy="11" r="4.5" fill="var(--trigger)"/>
+      </svg>
+      <span class="word">Amanat</span><span>parametric weather cover</span>
+    </div>
     <nav>
       <a href="#check">Check a location</a>
       <a href="#route">Check a route</a>

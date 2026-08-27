@@ -65,6 +65,7 @@ async function endpointOf(spec, which) {
 const HERE = dirname(fileURLToPath(import.meta.url));
 // One file, read once. The page is static and the server has no build step.
 const PAGE = readFileSync(join(HERE, "public/index.html"));
+const LOGO = readFileSync(join(HERE, "public/logo.svg"));
 
 const PORT = Number(process.env.PORT ?? 8787);
 
@@ -173,8 +174,19 @@ export const server = createServer(async (req, res) => {
       res.writeHead(200, { "Content-Type": "application/xml; charset=utf-8", "Content-Length": Buffer.byteLength(body) });
       return res.end(body);
     }
+    // The mark itself, as a file rather than only a data URI, so it can be
+    // linked from a README or a post.
+    if (pathname === "/logo.svg") {
+      res.writeHead(200, {
+        "Content-Type": "image/svg+xml; charset=utf-8",
+        "Content-Length": LOGO.length,
+        "Cache-Control": "public, max-age=86400",
+      });
+      return res.end(LOGO);
+    }
+    // /card.png is 1200x630, which is a social card and a poor favicon.
     if (pathname === "/favicon.ico") {
-      res.writeHead(302, { Location: "/card.png" });
+      res.writeHead(302, { Location: "/logo.svg" });
       return res.end();
     }
 

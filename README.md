@@ -1,3 +1,5 @@
+<img src="miner/public/logo.svg" width="72" height="72" alt="">
+
 # Amanat
 
 **Verified weather intelligence that a contract acts on by itself.**

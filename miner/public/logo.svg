@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="amanat-logo-title">
+  <title id="amanat-logo-title">Amanat — a barograph trace crossing the payout trigger</title>
+  <!--
+    The mark is the product: a pen trace rising across the line that pays.
+
+    Three things, and each is a different kind of mark, which is what keeps them
+    from reading as one shape. The rules are printed on the stock. The trigger
+    is printed too, so it is a dashed hairline — a threshold, not a stroke. Only
+    the trace is drawn, in one continuous pen movement that changes colour at
+    the instant it crosses: green while nothing is owed, red once the contract
+    pays. The dot is the pen nib at the head of the trace, where the reading is
+    now.
+
+    An earlier draft put a heavy trigger line and a dot at the crossing. It read
+    as a pair of scissors. The crossing sits left of centre now so the mark is
+    not symmetrical about it.
+  -->
+  <style>
+    .paper { fill: #E9EDE6 }
+    .rule  { stroke: #CBD6C8 }
+    .trace { stroke: #1E6049 }
+    .over  { stroke: #AE3A24 }
+    .nib   { fill: #AE3A24 }
+    @media (prefers-color-scheme: dark) {
+      .paper { fill: #0D1411 }
+      .rule  { stroke: #24322B }
+      .trace { stroke: #4FBE93 }
+      .over  { stroke: #E2664B }
+      .nib   { fill: #E2664B }
+    }
+  </style>
+
+  <rect class="paper" width="64" height="64" rx="7"/>
+
+  <!-- printed on the stock -->
+  <g class="rule" stroke-width="1.5">
+    <line x1="7" y1="18" x2="57" y2="18"/>
+    <line x1="7" y1="46" x2="57" y2="46"/>
+  </g>
+
+  <!-- printed too: the threshold, not a stroke of the pen -->
+  <line class="over" x1="7" y1="32" x2="57" y2="32"
+        stroke-width="1.6" stroke-dasharray="4 3.5" stroke-linecap="round" opacity=".9"/>
+
+  <!-- drawn: one pen movement, and the colour is the verdict.
+       Polyline, not a smooth curve. A clean S reads as a growth chart, which
+       is every other logo; a barograph trace wobbles, and the wobble is what
+       makes this a reading off an instrument rather than a letterform. -->
+  <g fill="none" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <polyline class="trace" points="10,53 16,48 21,49 27,40 31,32"/>
+    <polyline class="over"  points="31,32 36,24 42,21 48,13 53,11"/>
+  </g>
+
+  <!-- the nib, where the reading is now -->
+  <circle class="nib" cx="53" cy="11" r="4.5"/>
+</svg>

@@ -146,10 +146,12 @@ export function summarise({ lat, lon, place, hours, question, temp_c, wind_kmh, 
   // three weather champions.
   const asked = restate(question);
 
-  // The template lead already names the place and the horizon, so repeating
-  // them after the readings would say it twice.
+  // Say where once. The template lead already names the place and the horizon,
+  // and a restated question usually names the place too — typing "14.60,
+  // 120.98" into the page produced "14.60, 120.98: … for 14.60, 120.98".
   const lead = asked ? `${asked}: ` : `The weather forecast for ${where}${horizon} is `;
-  const scope = asked ? ` for ${where}${horizon}` : "";
+  const named = asked ? asked.toLowerCase().includes(where.toLowerCase()) : true;
+  const scope = named ? "" : ` for ${where}${horizon}`;
 
   return (
     lead +
