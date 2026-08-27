@@ -70,7 +70,13 @@ export function placeCandidates(text) {
     if (c.length >= 3 && !seen.has(key)) { seen.add(key); out.push(c); }
   };
 
-  for (const [, run] of s.matchAll(/\b([A-Z][a-zA-Z]+(?:[ -][A-Z][a-zA-Z]+){0,2})/g)) {
+  // Unicode, not A-Z. An ASCII-only run stops at the first accented letter, so
+  // "São Paulo" yielded "Paulo" and was answered about Jalisco, Mexico;
+  // "Málaga" yielded "Laga" and was answered about the Congo. Answering
+  // confidently about the wrong continent is the failure this miner exists to
+  // avoid, and it was reachable by any question naming a place the way most of
+  // the world spells it.
+  for (const [, run] of s.matchAll(/(?<!\p{L})(\p{Lu}[\p{L}]*(?:[ -]\p{Lu}[\p{L}]*){0,2})/gu)) {
     // A sentence begins with a capital, so "Will Riyadh exceed…" yields the run
     // "Will Riyadh". Trim the words that are not places off both ends and what
     // remains is the place: looking up "Will Riyadh" finds nothing, "Riyadh"
@@ -90,11 +96,30 @@ export function placeCandidates(text) {
   // resolved, because "see" in "see heavy rain" is a town in Germany and
   // "evening" is a town in Arkansas. Anything the sentence capitalised is more
   // likely to be the place than anything it did not.
-  for (const word of s.split(/[^A-Za-z]+/)) {
-    if (/^[A-Z]/.test(word)) continue;
+  for (const word of s.split(/[^\p{L}]+/u)) {
+    if (/^\p{Lu}/u.test(word)) continue;
     if (!NOT_A_PLACE.has(word.toLowerCase())) add(word);
   }
-  return out;
+
+  // A name straight after a locative preposition outranks one that merely came
+  // first in the sentence. "Wie ist das Wetter in Zürich?" offers "Wie" before
+  // "Zürich", and "Wie" resolves — to Wiesbaden. The word after "in" is the
+  // place being asked about; the sentence-initial capital rarely is.
+  const after = new Set();
+  // "en", "em", "di" and "à" cost nothing here — each must still be followed by
+  // a capitalised word — and they cover the languages a question is most likely
+  // to arrive in after English.
+  // A lookbehind, not \b: "à" is not an ASCII word character, so \b before it
+  // does not mean what it appears to and the French case silently never matched.
+  for (const [, name] of s.matchAll(/(?<!\p{L})(?:in|at|for|near|around|over|en|em|di|à)\s+(\p{Lu}[\p{L}]*(?:[ -]\p{Lu}[\p{L}]*){0,2})/gu)) {
+    after.add(name.toLowerCase());
+    for (const w of name.split(/[ -]/)) after.add(w.toLowerCase());
+  }
+  if (!after.size) return out;
+  return [
+    ...out.filter((c) => after.has(c.toLowerCase())),
+    ...out.filter((c) => !after.has(c.toLowerCase())),
+  ];
 }
 
 /** Resolve one name. Returns null when the API knows no such place. */

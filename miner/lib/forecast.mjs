@@ -100,7 +100,10 @@ export function restate(question) {
     .join("")
     .replace(/\s+/g, " ")
     .trim()
-    .replace(/[?？\s]+$/u, "");
+    // Terminal punctuation, so an imperative reads as a lead-in: "Provide a
+    // forecast for 51.5074, -0.1278." became "…-0.1278.:" with the colon after
+    // the full stop.
+    .replace(/[?？.。!！\s]+$/u, "");
   if (s.length < 3 || s.length > 160) return null;
   return s;
 }

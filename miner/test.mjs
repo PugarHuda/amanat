@@ -443,3 +443,30 @@ server.close();
   }
 }
 console.log("the answer opens with the question that was asked, and drops nothing");
+
+// ── a place is not spelled in ASCII ─────────────────────────────────────────
+{
+  // The extractor was [A-Z][a-zA-Z]+, so a run stopped at the first accented
+  // letter. Live, that answered "Will it rain in São Paulo tomorrow?" about
+  // Paulo, Jalisco, Mexico, and "What is the weather in Málaga?" about Laga in
+  // the Democratic Republic of Congo. Confidently answering about the wrong
+  // continent is the Null Island failure wearing a plausible name.
+  assert.equal(placeCandidates("Will it rain in São Paulo tomorrow?")[0], "São Paulo");
+  assert.equal(placeCandidates("What is the weather in Málaga?")[0], "Málaga");
+  assert.equal(placeCandidates("天気 in Tōkyō?")[0], "Tōkyō");
+
+  // A name after a locative preposition outranks one that merely came first.
+  // "Wie ist das Wetter in Zürich?" offered "Wie" first, and "Wie" resolves —
+  // to Wiesbaden, Germany.
+  assert.equal(placeCandidates("Wie ist das Wetter in Zürich?")[0], "Zürich");
+  assert.equal(placeCandidates("¿Qué tiempo hace en Bogotá?")[0], "Bogotá");
+  assert.equal(placeCandidates("Bagaimana cuaca di Surabaya besok?")[0], "Surabaya");
+  // A lookbehind rather than \b, because "à" is not an ASCII word character and
+  // \bà never matched where it looked like it would.
+  assert.equal(placeCandidates("Quel temps à Montréal?")[0], "Montréal");
+
+  // The cases that worked before still do.
+  assert.equal(placeCandidates("Will Riyadh exceed 40 degrees?")[0], "Riyadh");
+  assert.equal(placeCandidates("Is a storm expected in Cebu Port this evening?")[0], "Cebu Port");
+}
+console.log("places are read in the alphabet they are written in");
