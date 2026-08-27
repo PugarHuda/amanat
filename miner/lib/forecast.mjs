@@ -7,8 +7,15 @@
 // implementation, instead of two implementations.
 
 import { ttlCache } from "./cache.mjs";
+import { activeCyclones, nearest, cycloneRisk } from "./cyclone.mjs";
 
 const OPEN_METEO = "https://api.open-meteo.com/v1/forecast";
+
+// The same provider's wave model. The lanes on the board are at sea, and a
+// land-model wind reading says nothing about the thing that actually stops a
+// ship: significant wave height. Free, keyless, and it returns nulls over land
+// rather than an error, so an inland point simply has no sea state.
+const MARINE = "https://marine-api.open-meteo.com/v1/marine";
 
 /**
  * What CC BY 4.0 asks for, carried on every answer.
@@ -32,7 +39,11 @@ const ATTRIBUTION = Object.freeze({
   url: "https://open-meteo.com",
   licence: "CC BY 4.0",
   licence_url: "https://creativecommons.org/licenses/by/4.0/",
-  modified: "storm risk derived from the published wind, gust and precipitation readings",
+  modified: "storm risk derived from the published wind, gust, precipitation and wave-height readings",
+  // GDACS (UN OCHA and the European Commission) publishes cyclone positions
+  // for free reuse with the source named. Named here, and on every answer
+  // that carries one.
+  cyclones: "GDACS, https://www.gdacs.org",
 });
 
 /**
@@ -44,9 +55,11 @@ const ATTRIBUTION = Object.freeze({
  * for the right hour right up to expiry.
  */
 const SERIES = ttlCache({ ttlMs: 10 * 60_000, max: 400 });
+const SEA = ttlCache({ ttlMs: 10 * 60_000, max: 400 });
 
 /** How many points are held, for the health report. */
 export const seriesCacheSize = () => SERIES.size;
+export const seaCacheSize = () => SEA.size;
 
 /**
  * WMO 4677 present-weather codes, the vocabulary Open-Meteo reports conditions
@@ -74,15 +87,22 @@ export function condition(code) {
   return WMO[code] ?? null;
 }
 
-/** Storm risk in [0,1] from wind, gust and precipitation. */
-export function riskScore({ wind_kmh, gust_kmh, precip_mm }) {
+/**
+ * Storm risk in [0,1] from wind, gust, precipitation, sea state and any named
+ * cyclone nearby. The worst single driver wins: a contract is asking whether
+ * anything here is severe, not for an average of things that are not.
+ */
+export function riskScore({ wind_kmh, gust_kmh, precip_mm, wave_m, cyclone = 0 }) {
   // ponytail: linear ramps against thresholds a reinsurer would recognise
-  // (Beaufort 8 = 62 km/h, 30 mm/h is a severe-rain warning in most services).
-  // Deliberately not a model — the point is a number a contract can compare.
+  // (Beaufort 8 = 62 km/h, 30 mm/h is a severe-rain warning in most services,
+  // 4 m significant wave height is Douglas 6 "very rough", where coastal cargo
+  // operations suspend). Deliberately not a model — the point is a number a
+  // contract can compare.
   const w = Math.min(wind_kmh / 62, 1);
   const g = Math.min(gust_kmh / 90, 1);
   const p = Math.min(precip_mm / 30, 1);
-  return Math.round(Math.max(w, g, p) * 1000) / 1000;
+  const sea = Number.isFinite(wave_m) ? Math.min(wave_m / 4, 1) : 0;
+  return Math.round(Math.max(w, g, p, sea, cyclone) * 1000) / 1000;
 }
 
 /**
@@ -108,7 +128,7 @@ export function restate(question) {
   return s;
 }
 
-export function summarise({ lat, lon, place, hours, question, temp_c, wind_kmh, precip_mm, gust_kmh, risk, valid_at, condition: cond, temp_min_c, temp_max_c }) {
+export function summarise({ lat, lon, place, hours, question, temp_c, wind_kmh, precip_mm, gust_kmh, risk, valid_at, condition: cond, temp_min_c, temp_max_c, wave_m, cyclone }) {
   const level = risk >= 0.75 ? "severe" : risk >= 0.45 ? "elevated" : "low";
 
   const day = String(valid_at).slice(0, 10);
@@ -159,6 +179,10 @@ export function summarise({ lat, lon, place, hours, question, temp_c, wind_kmh, 
     `gusts ${gust_kmh.toFixed(1)} km/h and ${precip_mm.toFixed(1)} mm precipitation` +
     `${scope}, valid at ${valid_at}. ` +
     (cond ? `${day}: ${cond}${range}. ` : "") +
+    (Number.isFinite(wave_m) ? `Waves ${wave_m.toFixed(1)} m. ` : "") +
+    (cyclone
+      ? `Tropical cyclone ${cyclone.name} (${cyclone.max_wind_kmh ?? "?"} km/h, ${cyclone.alert}) is ${cyclone.distance_km} km away now. `
+      : "") +
     `Storm risk is ${level} (${risk.toFixed(3)}).`
   );
 }
@@ -235,7 +259,28 @@ export async function forecast({ lat, lon, hours = 0, place, question }) {
   const wind_kmh = d.hourly.wind_speed_10m[i];
   const gust_kmh = d.hourly.wind_gusts_10m[i];
   const precip_mm = d.hourly.precipitation[i];
-  const risk = riskScore({ wind_kmh, gust_kmh, precip_mm });
+
+  // Sea state for the same hour. Its own cache because the marine model is a
+  // separate upstream with its own failure modes, and a wave reading that
+  // cannot be fetched must not take the weather reading down with it — the
+  // response says `wave_m: null` and the risk is computed without it.
+  const wave_m = await SEA.through(key, async () => {
+    const url = `${MARINE}?latitude=${lat}&longitude=${lon}&hourly=wave_height&forecast_days=8&timezone=UTC`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+    if (!res.ok) throw new Error(`open-meteo marine ${res.status}`);
+    const m = await res.json();
+    return { time: m.hourly?.time ?? [], wave: m.hourly?.wave_height ?? [] };
+  }).then((sea) => {
+    const j = sea.time.indexOf(at);
+    const v = j >= 0 ? sea.wave[j] : null;
+    return Number.isFinite(v) ? v : null;
+  }).catch(() => null);
+
+  // Any named storm within reach, from where it is now. Same rule: a feed that
+  // is down is reported as no cyclone found, never as an error on the forecast.
+  const cyclone = await activeCyclones().then((list) => nearest(list, { lat, lon })).catch(() => null);
+
+  const risk = riskScore({ wind_kmh, gust_kmh, precip_mm, wave_m, cyclone: cycloneRisk(cyclone) });
   const code = d.hourly.weather_code?.[i];
   const cond = condition(code);
 
@@ -249,8 +294,17 @@ export async function forecast({ lat, lon, hours = 0, place, question }) {
   return {
     summary: summarise({
       lat, lon, place, hours, question, temp_c, wind_kmh, precip_mm, gust_kmh, risk,
-      valid_at: at + "Z", condition: cond, temp_min_c, temp_max_c,
+      valid_at: at + "Z", condition: cond, temp_min_c, temp_max_c, wave_m, cyclone,
     }),
+    // Significant wave height in metres for that hour; null over land or when
+    // the marine model could not be read.
+    wave_m,
+    // The nearest named cyclone within 500 km, positioned where it is now —
+    // not where it will be at the forecast hour, which this feed does not say.
+    cyclone_name: cyclone?.name ?? null,
+    cyclone_km_now: cyclone?.distance_km ?? null,
+    cyclone_max_wind_kmh: cyclone?.max_wind_kmh ?? null,
+    cyclone_alert: cyclone?.alert ?? null,
     condition: cond,
     weather_code: code ?? null,
     temp_min_c: temp_min_c ?? null,

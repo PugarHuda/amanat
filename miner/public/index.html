@@ -584,6 +584,13 @@ function showResult(r) {
       figure("wind", `${Number(r.wind_kmh).toFixed(1)} km/h`),
       figure("gusts", `${Number(r.gust_kmh).toFixed(1)} km/h`),
       figure("precipitation", `${Number(r.precip_mm).toFixed(1)} mm`),
+      // Sea state only where there is sea; a cyclone only when one is near.
+      // An inland point saying "waves —" would be answering a question nobody
+      // asked about it.
+      ...(Number.isFinite(r.wave_m) ? [figure("waves", `${Number(r.wave_m).toFixed(1)} m`)] : []),
+      ...(r.cyclone_name
+        ? [figure("cyclone", `${r.cyclone_name} · ${r.cyclone_km_now} km · ${r.cyclone_max_wind_kmh} km/h`)]
+        : []),
       figure("valid at", r.valid_at),
     ]),
   );

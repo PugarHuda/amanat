@@ -6,6 +6,7 @@ import { placeCandidates, coordinatesIn } from "./lib/geocode.mjs";
 import { greatCircleKm, waypoints, assessRoute } from "./lib/route.mjs";
 import { ttlCache, bucket } from "./lib/cache.mjs";
 import { drawCard, textWidth } from "./lib/card.mjs";
+import { parse, nearest, cycloneRisk, NEAR_KM } from "./lib/cyclone.mjs";
 import { server } from "./server.mjs";
 
 // risk: each driver alone can reach the ceiling, and the worst one wins.
@@ -470,3 +471,52 @@ console.log("the answer opens with the question that was asked, and drops nothin
   assert.equal(placeCandidates("Is a storm expected in Cebu Port this evening?")[0], "Cebu Port");
 }
 console.log("places are read in the alphabet they are written in");
+
+// ── the sea and the storm are drivers of risk, not decoration ───────────────
+{
+  // A 4 m significant wave height is Douglas 6, "very rough", and reaches the
+  // ceiling on its own with the air dead calm.
+  assert.equal(riskScore({ wind_kmh: 0, gust_kmh: 0, precip_mm: 0, wave_m: 4 }), 1);
+  assert.equal(riskScore({ wind_kmh: 0, gust_kmh: 0, precip_mm: 0, wave_m: 2 }), 0.5);
+  // No sea state — an inland point — contributes nothing rather than NaN.
+  assert.equal(riskScore({ wind_kmh: 0, gust_kmh: 0, precip_mm: 0, wave_m: null }), 0);
+  // A cyclone term is taken as given and competes with the rest.
+  assert.equal(riskScore({ wind_kmh: 31, gust_kmh: 0, precip_mm: 0, cyclone: 0.8 }), 0.8);
+
+  // GDACS's own shape, reduced to what a reading needs. Dead storms are dropped:
+  // the search returns recently dissipated ones and a dead storm 100 km away is
+  // not a risk.
+  const feed = { features: [
+    { geometry: { coordinates: [-38.7, 13.6] }, properties: { eventname: "DOLLY-26", alertlevel: "Green", iscurrent: true, todate: "2026-08-27T15:00:00", severitydata: { severity: 74.07 }, url: { report: "r" } } },
+    { geometry: { coordinates: [125.0, 12.0] }, properties: { eventname: "OLD-25", alertlevel: "Orange", iscurrent: false, severitydata: { severity: 150 } } },
+  ] };
+  const live = parse(feed);
+  assert.equal(live.length, 1);
+  assert.deepEqual(
+    { name: live[0].name, wind: live[0].max_wind_kmh, lat: live[0].lat, lon: live[0].lon },
+    { name: "DOLLY-26", wind: 74, lat: 13.6, lon: -38.7 },
+  );
+
+  // Nearest within reach, or nothing. Cebu is nowhere near an Atlantic storm.
+  assert.equal(nearest(live, { lat: 10.32, lon: 123.89 }), null);
+  const under = nearest(live, { lat: 13.6, lon: -38.7 });
+  assert.equal(under.distance_km, 0);
+  const off = nearest(live, { lat: 15.0, lon: -36.0 });
+  assert.ok(off.distance_km > 300 && off.distance_km < NEAR_KM, `${off.distance_km} km`);
+
+  // Intensity against the 118 km/h typhoon line, discounted with distance. A
+  // typhoon overhead is 1; a 74 km/h storm 250 km out is 0.31; none is 0.
+  assert.equal(cycloneRisk({ max_wind_kmh: 118, distance_km: 0 }), 1);
+  assert.equal(cycloneRisk({ max_wind_kmh: 236, distance_km: 0 }), 1, "clamps at 1");
+  assert.equal(cycloneRisk({ max_wind_kmh: 74, distance_km: 250 }), 0.314);
+  assert.equal(cycloneRisk(null), 0);
+
+  // The summary carries both when present, and neither when not.
+  const base = { lat: 10.32, lon: 123.89, hours: 6, temp_c: 27.1, wind_kmh: 11.4, gust_kmh: 29.9, precip_mm: 0, risk: 0.685, valid_at: "2026-08-27T11:00Z", condition: "Overcast" };
+  const withSea = summarise({ ...base, wave_m: 2.74, cyclone: { name: "DOLLY-26", max_wind_kmh: 74, alert: "Green", distance_km: 330 } });
+  assert.ok(withSea.includes("Waves 2.7 m"), withSea);
+  assert.ok(withSea.includes("DOLLY-26 (74 km/h, Green) is 330 km away now"), withSea);
+  const inland = summarise({ ...base, wave_m: null, cyclone: null });
+  assert.ok(!inland.includes("Waves") && !inland.includes("cyclone"), inland);
+}
+console.log("sea state and named cyclones drive risk, and say so");

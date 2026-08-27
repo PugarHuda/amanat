@@ -321,3 +321,38 @@ test.describe("the scoring board says which number is which @ui", () => {
     await expect(page.locator("#surveybody")).toContainText("not been published");
   });
 });
+
+test.describe("the reading shows the sea and the storm when there are any @ui", () => {
+  const reading = (over) => ({
+    summary: "Storm risk at 13.60, -38.70: 26.6 °C with wind 38.2 km/h, gusts 50.4 km/h and 1.4 mm precipitation, valid at 2026-08-27T21:00Z. Waves 2.7 m. Tropical cyclone DOLLY-26 (74 km/h, Green) is 0 km away now. Storm risk is elevated (0.685).",
+    place: null, lat: 13.6, lon: -38.7, hours: 6, condition: "Slight rain showers", weather_code: 80,
+    temp_min_c: 24.8, temp_max_c: 27.5, temp_c: 26.6, wind_kmh: 38.2, gust_kmh: 50.4, precip_mm: 1.4,
+    wave_m: 2.74, cyclone_name: "DOLLY-26", cyclone_km_now: 0, cyclone_max_wind_kmh: 74, cyclone_alert: "Green",
+    risk: 0.685, breach: false, valid_at: "2026-08-27T21:00Z", source: "open-meteo",
+    ...over,
+  });
+
+  test("a point under a named storm shows its waves and the storm by name", async ({ page }) => {
+    await page.route("**/forecast*", (route) => route.fulfill({ status: 200, json: reading() }));
+    await page.goto(BASE);
+    await page.fill("#ask", "13.60, -38.70");
+    await page.click("#go");
+    const figures = page.locator("#result .figures");
+    await expect(figures).toContainText("waves");
+    await expect(figures).toContainText("2.7 m");
+    await expect(figures).toContainText("DOLLY-26");
+    await expect(figures).toContainText("74 km/h");
+  });
+
+  test("an inland point shows neither, rather than a dash", async ({ page }) => {
+    await page.route("**/forecast*", (route) =>
+      route.fulfill({ status: 200, json: reading({ wave_m: null, cyclone_name: null, cyclone_km_now: null, cyclone_max_wind_kmh: null, cyclone_alert: null }) }));
+    await page.goto(BASE);
+    await page.fill("#ask", "24.69, 46.72");
+    await page.click("#go");
+    const figures = page.locator("#result .figures");
+    await expect(figures).toContainText("temperature");
+    await expect(figures).not.toContainText("waves");
+    await expect(figures).not.toContainText("cyclone");
+  });
+});

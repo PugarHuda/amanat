@@ -26,6 +26,7 @@ curl -X POST https://amanat-miner.vercel.app/forecast \
 {
   "summary": "At 2026-08-25T19:00Z the forecast for 14.60, 120.98 is 28.4 °C with wind 21.6 km/h, gusts 34.2 km/h and 0.2 mm precipitation. Storm risk is elevated (0.483).",
   "temp_c": 28.4, "wind_kmh": 21.6, "gust_kmh": 34.2, "precip_mm": 0.2,
+  "wave_m": 1.1, "cyclone_name": null, "cyclone_km_now": null,
   "risk": 0.483, "breach": false,
   "valid_at": "2026-08-25T19:00Z", "source": "open-meteo"
 }

@@ -5,7 +5,7 @@ import { createServer } from "node:http";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { forecast, hoursIn, seriesCacheSize } from "./lib/forecast.mjs";
+import { forecast, hoursIn, seriesCacheSize, seaCacheSize } from "./lib/forecast.mjs";
 import { locate, placeCacheSize } from "./lib/geocode.mjs";
 import { assessRoute } from "./lib/route.mjs";
 import { bucket, ttlCache } from "./lib/cache.mjs";
@@ -128,6 +128,7 @@ export const server = createServer(async (req, res) => {
           // is the budget that keeps it that way.
           route_requests_available: Math.floor(routeBudget.available),
           cached_points: seriesCacheSize(),
+          cached_sea_points: seaCacheSize(),
           cached_places: placeCacheSize(),
         },
       });

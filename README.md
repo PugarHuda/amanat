@@ -61,13 +61,20 @@ threshold is a mainnet property, not something running today.
 
 ## Track 1 — the miner
 
-`miner/server.mjs` wraps Open-Meteo (free, no key) and returns every answer in
-two shapes at once:
+`miner/server.mjs` reads three free, keyless sources and returns every answer
+in two shapes at once. Open-Meteo's weather model gives the air; its marine model
+gives significant wave height, which is the thing that actually stops a ship
+and the one figure the shipping-lane board was missing; and GDACS gives every
+active named tropical cyclone on Earth with its position and maximum wind, so a
+reading under Tropical Storm Dolly says so by name rather than reporting "38 km/h
+wind". Storm risk is the worst of wind, gusts, rain, waves and cyclone
+proximity — a 4 m sea or a typhoon overhead reaches the ceiling on its own.
 
 ```json
 {
   "summary": "At 2026-08-21T06:00Z the forecast for -6.20, 106.85 is 26.2 °C with wind 2.7 km/h, gusts 5.0 km/h and 0.0 mm precipitation. Storm risk is low (0.056).",
   "temp_c": 26.2, "wind_kmh": 2.7, "gust_kmh": 5.0, "precip_mm": 0.0,
+  "wave_m": 0.3, "cyclone_name": null, "cyclone_km_now": null,
   "risk": 0.056, "breach": false, "valid_at": "2026-08-21T06:00Z", "source": "open-meteo"
 }
 ```

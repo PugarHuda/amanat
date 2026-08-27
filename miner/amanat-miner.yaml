@@ -73,7 +73,7 @@ input_schema:
 output_schema:
   type: object
   properties:
-    summary: { type: string, description: Plain-language forecast. Opens with the day, the condition and the daily range, then the hour being asked about. }
+    summary: { type: string, description: Plain-language forecast. Opens by restating the question, then gives temperature, wind, gusts, precipitation, the condition and daily range, sea state and any named cyclone nearby, and the storm risk. }
     condition: { type: string, description: WMO present-weather condition for that hour, e.g. Overcast or Thunderstorm. Null when the code is unrecognised. }
     weather_code: { type: integer, description: WMO 4677 present-weather code for that hour. }
     temp_min_c: { type: number, description: Lowest temperature that day in degrees Celsius. }
@@ -82,7 +82,12 @@ output_schema:
     wind_kmh: { type: number, description: Sustained wind speed in km/h. }
     gust_kmh: { type: number, description: Wind gust speed in km/h. }
     precip_mm: { type: number, description: Precipitation in mm for the hour. }
-    risk: { type: number, description: Storm risk between 0 and 1. }
+    wave_m: { type: number, description: Significant wave height in metres for that hour, from the Open-Meteo marine model. Null over land or when the sea state could not be read. }
+    cyclone_name: { type: string, description: Name of the nearest active tropical cyclone within 500 km, from GDACS. Null when none. }
+    cyclone_km_now: { type: integer, description: Distance in km to that cyclone's current position. Its position at the forecast hour is not published, so this is where it is now. }
+    cyclone_max_wind_kmh: { type: integer, description: That cyclone's maximum sustained wind in km/h. }
+    cyclone_alert: { type: string, description: GDACS alert level for that cyclone - Green, Orange or Red. }
+    risk: { type: number, description: Storm risk between 0 and 1. The worst of wind, gusts, precipitation, wave height and cyclone proximity. }
     breach: { type: boolean, description: True when risk is at or above the 0.75 payout threshold. }
     valid_at: { type: string, description: UTC timestamp the forecast applies to. }
     source: { type: string }
@@ -137,6 +142,17 @@ on_chain:
         description: Storm risk between 0 and 1 times 10000.
         source_path: risk
         multiplier: 10000
+      - index: 4
+        name: wave_m_x100
+        description: Significant wave height in metres times 100. Zero over land.
+        source_path: wave_m
+        multiplier: 100
+        optional: true
+      - index: 5
+        name: cyclone_km_now
+        description: Distance in km to the nearest active named cyclone, now. Zero when none within 500 km.
+        source_path: cyclone_km_now
+        optional: true
     bools:
       - index: 0
         name: breach

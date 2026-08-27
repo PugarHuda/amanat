@@ -75,6 +75,31 @@ test.describe("miner API — happy paths", () => {
     expect(body.summary).toContain(body.risk.toFixed(3));
   });
 
+  test("reads the sea where there is sea, and says nothing about it inland", async ({ request }) => {
+    // Cebu sits on a strait; the marine model has a wave height for it. Riyadh
+    // does not, and the honest answer there is null — not 0.0 m, which would
+    // claim a flat calm sea in the middle of the Arabian peninsula.
+    const sea = await (await request.post(`${BASE}/forecast`, { data: { ...CEBU, hours: 6 } })).json();
+    expect(typeof sea.wave_m).toBe("number");
+    expect(sea.wave_m).toBeGreaterThanOrEqual(0);
+    expect(sea.summary).toContain(`Waves ${sea.wave_m.toFixed(1)} m`);
+
+    const inland = await (await request.post(`${BASE}/forecast`, { data: { lat: 24.69, lon: 46.72, hours: 6 } })).json();
+    expect(inland.wave_m).toBeNull();
+    expect(inland.summary).not.toContain("Waves");
+
+    // The cyclone fields are always present so a contract can read a fixed
+    // shape; null is the answer when no named storm is within 500 km.
+    for (const body of [sea, inland]) {
+      for (const k of ["cyclone_name", "cyclone_km_now", "cyclone_max_wind_kmh", "cyclone_alert"]) expect(k in body).toBe(true);
+      if (body.cyclone_name === null) expect(body.cyclone_km_now).toBeNull();
+      else {
+        expect(body.cyclone_km_now).toBeLessThanOrEqual(500);
+        expect(body.summary).toContain(body.cyclone_name);
+      }
+    }
+  });
+
   test("reports health as itself", async ({ request }) => {
     const res = await request.get(`${BASE}/health`);
     expect(res.status()).toBe(200);
