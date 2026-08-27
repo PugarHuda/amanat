@@ -429,13 +429,19 @@ Read from the chain and the node on 27 August; every figure below is checkable
 at the addresses given.
 
 **Track 1 — miner.** Registration 218, `amanat-weather-risk`, id `20260821`,
-active on `WEATHER_FORECAST`, `WEATHER_CHECK` and `STORM_ALERT` and served from
-https://amanat-miner.vercel.app. Ranked **1** in all three — of 11, 9 and 4
-miners respectively. That rank is worth less than it looks: at epoch 280 every
-weather miner scored exactly 0.000000, so on those intents a rank is a tie-break
-over an absence. Three epochs earlier the same intents produced real spread and
-this miner led on merit at 0.009192. Both facts are in
-[`docs/bug-report.md`](docs/bug-report.md).
+active on `WEATHER_FORECAST`, `WEATHER_CHECK` and `STORM_ALERT`, served from
+https://amanat-miner.vercel.app. **359 requests served.** At epoch 285 it ranked
+**3 of 4** on `STORM_ALERT` at 0.005034 and **9 of 11** on `WEATHER_FORECAST` at
+0.005182; `WEATHER_CHECK` was not scored that epoch.
+
+Those ranks are honest and they are not good. They are also barely a
+measurement: the whole field sits between 0.0050 and 0.0089, a spread of four
+thousandths, on intents where a prose miner scores 0.996. At epoch 280 every
+weather miner scored exactly 0.000000 and the leaderboard still printed ranks
+1 to 9 over it. What separates rank 3 from rank 9 here is smaller than what
+separates any of them from being measured at all — which is
+[finding 5](docs/bug-report.md#a-whole-intent-family-scored-exactly-zero-and-it-is-not-only-weather),
+and the reason Track 2 exists.
 
 **Track 2 — scoring modules.** **Champion on `GAME_RESULT`**, registration 1253,
 active since 27 August: margin 0.7008 against a bar of 0.4175, ordering 15 of 15,
