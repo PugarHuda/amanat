@@ -398,6 +398,29 @@ footer a{color:var(--muted)}
     </p>
   </section>
 
+  <section class="ledger" id="survey">
+    <h2>What the network scores</h2>
+    <p>
+      A scoring module decides what a miner's answer is worth, and one is
+      chosen per intent. These are the ones in force, read from the node — the
+      bar a challenger must clear, the score the board displays for it, and
+      what the best miner on that intent actually scored.
+    </p>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>Intent</th><th class="m">Bar</th><th class="m">Shown</th><th class="m">Best miner</th><th>Tries</th></tr>
+        </thead>
+        <tbody id="surveybody">
+          <tr><td colspan="5" class="m" style="color:var(--muted)">reading the node…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="mono" style="font-size:.78rem;color:var(--muted);margin-top:16px">
+      <span id="surveystat">reading…</span>
+    </p>
+  </section>
+
   <footer>
     <span>Amanat · a miner, a scoring module and a contract on Telegraph</span>
     <span>
@@ -701,6 +724,59 @@ fetch("/api/book")
       `${b.policies} policies written · ${b.jobBudget} USDC left for jobs`;
   })
   .catch(() => { $("bookstat").textContent = "book unavailable"; });
+
+/**
+ * The survey table.
+ *
+ * Two numbers per intent because they disagree. "Shown" is the champion's
+ * eval_score as published: the margin it recorded on the day it won, frozen.
+ * "Bar" is that same champion re-measured on the current corpus, which is what
+ * a new registration is actually held against. On WEATHER_FORECAST they are
+ * 0.53 and 0.99 — reading the first one is how four of our registrations went
+ * at the strongest incumbent on the board believing it was the weakest.
+ */
+const four = (n) => (n === null || n === undefined ? "—" : Number(n).toFixed(4));
+
+// Below a ten-thousandth, a fixed-point number reads as 0.0000 and loses the
+// only interesting thing about it — that CRYPTO_PRICE tops out at 1.4e-8.
+const small = (n) =>
+  n === null || n === undefined ? "—" : n > 0 && n < 1e-4 ? Number(n).toExponential(1) : Number(n).toFixed(4);
+
+fetch("/api/survey")
+  .then((r) => { if (!r.ok) throw new Error("survey unavailable"); return r.json(); })
+  .then(({ rows, read_at }) => {
+    const body = $("surveybody");
+    body.replaceChildren();
+    for (const r of rows) {
+      const bar = r.champion && r.champion.bar;
+      const shown = r.champion && r.champion.eval;
+      // Flag the ones where the published number would mislead by more than a
+      // tenth, in either direction.
+      const off = bar !== null && bar !== undefined && shown !== null && shown !== undefined
+        && Math.abs(bar - shown) > 0.1;
+      body.appendChild(el("tr", {}, [
+        el("td", { className: "m", text: r.intent }),
+        el("td", { className: "m", text: four(bar) }),
+        el("td", {
+          className: "m",
+          text: four(shown),
+          attrs: off ? { style: "color:var(--trigger)" } : {},
+        }),
+        el("td", { className: "m", text: small(r.live && r.live.best) }),
+        el("td", { className: "m", text: (r.champion && r.champion.attempts) || 0 }),
+      ]));
+    }
+    const dead = rows.filter((r) => r.live.best !== null && r.live.best < 0.05).length;
+    const graded = rows.filter((r) => r.live.best !== null).length;
+    $("surveystat").textContent =
+      `${dead} of ${graded} scored intents have no miner above 0.05 · red where the shown score is off the bar by more than 0.1 · read ${String(read_at).slice(0, 10)}`;
+  })
+  .catch(() => {
+    $("surveybody").replaceChildren(el("tr", {}, [
+      el("td", { className: "m", text: "the survey has not been published yet", attrs: { colspan: 5, style: "color:var(--muted)" } }),
+    ]));
+    $("surveystat").textContent = "";
+  });
 
 loadPlot();
 </script>

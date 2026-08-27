@@ -31,6 +31,11 @@ const routeBudget = bucket({ perMinute: Number(process.env.AMANAT_ROUTE_PER_MINU
 const BOARD_URL = process.env.AMANAT_BOARD_URL
   ?? "https://raw.githubusercontent.com/PugarHuda/amanat/board/board.json";
 
+// The same branch carries the network survey. It costs nothing to produce —
+// both catalogues are public reads — so it refreshes on the board's schedule.
+const SURVEY_URL = process.env.AMANAT_SURVEY_URL
+  ?? "https://raw.githubusercontent.com/PugarHuda/amanat/board/survey.json";
+
 // Callers name the question field differently and the protocol does not fix
 // one. Accepting the whole set costs a lookup and turns "unsupported request"
 // into an answer.
@@ -225,6 +230,19 @@ export const server = createServer(async (req, res) => {
     // at build time. Reading it here means the board is current without a
     // redeploy, which matters more than it sounds — the free tier allows a
     // hundred deployments a day, and a data refresh must never cost one.
+    // What the network scores, and what the board claims about it. Served from
+    // the branch rather than computed per request: the two upstream catalogues
+    // are large, and a page refresh must not turn into two megabytes of fetch.
+    if (pathname === "/api/survey") {
+      const upstream = await fetch(SURVEY_URL, { signal: AbortSignal.timeout(8000) });
+      if (upstream.status === 404) {
+        return send(res, 503, { error: "the survey has not been published yet — the schedule writes it every 12 hours" });
+      }
+      if (!upstream.ok) throw new Error(`survey ${upstream.status}`);
+      res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "public, max-age=1800" });
+      return res.end(JSON.stringify(await upstream.json()));
+    }
+
     if (pathname === "/api/board") {
       const upstream = await fetch(BOARD_URL, { signal: AbortSignal.timeout(8000) });
       if (upstream.status === 404) {
@@ -273,7 +291,7 @@ export const server = createServer(async (req, res) => {
       }));
     }
 
-    send(res, 404, { error: "not found", endpoints: ["/forecast", "/api/route", "/api/board", "/health"] });
+    send(res, 404, { error: "not found", endpoints: ["/forecast", "/api/route", "/api/board", "/api/survey", "/health"] });
   } catch (e) {
     // A validation mistake is the caller's; anything else is ours. Both are
     // real HTTP errors so Telegraph does not charge for them or store a signal.
