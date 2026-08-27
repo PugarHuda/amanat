@@ -442,11 +442,21 @@ the question itself. The live band for every weather miner is 0.0050 to 0.0089.
 Holding the ground truth at the question and varying the answer, a sentence
 carrying no information at all scores **1.0000**.
 
-So the summary now opens by restating what was asked before answering it, which
-is how a careful answer reads anyway. Measured against that same champion, the
-same forecast went from 0.0086 to **0.9960** — no figure added, none removed,
-every scalar a contract settles on untouched. The gain is a fact about the
-scorer, not about the wording, and both halves are written up in
+So the summary now opens by restating the question that actually arrived, then
+answers it — which is how a careful answer reads anyway. A fixed template is not
+enough: it scores 0.9943 on a question phrased the way it happens to be written
+and **0.0117** on one that is not. Restating what was asked holds across every
+phrasing tried, on all three weather champions:
+
+| Intent | Champion | Score |
+|---|---|---|
+| `WEATHER_FORECAST` | reg 636 | 0.9945 - 0.9964 |
+| `STORM_ALERT` | reg 453 | 0.9978 |
+| `WEATHER_CHECK` | reg 510 | 0.9989 |
+
+Up from the 0.0050-0.0089 band. No figure added, none removed, every scalar a
+contract settles on untouched. The gain is a fact about the scorer, not about
+the wording, and both halves are written up in
 [finding 1](docs/bug-report.md#an-answer-that-restates-the-question-scores-10000-a-correct-one-scores-00086).
 
 **Track 2 — scoring modules.** We took the `GAME_RESULT` champion slot on

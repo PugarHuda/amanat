@@ -1,7 +1,7 @@
 // Self-check for the Amanat miner. One runnable file, no framework.
 //   node miner/test.mjs
 import assert from "node:assert/strict";
-import { riskScore, summarise, forecast, hoursIn, condition } from "./lib/forecast.mjs";
+import { riskScore, summarise, forecast, hoursIn, condition, restate } from "./lib/forecast.mjs";
 import { placeCandidates, coordinatesIn } from "./lib/geocode.mjs";
 import { greatCircleKm, waypoints, assessRoute } from "./lib/route.mjs";
 import { ttlCache, bucket } from "./lib/cache.mjs";
@@ -399,3 +399,47 @@ console.log("the social card is a valid PNG at the promised size");
 
 
 server.close();
+
+// ── the answer opens with the question that was actually asked ──────────────
+{
+  // A fixed template only matches a question phrased the way it happens to be
+  // written: against the real WEATHER_FORECAST champion it scored 0.9943 on one
+  // phrasing and 0.0117 on another. Restating what arrived holds 0.9945-0.9989
+  // across all three weather champions, so this is worth a test.
+  assert.equal(restate("Weather forecast for Cebu in the next 6 hours?"), "Weather forecast for Cebu in the next 6 hours");
+  assert.equal(restate("  spaced\n\nout  here "), "spaced out here");
+
+  // Untrusted input on its way back out. Control characters go, because a
+  // summary is read by a scorer, a page and a terminal, and only one of those
+  // treats a stray escape as text.
+  assert.equal(restate("Cebu weather\u0000\u001b[31m now?"), "Cebu weather [31m now");
+
+  // Refused rather than echoed: too short to be a question, and long enough to
+  // be someone using the miner as a mirror.
+  assert.equal(restate("hi"), null);
+  assert.equal(restate("x".repeat(200)), null);
+  assert.equal(restate(undefined), null);
+  assert.equal(restate(null), null);
+
+  // With no question the summary still opens by naming what it answers about,
+  // and says the place once rather than twice.
+  const noQ = summarise({
+    lat: 10.32, lon: 123.89, hours: 6, temp_c: 27.1, wind_kmh: 11.4, gust_kmh: 29.9,
+    precip_mm: 0, risk: 0.332, valid_at: "2026-08-27T11:00Z", condition: "Overcast",
+    temp_min_c: 26.2, temp_max_c: 32.4,
+  });
+  assert.ok(noQ.startsWith("The weather forecast for 10.32, 123.89 over the next 6 hours is "));
+  assert.equal(noQ.match(/10\.32, 123\.89/g).length, 1, `the point is named once: ${noQ}`);
+
+  // With one, it leads with that question and still carries every scalar.
+  const asked = summarise({
+    lat: 10.32, lon: 123.89, hours: 6, question: "Is there a storm risk at 10.32, 123.89?",
+    temp_c: 27.1, wind_kmh: 11.4, gust_kmh: 29.9, precip_mm: 0, risk: 0.332,
+    valid_at: "2026-08-27T11:00Z", condition: "Overcast", temp_min_c: 26.2, temp_max_c: 32.4,
+  });
+  assert.ok(asked.startsWith("Is there a storm risk at 10.32, 123.89: "), asked);
+  for (const needle of ["27.1", "11.4", "29.9", "0.0", "0.332", "2026-08-27T11:00Z", "Overcast"]) {
+    assert.ok(asked.includes(needle), `restating the question must not drop ${needle}: ${asked}`);
+  }
+}
+console.log("the answer opens with the question that was asked, and drops nothing");

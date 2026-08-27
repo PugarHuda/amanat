@@ -220,7 +220,7 @@ export const server = createServer(async (req, res) => {
       const hours = rawHours !== undefined ? Number(rawHours)
         : question !== undefined ? hoursIn(question)
         : 0;
-      return send(res, 200, await forecast({ lat, lon, hours, place }));
+      return send(res, 200, await forecast({ lat, lon, hours, place, question }));
     }
 
     // The storm board, as the scheduled agent last published it.
