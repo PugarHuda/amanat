@@ -43,6 +43,15 @@ const pct = (n) => (n === null ? "     —" : n.toFixed(4).padStart(6));
  * 0.9898: picking targets by the displayed score sends you at the strongest
  * incumbent on the board believing it is the weakest. Four of our own
  * registrations were spent that way.
+ *
+ * ponytail: `bar` is a lagging proxy, not a prediction, and five registrations
+ * on 27 August proved how lagging. Sent half an hour after this survey ran, they
+ * were measured against bars of 0.4175, 0.4851, 0.5042, 0.5909 and 0.9920 where
+ * this had reported 0.5459, 0.4851, 0.4989, 0.3344 and 0.4935. IP_GEOLOCATION
+ * doubled inside thirty minutes; our 0.6677 there would have won comfortably
+ * against the figure this printed. The bar is recomputed at evaluation and is
+ * not knowable beforehand — which is finding 3 in docs/bug-report.md, not a
+ * defect here. Use this to rank targets, never to predict a verdict.
  */
 async function champions() {
   const res = await fetch(`${NODE}/api/wasm`);
@@ -171,11 +180,14 @@ async function main() {
   }
 
   const targets = rows.filter((r) => r.champion?.bar != null && r.champion.bar < margin);
-  console.log(`\n${targets.length} intent(s) whose measured bar is under ${margin}:`);
+  console.log(`\n${targets.length} intent(s) whose last measured bar was under ${margin}:`);
   console.log(`  ${targets.map((r) => `${r.intent} ${r.champion.bar.toFixed(4)}`).join(", ") || "none"}`);
   console.log(`\nThat is the separation gate only. A registration must also match the`);
   console.log(`champion's ordering on fixtures and agree with its ranking of real answers`);
   console.log(`at 0.60 or better — three gates, each able to reject on its own.`);
+  console.log(`\nAnd the bar is a last reading, not a forecast: it is recomputed when your`);
+  console.log(`registration is evaluated. On 27 August one of these moved from 0.4935 to`);
+  console.log(`0.9920 inside half an hour. Rank targets with it; do not bet on it.`);
 
   if (has(process.argv, "--json")) {
     const read_at = new Date().toISOString();

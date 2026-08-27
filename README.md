@@ -443,18 +443,33 @@ agreement 0.6868. Four earlier slots were held before the 23 August evaluator
 change superseded them. Eight profiles, every one at 37 of 38 ordering wins with
 14 of 14 attacks held.
 
-`npm run survey` is how that slot was found. Targets picked off the published
-`eval_score` are picked off a frozen number — `WEATHER_FORECAST` displays 0.5302
-and measures 0.9898 — and four of our registrations went there before we read
-the entries instead of the summary.
+That slot came out of `npm run survey`, which reads what the board does not
+show. The published `eval_score` is the margin a champion recorded on the day it
+won, frozen — `WEATHER_FORECAST` displays 0.5302 and measures 0.9898, and four
+of our registrations went there before we read the entries instead of the
+summary.
 
-The registration sent alongside it is the more useful result. On `GAS_PRICE`,
-registration 1250 beat the incumbent on separation (0.6446 against 0.4851) and
-matched it on ordering (14 of 14), and was refused for agreeing with its ranking
-of real answers at only 0.1288. `GAS_PRICE`'s best live miner scores 0.0054, so
-the ranking a challenger must reproduce is one that is not working. That is
-[finding 2](docs/bug-report.md#three-gates-and-the-one-that-makes-the-networks-real-problem-unfixable),
-demonstrated the same day by two registrations a minute apart.
+The five sent on 27 August are the more useful result, because only one of them
+was decided by the module:
+
+| Reg | Intent | Bar when read | Bar when evaluated | Our margin | Result |
+|---|---|---|---|---|---|
+| 1253 | `GAME_RESULT` | 0.5459 | 0.4175 | 0.7008 | **active** |
+| 1250 | `GAS_PRICE` | 0.4851 | 0.4851 | 0.6446 | rejected — agreement 0.1288 |
+| 1251 | `TVL_LOOKUP` | 0.4989 | 0.5042 | 0.4885 | rejected — separation |
+| 1249 | `ACADEMIC_SEARCH` | 0.3344 | 0.5909 | 0.4707 | rejected — separation |
+| 1252 | `IP_GEOLOCATION` | 0.4935 | **0.9920** | 0.6677 | rejected — separation |
+
+`IP_GEOLOCATION` beat the bar the API reported half an hour earlier and lost to
+the one it was held to, which had doubled in between. `GAS_PRICE` beat the
+incumbent on separation and matched it on ordering, and was refused for ranking
+real answers differently — on an intent whose best live miner scores 0.0054.
+
+So the survey ranks targets and cannot predict verdicts, and says so. Both
+facts are findings
+[3](docs/bug-report.md#the-bar-moves-between-registrations-and-cannot-be-read-before-you-spend-one)
+and [2](docs/bug-report.md#three-gates-and-the-one-that-makes-the-networks-real-problem-unfixable),
+measured rather than argued.
 
 **Track 3 — application.** Fourteen ERC-8183 jobs have ever been created on this
 network. **Eight of them are ours** — jobs 7 through 14, across two contracts.

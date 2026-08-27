@@ -263,3 +263,61 @@ test.describe("the board can go stale, and must say so @ui", () => {
     await expect(page.locator("#plotstamp")).toHaveText("no board published");
   });
 });
+
+test.describe("the scoring board says which number is which @ui", () => {
+  // Two intents, chosen to exercise the two things the table exists to show:
+  // a published score that no longer describes the incumbent, and a live score
+  // too small to survive fixed-point rounding.
+  const SURVEY = {
+    read_at: "2026-08-27T04:29:33.141Z",
+    node: "https://devnode.telegraphprotocol.com",
+    registrations: 1180,
+    held: [["0xaaa", 43], ["0x39d2bae5", 1]],
+    rows: [
+      {
+        intent: "CRYPTO_PRICE",
+        champion: { eval: 0.9598, bar: 0.6729, attempts: 56, registration: 222, author: "0xaaa" },
+        live: { scored: 9, nonzero: 7, best: 1.37e-8 },
+      },
+      {
+        intent: "GAME_RESULT",
+        champion: { eval: 0.7008, bar: 0.7008, attempts: 5, registration: 1253, author: "0x39d2bae5" },
+        live: { scored: 2, nonzero: 2, best: 0.016917 },
+      },
+    ],
+  };
+
+  test("a live score below a ten-thousandth keeps its magnitude", async ({ page }) => {
+    await page.route("**/api/survey", (route) => route.fulfill({ status: 200, json: SURVEY }));
+    await page.goto(BASE);
+
+    // 1.37e-8 rendered as a fixed-point number is "0.0000", which reads as
+    // "roughly zero" when the point is that it is eight orders below the prose
+    // intents. The exponent is the finding.
+    const row = page.locator("#surveybody tr", { hasText: "CRYPTO_PRICE" });
+    await expect(row).toContainText(/e-8/);
+  });
+
+  test("a published score that no longer describes the champion is marked", async ({ page }) => {
+    await page.route("**/api/survey", (route) => route.fulfill({ status: 200, json: SURVEY }));
+    await page.goto(BASE);
+
+    // CRYPTO_PRICE is off by 0.29 and must be flagged; GAME_RESULT's two
+    // numbers agree exactly and must not be, or the mark means nothing.
+    const off = page.locator("#surveybody tr", { hasText: "CRYPTO_PRICE" }).locator("td[style*='trigger']");
+    await expect(off).toHaveCount(1);
+
+    const fine = page.locator("#surveybody tr", { hasText: "GAME_RESULT" }).locator("td[style*='trigger']");
+    await expect(fine).toHaveCount(0);
+  });
+
+  test("no survey published draws nothing and says why", async ({ page }) => {
+    await page.route("**/api/survey", (route) =>
+      route.fulfill({ status: 503, json: { error: "the survey has not been published yet" } }));
+
+    await page.goto(BASE);
+    // An empty table reads as "the network scores nothing", which is a claim
+    // this page must not make by accident.
+    await expect(page.locator("#surveybody")).toContainText("not been published");
+  });
+});

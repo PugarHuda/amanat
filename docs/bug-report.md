@@ -449,6 +449,30 @@ the bar rose 26% between them, with the slot never changing hands. On
 `TEXT_AUTHENTICITY_CHECK` it sat at 0.4045 for three consecutive attempts and
 then jumped to 0.6586 for the fourth.
 
+### Five sent together, 27 August
+
+The clearest measurement of this. Five registrations went out within a minute of
+each other, half an hour after reading every bar from `/api/wasm`. Nothing about
+the submissions changed in between; only the bars did.
+
+| Reg | Intent | Bar when read | Bar when evaluated | Moved | Our margin | Result |
+|---|---|---|---|---|---|---|
+| 1253 | `GAME_RESULT` | 0.5459 | 0.4175 | −0.128 | 0.7008 | **active** |
+| 1250 | `GAS_PRICE` | 0.4851 | 0.4851 | 0 | 0.6446 | rejected, agreement |
+| 1251 | `TVL_LOOKUP` | 0.4989 | 0.5042 | +0.005 | 0.4885 | rejected, separation |
+| 1249 | `ACADEMIC_SEARCH` | 0.3344 | 0.5909 | **+0.257** | 0.4707 | rejected, separation |
+| 1252 | `IP_GEOLOCATION` | 0.4935 | **0.9920** | **+0.499** | 0.6677 | rejected, separation |
+
+`IP_GEOLOCATION` is the one to look at. The bar doubled inside thirty minutes.
+Our module scored 0.6677 there — a comfortable win against the 0.4935 the API
+had just reported, a heavy loss against the 0.9920 it was actually held to.
+`ACADEMIC_SEARCH` rose 77% over the same half hour.
+
+Two of the five were therefore decided by the gap between when a builder reads
+the board and when the node evaluates, and there is no way to close it: the
+figure is recomputed at evaluation and never exposed before. A registration is
+consequently a bet on a number the protocol already knows and does not publish.
+
 A submission is therefore accepted or refused partly on when it was sent, and
 nothing in the API exposes the current bar before a registration is spent. The
 number that would make registration a decision rather than a lottery is already
