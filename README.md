@@ -437,10 +437,24 @@ over an absence. Three epochs earlier the same intents produced real spread and
 this miner led on merit at 0.009192. Both facts are in
 [`docs/bug-report.md`](docs/bug-report.md).
 
-**Track 2 — scoring modules.** Four champion slots held before the 23 August
-evaluator change superseded them; nine registrations since, all recorded on
-chain with their reasons. Eight profiles, every one at 37 of 38 ordering wins
-with 14 of 14 attacks held.
+**Track 2 — scoring modules.** **Champion on `GAME_RESULT`**, registration 1253,
+active since 27 August: margin 0.7008 against a bar of 0.4175, ordering 15 of 15,
+agreement 0.6868. Four earlier slots were held before the 23 August evaluator
+change superseded them. Eight profiles, every one at 37 of 38 ordering wins with
+14 of 14 attacks held.
+
+`npm run survey` is how that slot was found. Targets picked off the published
+`eval_score` are picked off a frozen number — `WEATHER_FORECAST` displays 0.5302
+and measures 0.9898 — and four of our registrations went there before we read
+the entries instead of the summary.
+
+The registration sent alongside it is the more useful result. On `GAS_PRICE`,
+registration 1250 beat the incumbent on separation (0.6446 against 0.4851) and
+matched it on ordering (14 of 14), and was refused for agreeing with its ranking
+of real answers at only 0.1288. `GAS_PRICE`'s best live miner scores 0.0054, so
+the ranking a challenger must reproduce is one that is not working. That is
+[finding 2](docs/bug-report.md#three-gates-and-the-one-that-makes-the-networks-real-problem-unfixable),
+demonstrated the same day by two registrations a minute apart.
 
 **Track 3 — application.** Fourteen ERC-8183 jobs have ever been created on this
 network. **Eight of them are ours** — jobs 7 through 14, across two contracts.

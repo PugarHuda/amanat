@@ -494,6 +494,25 @@ agreeing with the module that is scoring it wrongly.** One address holds 42 of
 45 champion slots out of 1153 registrations, which is what a rule like that
 produces given time.
 
+### The gate demonstrated, 27 August
+
+Five registrations were sent within one minute of each other, from one address,
+to test exactly this. Two had been evaluated an hour later.
+
+| Reg | Intent | Our margin | Bar | Ordering | Agreement | Result |
+|---|---|---|---|---|---|---|
+| 1253 | `GAME_RESULT` | 0.7008 | 0.4175 | 15/15 | **0.6868** | **active** |
+| 1250 | `GAS_PRICE` | 0.6446 | 0.4851 | 14/14 | **0.1288** | rejected |
+
+Both beat the incumbent on separation. Both matched it on ordering, case for
+case. The only thing that separated them was whether they ranked real miner
+answers the way the incumbent already does, and that alone decided the slot.
+
+`GAS_PRICE` is an intent whose best live miner scores **0.0054**. The module
+holding it is not ranking those answers usefully — there is nothing there to
+agree with — and a challenger was refused for not reproducing that ranking.
+
+
 None of this needs new machinery to fix. Publish `champion_margin` alongside
 `eval_score`, and exempt a challenger from the agreement gate on any intent
 where the incumbent's live scores are all below some floor — an intent nobody
