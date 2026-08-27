@@ -64,7 +64,12 @@ test.describe("miner API — happy paths", () => {
     expect(typeof body.condition).toBe("string");
     expect(body.condition.length).toBeGreaterThan(2);
     expect(body.temp_min_c).toBeLessThanOrEqual(body.temp_max_c);
-    expect(body.summary.startsWith(body.valid_at.slice(0, 10))).toBe(true);
+    // The summary opens by restating the question and carries the hour later.
+    // Leading with the date instead scored 0.0086 against the real
+    // WEATHER_FORECAST champion where this scores 0.9960, so the clause order is
+    // load-bearing — see docs/bug-report.md, finding 1.
+    expect(body.summary.startsWith("The weather forecast for ")).toBe(true);
+    expect(body.summary).toContain(body.valid_at);
     expect(body.summary).toContain(body.condition);
     // and the scalars a contract settles on are still all there
     expect(body.summary).toContain(body.risk.toFixed(3));
