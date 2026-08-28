@@ -1,0 +1,23 @@
+# Amanat
+
+> Verified weather and storm-risk readings a contract can act on. A Telegraph Protocol miner, a scoring module, and a parametric cover contract on Base Sepolia.
+
+Every answer is a weather report plus the scalars behind it: temperature, wind, gusts, precipitation, sea state, the nearest named cyclone, and a storm risk in [0,1] with the payout trigger at 0.75. The risk comes with an ensemble band (ECMWF, 51 members) and an Ed25519 attestation over the fields a contract settles on.
+
+## Call it
+
+- POST https://amanat-miner.vercel.app/forecast with `{"question": "Storm risk for Cebu in the next 6 hours?"}` or `{"lat": 10.32, "lon": 123.89, "hours": 6}`
+- GET  https://amanat-miner.vercel.app/api/route?from=Cebu&to=Manila&speed=37 — risk along a route, each leg at the hour the vehicle reaches it
+- GET  https://amanat-miner.vercel.app/api/backtest?lat=10.32&lon=123.89&start=2021-12-15&end=2021-12-18 — would the trigger have fired? Typhoon Rai, Cebu: yes, 1.000 at 13:00 UTC on 16 December
+- Paid, routed by the network: ask the Telegraph Engine for WEATHER_FORECAST, WEATHER_CHECK or STORM_ALERT over x402, $0.01
+
+## Read it
+
+- [OpenAPI](https://amanat-miner.vercel.app/openapi.json): every route and schema
+- [Signing key](https://amanat-miner.vercel.app/.well-known/amanat.json): verify an answer with Node's crypto.verify and nothing else
+- [Source](https://github.com/PugarHuda/amanat): miner, scorer, contract, agent
+- [What broke on the network](https://github.com/PugarHuda/amanat/blob/main/docs/bug-report.md): fourteen measured findings
+
+## Data
+
+Open-Meteo (CC BY 4.0) for weather, marine and ensemble models and the reanalysis archive; GDACS for active tropical cyclones. Storm risk is derived from those readings and is ours.

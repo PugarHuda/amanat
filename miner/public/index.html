@@ -238,6 +238,7 @@ footer a{color:var(--muted)}
       <a href="#route">Check a route</a>
       <a href="#settles">How it settles</a>
       <a href="#ledger">Ledger</a>
+      <a href="#backtest">Backtest</a>
       <a href="#use">Use it</a>
       <a href="https://github.com/PugarHuda/amanat">Source</a>
     </nav>
@@ -420,6 +421,31 @@ footer a{color:var(--muted)}
     </p>
   </section>
 
+  <section class="ledger" id="backtest">
+    <h2>Would it have paid?</h2>
+    <p>
+      The same thresholds, run over what actually happened. Typhoon Rai —
+      Odette in the Philippines — crossed the Visayas on 16 December 2021.
+      These are the board's ports on those four days, hour by hour, from the
+      reanalysis archive: the cover pays where it should and stays quiet where
+      it should not.
+    </p>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>Port</th><th class="m">Peak risk</th><th class="m">Peak gust</th><th>Peak hour (UTC)</th><th class="m">Hours over 0.75</th><th>Outcome</th></tr>
+        </thead>
+        <tbody id="backtestbody">
+          <tr><td colspan="6" class="m" style="color:var(--muted)">reading the archive…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="mono" style="font-size:.78rem;color:var(--muted);margin-top:16px">
+      Any point, any dates: <code>/api/backtest?lat=10.32&amp;lon=123.89&amp;start=2021-12-15&amp;end=2021-12-18</code>
+      · <span id="backteststat">archive: Open-Meteo ERA5</span>
+    </p>
+  </section>
+
   <section class="ledger" id="survey">
     <h2>What the network scores</h2>
     <p>
@@ -591,7 +617,15 @@ function showResult(r) {
       ...(r.cyclone_name
         ? [figure("cyclone", `${r.cyclone_name} · ${r.cyclone_km_now} km · ${r.cyclone_max_wind_kmh} km/h`)]
         : []),
+      ...(r.risk_band
+        ? [figure(`risk band · ${r.risk_band.members} runs`, `${Number(r.risk_band.p10).toFixed(2)}–${Number(r.risk_band.p90).toFixed(2)} · ${Math.round(r.risk_band.breach_probability * 100)}% pay`)]
+        : []),
       figure("valid at", r.valid_at),
+      // The signature, shortened. The full attestation is in the JSON; what a
+      // person needs to see is that there is one and whose key it is.
+      ...(r.attestation
+        ? [figure("signed", `ed25519 · ${String(r.attestation.public_key).slice(-8)}${r.attestation.key_persistent ? "" : " · ephemeral"}`)]
+        : []),
     ]),
   );
 }
@@ -770,6 +804,48 @@ const four = (n) => (n === null || n === undefined ? "—" : Number(n).toFixed(4
 // only interesting thing about it — that CRYPTO_PRICE tops out at 1.4e-8.
 const small = (n) =>
   n === null || n === undefined ? "—" : n > 0 && n < 1e-4 ? Number(n).toExponential(1) : Number(n).toFixed(4);
+
+// The board's ports during Typhoon Rai. Each is one archive read, cached a
+// day server-side, so the section costs the archive nothing after first load.
+const RAI = { start: "2021-12-15", end: "2021-12-18" };
+const PORTS = [
+  ["Cebu", 10.32, 123.89], ["Surigao", 9.79, 125.49], ["Manila", 14.60, 120.98],
+  ["Hong Kong", 22.30, 114.17], ["Singapore", 1.29, 103.85],
+];
+Promise.all(PORTS.map(([name, lat, lon]) =>
+  fetch(`/api/backtest?lat=${lat}&lon=${lon}&start=${RAI.start}&end=${RAI.end}`)
+    .then((r) => { if (!r.ok) throw new Error("archive unavailable"); return r.json(); })
+    .then((b) => ({ name, ...b }))
+    .catch(() => ({ name, error: true })),
+)).then((rows) => {
+  const body = $("backtestbody");
+  body.replaceChildren();
+  for (const b of rows) {
+    if (b.error || !b.peak) {
+      body.appendChild(el("tr", {}, [
+        el("td", { className: "m", text: b.name }),
+        el("td", { className: "m", text: "could not read the archive", attrs: { colspan: 5, style: "color:var(--trigger)" } }),
+      ]));
+      continue;
+    }
+    body.appendChild(el("tr", {}, [
+      el("td", { className: "m", text: b.name }),
+      el("td", { className: "m", text: Number(b.peak.risk).toFixed(3) }),
+      el("td", { className: "m", text: `${Number(b.peak.gust_kmh).toFixed(0)} km/h` }),
+      el("td", { className: "m", text: String(b.peak.at).slice(0, 16).replace("T", " ") }),
+      el("td", { className: "m", text: b.hours_above_trigger }),
+      el("td", {}, [el("span", { className: b.breach ? "tag" : "tag declined", text: b.breach ? "pays" : "no claim" })]),
+    ]));
+  }
+  const paid = rows.filter((b) => b.breach).map((b) => b.name);
+  $("backteststat").textContent = paid.length
+    ? `pays at ${paid.join(" and ")} · archive: Open-Meteo ERA5`
+    : "no port breached · archive: Open-Meteo ERA5";
+}).catch(() => {
+  $("backtestbody").replaceChildren(el("tr", {}, [
+    el("td", { className: "m", text: "could not read the archive", attrs: { colspan: 6, style: "color:var(--trigger)" } }),
+  ]));
+});
 
 fetch("/api/survey")
   .then((r) => { if (!r.ok) throw new Error("survey unavailable"); return r.json(); })

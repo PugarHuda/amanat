@@ -479,6 +479,29 @@ so in place rather than quietly. No figure was added or removed and every
 scalar a contract settles on is untouched. Both halves are written up in
 [finding 1](docs/bug-report.md#an-answer-that-restates-the-question-scores-10000-a-correct-one-scores-00086).
 
+**What an answer carries now, beyond the reading.** Three things a parametric
+cover needs and the network's own answers do not have:
+
+- **How sure it is.** The same risk score run across ECMWF's 51 ensemble
+  members at the same hour: `risk_band` gives p10, p50, p90, the worst run,
+  and the share of runs over the trigger — the probability the cover pays, as
+  the model sees it. In the sentence too: "across 51 ensemble runs it ranges
+  0.32 to 0.43, 0% of them over the trigger".
+- **Whether it would have paid.** `GET /api/backtest?lat&lon&start&end` runs
+  the live thresholds over the reanalysis archive. Typhoon Rai, 16 December
+  2021: Cebu peaks at **1.000** with 170 km/h gusts and thirteen hours over the
+  trigger, Surigao at 1.000; Manila 0.568, Hong Kong 0.576, Singapore 0.418 —
+  the cover pays where the storm went and nowhere else. On the page as "Would
+  it have paid?", read live from the archive.
+- **Who said it.** Every answer carries an Ed25519 `attestation` over the
+  fields a contract settles on — a canonical payload, its SHA-256, a signature,
+  the public key. Verifying takes Node's `crypto.verify` and nothing else; the
+  key is at `/.well-known/amanat.json`. The network's own `signal_hash`
+  cannot be re-derived from outside (finding 10); this one can.
+
+And for agents that read before they call: `/openapi.json` (OpenAPI 3.1,
+every route and schema) and `/llms.txt`.
+
 **Track 2 — scoring modules.** We took the `GAME_RESULT` champion slot on
 27 August and **held it for about forty minutes.**
 

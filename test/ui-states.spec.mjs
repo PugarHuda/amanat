@@ -356,3 +356,54 @@ test.describe("the reading shows the sea and the storm when there are any @ui", 
     await expect(figures).not.toContainText("cyclone");
   });
 });
+
+test.describe("the backtest says where the cover would have paid @ui", () => {
+  const run = (breach) => ({
+    lat: 0, lon: 0, start: "2021-12-15", end: "2021-12-18", trigger: 0.75, hours: 96,
+    peak: { at: breach ? "2021-12-16T13:00Z" : "2021-12-17T07:00Z", risk: breach ? 1 : 0.568, wind_kmh: breach ? 90.7 : 17.7, gust_kmh: breach ? 170.6 : 51.1, precip_mm: 0 },
+    breach, hours_above_trigger: breach ? 13 : 0, series: [], source: "test",
+  });
+
+  test("a port the storm crossed pays, one it missed does not", async ({ page }) => {
+    await page.route("**/api/backtest*", (route) => {
+      const u = new URL(route.request().url());
+      return route.fulfill({ status: 200, json: run(u.searchParams.get("lat") === "10.32") });
+    });
+    await page.goto(BASE);
+    const rows = page.locator("#backtestbody tr");
+    await expect(rows).toHaveCount(5);
+    const cebu = rows.filter({ hasText: "Cebu" });
+    await expect(cebu).toContainText("1.000");
+    await expect(cebu).toContainText("171 km/h");
+    await expect(cebu.locator(".tag")).toHaveText("pays");
+    const manila = rows.filter({ hasText: "Manila" });
+    await expect(manila.locator(".tag")).toHaveText("no claim");
+    await expect(page.locator("#backteststat")).toContainText("pays at Cebu");
+  });
+
+  test("an archive that cannot be read says so per port", async ({ page }) => {
+    await page.route("**/api/backtest*", (route) => route.fulfill({ status: 502, json: { error: "archive down" } }));
+    await page.goto(BASE);
+    await expect(page.locator("#backtestbody")).toContainText("could not read the archive");
+    await expect(page.locator("#backtestbody tr")).toHaveCount(5);
+  });
+
+  test("the reading shows its band and its signature", async ({ page }) => {
+    await page.route("**/forecast*", (route) => route.fulfill({ status: 200, json: {
+      summary: "Storm risk at 10.32, 123.89: 27.1 °C, wind 11.4 km/h, valid at 2026-08-28T09:00Z. Storm risk is low (0.332); across 51 ensemble runs it ranges 0.30 to 0.45, 2% of them over the trigger.",
+      lat: 10.32, lon: 123.89, hours: 6, temp_c: 27.1, wind_kmh: 11.4, gust_kmh: 29.9, precip_mm: 0, condition: "Overcast",
+      risk: 0.332, breach: false, valid_at: "2026-08-28T09:00Z", wave_m: null, cyclone_name: null,
+      risk_band: { model: "ecmwf_ifs025", members: 51, p10: 0.3, p50: 0.36, p90: 0.45, max: 0.8, breach_probability: 0.02 },
+      attestation: { algorithm: "ed25519", public_key: "MCowBQYDK2VwAyEAabcdefghijklmnopqrstuvwxyz0123456789ABCDEFG=", key_persistent: true, canonical: "{}", signature: "x", sha256: "y", signed_fields: [] },
+    } }));
+    await page.goto(BASE);
+    await page.fill("#ask", "10.32, 123.89");
+    await page.click("#go");
+    const figures = page.locator("#result .figures");
+    await expect(figures).toContainText("51 runs");
+    await expect(figures).toContainText("0.30–0.45");
+    await expect(figures).toContainText("2% pay");
+    await expect(figures).toContainText("ed25519");
+    await expect(figures).not.toContainText("ephemeral");
+  });
+});

@@ -107,6 +107,25 @@ twelve hours by `agent/board.mjs`. Each leg carries the signal hash of the paid
 call behind it, so reading the board costs nothing while the readings in it were
 still bought and verified. The gauge on the landing page is drawn from this.
 
+## Verifying an answer
+
+Every answer is signed over the fields a contract settles on. Check it with
+Node and nothing else:
+
+```js
+import { createPublicKey, verify } from "node:crypto";
+const a = answer.attestation;
+const ok = verify(null, Buffer.from(a.canonical),
+  createPublicKey({ key: Buffer.from(a.public_key, "base64"), format: "der", type: "spki" }),
+  Buffer.from(a.signature, "base64"));
+// and that the canonical payload is what you were given:
+const signed = JSON.parse(a.canonical);   // { lat, lon, hours, valid_at, temp_c, …, risk, breach }
+```
+
+`a.key_persistent` is false when the instance generated its key at start —
+set `AMANAT_SIGNING_KEY` on the host to pin one. The current public key is at
+`/.well-known/amanat.json`.
+
 ## 2. From an agent, over MCP
 
 The [Telegraph MCP server](https://github.com/telegraphprotocol/telegraph-mcp)

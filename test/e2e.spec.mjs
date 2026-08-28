@@ -100,6 +100,81 @@ test.describe("miner API — happy paths", () => {
     }
   });
 
+  test("says how sure it is, and signs what a contract would settle on", async ({ request }) => {
+    const body = await (await request.post(`${BASE}/forecast`, { data: { ...CEBU, hours: 6 } })).json();
+
+    // The band is the same score across ECMWF's members. It brackets a real
+    // distribution or it is null; it is never a made-up interval.
+    if (body.risk_band !== null) {
+      const b = body.risk_band;
+      expect(b.members).toBeGreaterThanOrEqual(5);
+      expect(b.p10).toBeLessThanOrEqual(b.p50);
+      expect(b.p50).toBeLessThanOrEqual(b.p90);
+      expect(b.p90).toBeLessThanOrEqual(b.max);
+      expect(b.breach_probability).toBeGreaterThanOrEqual(0);
+      expect(b.breach_probability).toBeLessThanOrEqual(1);
+      expect(body.summary).toContain(`across ${b.members} ensemble runs`);
+    }
+
+    // The attestation verifies with Node's crypto and nothing of ours, and the
+    // canonical payload carries the numbers the JSON carries.
+    const { createPublicKey, verify } = await import("node:crypto");
+    const a = body.attestation;
+    expect(a.algorithm).toBe("ed25519");
+    const pub = createPublicKey({ key: Buffer.from(a.public_key, "base64"), format: "der", type: "spki" });
+    expect(verify(null, Buffer.from(a.canonical), pub, Buffer.from(a.signature, "base64"))).toBe(true);
+    const signed = JSON.parse(a.canonical);
+    expect(signed.risk).toBe(body.risk);
+    expect(signed.breach).toBe(body.breach);
+    expect(signed.wave_cm).toBe(body.wave_cm);
+  });
+
+  test("backtests the trigger against Typhoon Rai over Cebu", async ({ request }) => {
+    // 16 December 2021: gusts over 170 km/h at Cebu. If the thresholds do not
+    // fire on this, they do not fire on anything.
+    const res = await request.get(`${BASE}/api/backtest?lat=10.32&lon=123.89&start=2021-12-15&end=2021-12-18`);
+    expect(res.status()).toBe(200);
+    const b = await res.json();
+    expect(b.hours).toBeGreaterThan(80);
+    expect(b.breach).toBe(true);
+    expect(b.peak.risk).toBe(1);
+    expect(b.peak.at.startsWith("2021-12-16")).toBe(true);
+    expect(b.peak.gust_kmh).toBeGreaterThan(150);
+    expect(b.hours_above_trigger).toBeGreaterThan(5);
+
+    // And stays quiet where the storm did not go: Singapore the same days.
+    const quiet = await (await request.get(`${BASE}/api/backtest?lat=1.29&lon=103.85&start=2021-12-15&end=2021-12-18`)).json();
+    expect(quiet.breach).toBe(false);
+    expect(quiet.peak.risk).toBeLessThan(0.75);
+  });
+
+  test("refuses a backtest the archive cannot answer", async ({ request }) => {
+    const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+    const r1 = await request.get(`${BASE}/api/backtest?lat=10.32&lon=123.89&start=${yesterday}&end=${yesterday}`);
+    expect(r1.status()).toBe(400);
+    expect((await r1.json()).error).toMatch(/six days/);
+    const r2 = await request.get(`${BASE}/api/backtest?lat=10.32&lon=123.89&start=2021-01-01&end=2021-03-01`);
+    expect(r2.status()).toBe(400);
+    expect((await r2.json()).error).toMatch(/at most/);
+    const r3 = await request.get(`${BASE}/api/backtest?start=2021-12-15&end=2021-12-18`);
+    expect(r3.status()).toBe(400);
+  });
+
+  test("describes itself to machines", async ({ request }) => {
+    const spec = await (await request.get(`${BASE}/openapi.json`)).json();
+    expect(spec.openapi).toMatch(/^3\.1/);
+    for (const path of ["/forecast", "/api/route", "/api/backtest", "/health"]) expect(spec.paths).toHaveProperty(path);
+    const llms = await request.get(`${BASE}/llms.txt`);
+    expect(llms.status()).toBe(200);
+    expect(await llms.text()).toContain("# Amanat");
+    const wk = await (await request.get(`${BASE}/.well-known/amanat.json`)).json();
+    expect(wk.signing.algorithm).toBe("ed25519");
+    expect(wk.signing.public_key.length).toBeGreaterThan(40);
+    // The key the well-known publishes is the key the answers are signed with.
+    const body = await (await request.post(`${BASE}/forecast`, { data: { ...CEBU, hours: 1 } })).json();
+    if (wk.signing.persistent) expect(body.attestation.public_key).toBe(wk.signing.public_key);
+  });
+
   test("reports health as itself", async ({ request }) => {
     const res = await request.get(`${BASE}/health`);
     expect(res.status()).toBe(200);

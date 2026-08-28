@@ -8,6 +8,8 @@
 
 import { ttlCache } from "./cache.mjs";
 import { activeCyclones, nearest, cycloneRisk } from "./cyclone.mjs";
+import { ensembleSeries, band } from "./ensemble.mjs";
+import { attest } from "./sign.mjs";
 
 const OPEN_METEO = "https://api.open-meteo.com/v1/forecast";
 
@@ -136,7 +138,7 @@ export function restate(question) {
 }
 
 export function summarise({ lat, lon, place, hours, question, temp_c, wind_kmh, precip_mm, gust_kmh, risk, valid_at, condition: cond, temp_min_c, temp_max_c, wave_m, cyclone,
-  humidity_pct, feels_like_c, wind_dir, cloud_pct, precip_prob_pct, days }) {
+  humidity_pct, feels_like_c, wind_dir, cloud_pct, precip_prob_pct, days, risk_band }) {
   const level = risk >= 0.75 ? "severe" : risk >= 0.45 ? "elevated" : "low";
 
   const day = String(valid_at).slice(0, 10);
@@ -221,7 +223,10 @@ export function summarise({ lat, lon, place, hours, question, temp_c, wind_kmh, 
     (cyclone
       ? `Tropical cyclone ${cyclone.name} (${cyclone.max_wind_kmh ?? "?"} km/h, ${cyclone.alert}) is ${cyclone.distance_km} km away now. `
       : "") +
-    `Storm risk is ${level} (${risk.toFixed(3)}).`
+    `Storm risk is ${level} (${risk.toFixed(3)})` +
+    (risk_band
+      ? `; across ${risk_band.members} ensemble runs it ranges ${risk_band.p10.toFixed(2)} to ${risk_band.p90.toFixed(2)}, ${Math.round(risk_band.breach_probability * 100)}% of them over the trigger.`
+      : ".")
   );
 }
 
@@ -306,27 +311,34 @@ export async function forecast({ lat, lon, hours = 0, place, question }) {
   const precip_prob_pct = d.hourly.precipitation_probability?.[i] ?? null;
   const dew_point_c = d.hourly.dew_point_2m?.[i] ?? null;
 
-  // Sea state for the same hour. Its own cache because the marine model is a
-  // separate upstream with its own failure modes, and a wave reading that
-  // cannot be fetched must not take the weather reading down with it — the
-  // response says `wave_m: null` and the risk is computed without it.
-  const wave_m = await SEA.through(key, async () => {
+  // Sea state, named storms and the ensemble are three more upstreams, each
+  // with its own cache and its own failure: one that cannot be read reports
+  // null and the risk is computed without it, never an error on the forecast.
+  // They are fetched together, not in turn — a cold point took 5.7 s when
+  // each waited for the last, and the three do not depend on each other.
+  const [wave_m, cyclone, ens] = await Promise.all([
+    SEA.through(key, async () => {
     const url = `${MARINE}?latitude=${lat}&longitude=${lon}&hourly=wave_height&forecast_days=8&timezone=UTC`;
     const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
     if (!res.ok) throw new Error(`open-meteo marine ${res.status}`);
     const m = await res.json();
     return { time: m.hourly?.time ?? [], wave: m.hourly?.wave_height ?? [] };
-  }).then((sea) => {
-    const j = sea.time.indexOf(at);
-    const v = j >= 0 ? sea.wave[j] : null;
-    return Number.isFinite(v) ? v : null;
-  }).catch(() => null);
-
-  // Any named storm within reach, from where it is now. Same rule: a feed that
-  // is down is reported as no cyclone found, never as an error on the forecast.
-  const cyclone = await activeCyclones().then((list) => nearest(list, { lat, lon })).catch(() => null);
+    }).then((sea) => {
+      const j = sea.time.indexOf(at);
+      const v = j >= 0 ? sea.wave[j] : null;
+      return Number.isFinite(v) ? v : null;
+    }).catch(() => null),
+    // Any named storm within reach, from where it is now.
+    activeCyclones().then((list) => nearest(list, { lat, lon })).catch(() => null),
+    // The member series; scored below once the sea and the storm are known.
+    ensembleSeries({ lat, lon }).catch(() => null),
+  ]);
 
   const risk = riskScore({ wind_kmh, gust_kmh, precip_mm, wave_m, cyclone: cycloneRisk(cyclone) });
+
+  // The same score across the ensemble, so the answer says how sure it is.
+  const ei = ens?.time?.indexOf(at) ?? -1;
+  const risk_band = ens && ei >= 0 ? band(ens, ei, { wave_m, cyclone: cycloneRisk(cyclone) }) : null;
   const code = d.hourly.weather_code?.[i];
   const cond = condition(code);
 
@@ -352,12 +364,13 @@ export async function forecast({ lat, lon, hours = 0, place, question }) {
     });
   }
 
-  return {
+  const answer = {
     summary: summarise({
       lat, lon, place, hours, question, temp_c, wind_kmh, precip_mm, gust_kmh, risk,
       valid_at: at + "Z", condition: cond, temp_min_c, temp_max_c, wave_m, cyclone,
-      humidity_pct, feels_like_c, wind_dir: compass(wind_dir_deg), cloud_pct, precip_prob_pct, days,
+      humidity_pct, feels_like_c, wind_dir: compass(wind_dir_deg), cloud_pct, precip_prob_pct, days, risk_band,
     }),
+    risk_band,
     humidity_pct, feels_like_c, dew_point_c,
     wind_dir_deg, wind_dir: compass(wind_dir_deg),
     cloud_pct, precip_prob_pct,
@@ -392,4 +405,8 @@ export async function forecast({ lat, lon, hours = 0, place, question }) {
     source: "open-meteo",
     attribution: ATTRIBUTION,
   };
+  // Signed last, over the fields a contract settles on, so the signature
+  // covers what was actually returned.
+  answer.attestation = attest(answer);
+  return answer;
 }

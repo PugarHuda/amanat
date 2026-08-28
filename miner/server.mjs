@@ -6,6 +6,8 @@ import { pathToFileURL, fileURLToPath } from "node:url";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { forecast, hoursIn, seriesCacheSize, seaCacheSize } from "./lib/forecast.mjs";
+import { backtest } from "./lib/backtest.mjs";
+import { publicKey, keyIsPersistent, SIGNED_FIELDS } from "./lib/sign.mjs";
 import { locate, placeCacheSize } from "./lib/geocode.mjs";
 import { assessRoute } from "./lib/route.mjs";
 import { bucket, ttlCache } from "./lib/cache.mjs";
@@ -88,6 +90,8 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 // One file, read once. The page is static and the server has no build step.
 const PAGE = readFileSync(join(HERE, "public/index.html"));
 const LOGO = readFileSync(join(HERE, "public/logo.svg"));
+const OPENAPI = readFileSync(join(HERE, "public/openapi.json"));
+const LLMS = readFileSync(join(HERE, "public/llms.txt"));
 
 const PORT = Number(process.env.PORT ?? 8787);
 
@@ -151,6 +155,10 @@ export const server = createServer(async (req, res) => {
           route_requests_available: Math.floor(routeBudget.available),
           cached_points: seriesCacheSize(),
           cached_sea_points: seaCacheSize(),
+          // An ephemeral key means each serverless instance signs with its
+          // own; set AMANAT_SIGNING_KEY to make the attestation checkable
+          // across restarts. Reported rather than hidden.
+          signing_key_persistent: keyIsPersistent,
           cached_places: placeCacheSize(),
         },
       });
@@ -264,6 +272,36 @@ export const server = createServer(async (req, res) => {
     // scorer sees, because the docs and the tournament do not agree.
     if (pathname === "/api/asked") return send(res, 200, { count: ASKED.length, max: ASKED_MAX, asked: ASKED });
 
+    // Would the trigger have fired? The live thresholds over the archive.
+    if (pathname === "/api/backtest") {
+      const num = (k) => { const v = searchParams.get(k); return v === null || v === "" ? NaN : Number(v); };
+      const lat = num("lat"), lon = num("lon");
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new RangeError("lat and lon are required");
+      const out = await backtest({ lat, lon, start: searchParams.get("start"), end: searchParams.get("end") });
+      res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "public, max-age=86400" });
+      return res.end(JSON.stringify(out));
+    }
+
+    // Machine-readable descriptions of this miner, for agents that read them.
+    if (pathname === "/openapi.json") {
+      res.writeHead(200, { "Content-Type": "application/json", "Content-Length": OPENAPI.length, "Cache-Control": "public, max-age=3600" });
+      return res.end(OPENAPI);
+    }
+    if (pathname === "/llms.txt") {
+      res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8", "Content-Length": LLMS.length, "Cache-Control": "public, max-age=3600" });
+      return res.end(LLMS);
+    }
+    if (pathname === "/.well-known/amanat.json") {
+      return send(res, 200, {
+        name: "amanat-weather-risk",
+        signing: { algorithm: "ed25519", public_key: publicKey, persistent: keyIsPersistent, signed_fields: SIGNED_FIELDS,
+          verify: "Node: crypto.verify(null, Buffer.from(attestation.canonical), crypto.createPublicKey({ key: Buffer.from(public_key, 'base64'), format: 'der', type: 'spki' }), Buffer.from(attestation.signature, 'base64'))" },
+        openapi: `${SITE}/openapi.json`,
+        llms: `${SITE}/llms.txt`,
+        source: "https://github.com/PugarHuda/amanat",
+      });
+    }
+
     // The storm board, as the scheduled agent last published it.
     //
     // Fetched from the branch rather than read off disk: the file is written by
@@ -332,7 +370,7 @@ export const server = createServer(async (req, res) => {
       }));
     }
 
-    send(res, 404, { error: "not found", endpoints: ["/forecast", "/api/route", "/api/board", "/api/survey", "/api/asked", "/health"] });
+    send(res, 404, { error: "not found", endpoints: ["/forecast", "/api/route", "/api/backtest", "/api/board", "/api/survey", "/api/asked", "/openapi.json", "/llms.txt", "/health"] });
   } catch (e) {
     // A validation mistake is the caller's; anything else is ours. Both are
     // real HTTP errors so Telegraph does not charge for them or store a signal.

@@ -7,6 +7,9 @@ import { greatCircleKm, waypoints, assessRoute } from "./lib/route.mjs";
 import { ttlCache, bucket } from "./lib/cache.mjs";
 import { drawCard, textWidth } from "./lib/card.mjs";
 import { parse, nearest, cycloneRisk, NEAR_KM } from "./lib/cyclone.mjs";
+import { assess, range } from "./lib/backtest.mjs";
+import { band } from "./lib/ensemble.mjs";
+import { attest, verify, canonical, SIGNED_FIELDS } from "./lib/sign.mjs";
 import { server } from "./server.mjs";
 
 // risk: each driver alone can reach the ceiling, and the worst one wins.
@@ -419,6 +422,64 @@ console.log("the social card is a valid PNG at the promised size");
   assert.ok(Number.isFinite(asked[0].lat) && Number.isFinite(asked[0].lon));
 }
 console.log("what the network asked is on the record");
+
+
+// ── backtest, band and attestation: the shapes, without the network ─────────
+{
+  // Rai over Cebu, reduced to four hours: quiet, the peak, quiet, and one the
+  // archive did not have. The null hour is left out, not read as calm.
+  const hourly = {
+    time: ["2021-12-16T10:00", "2021-12-16T13:00", "2021-12-16T20:00", "2021-12-17T00:00"],
+    wind_speed_10m: [30, 90.7, 20, null],
+    wind_gusts_10m: [55, 170.6, 40, null],
+    precipitation: [2, 12.5, 0, null],
+  };
+  const a = assess(hourly);
+  assert.equal(a.hours, 3);
+  assert.equal(a.peak.at, "2021-12-16T13:00Z");
+  assert.equal(a.peak.risk, 1);
+  assert.equal(a.breach, true);
+  assert.equal(a.hours_above_trigger, 1);
+  assert.equal(assess({ time: [] }).peak, null);
+
+  // A range the archive can answer, and the three it cannot.
+  assert.equal(range("2021-12-15", "2021-12-18").days, 4);
+  assert.throws(() => range("2021-12-18", "2021-12-15"), /before start/);
+  assert.throws(() => range("2021-01-01", "2021-03-01"), /at most/);
+  assert.throws(() => range("2021-13-01", "2021-13-02"), /real dates|YYYY/);
+  const recent = new Date(Date.now() - 2 * 86_400_000).toISOString().slice(0, 10);
+  assert.throws(() => range(recent, recent), /six days/);
+
+  // Ten members, one of them a storm: p90 lands on it and one in ten pays.
+  const ens = { time: ["t"], wind_speed_10m: [10], wind_gusts_10m: [20], precipitation: [0] };
+  for (let m = 1; m <= 10; m++) {
+    ens[`wind_speed_10m_member${m}`] = [m === 10 ? 62 : 10];
+    ens[`wind_gusts_10m_member${m}`] = [m === 10 ? 95 : 20];
+    ens[`precipitation_member${m}`] = [0];
+  }
+  const b = band(ens, 0);
+  assert.equal(b.members, 11);
+  assert.ok(b.p10 < 0.3 && b.p50 < 0.3, JSON.stringify(b));
+  // With eleven members the ninetieth percentile is the second-worst run, so
+  // the storm shows up as the maximum, not the p90 — which is why max is
+  // reported at all.
+  assert.ok(b.p90 < 1, JSON.stringify(b));
+  assert.equal(b.max, 1, "the storm member is the worst run");
+  assert.ok(b.breach_probability > 0 && b.breach_probability < 0.2, "one member in eleven breaches");
+  assert.equal(band({ time: ["t"], wind_speed_10m: [1], wind_gusts_10m: [1], precipitation: [0] }, 0), null, "too few members is no band, not a confident one");
+
+  // The attestation covers exactly the settle fields, in a fixed order, and a
+  // changed byte fails. Verification uses Node's crypto and nothing of ours.
+  const answer = { lat: 10.32, lon: 123.89, hours: 6, valid_at: "2026-08-28T09:00Z", temp_c: 27.1, wind_kmh: 11.4, gust_kmh: 29.9, precip_mm: 0, wave_cm: 42, cyclone_km: 0, risk: 0.332, breach: false, summary: "not signed" };
+  const att = attest(answer);
+  assert.equal(att.algorithm, "ed25519");
+  assert.deepEqual(Object.keys(JSON.parse(att.canonical)), SIGNED_FIELDS);
+  assert.ok(!att.canonical.includes("not signed"), "commentary is outside the signature");
+  assert.equal(verify(att), true);
+  assert.equal(verify({ ...att, canonical: att.canonical.replace('"breach":false', '"breach":true') }), false);
+  assert.equal(canonical({ ...answer, extra: 1 }), canonical(answer), "an extra field changes nothing");
+}
+console.log("backtest, band and attestation hold their shape");
 
 server.close();
 

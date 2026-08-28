@@ -54,6 +54,21 @@ jobs:
       - name: Keep the last board
         run: curl -fsSL https://raw.githubusercontent.com/PugarHuda/amanat/board/board.json -o board.json || true
 
+      # A run with an empty secret "succeeds" at every step and publishes a
+      # stale board, which is how it went unnoticed for two days. Say so where
+      # a person looks: the run summary.
+      - name: Is the key there
+        env:
+          AGENT_PRIVATE_KEY: ${{ secrets.AGENT_PRIVATE_KEY }}
+        run: |
+          if [ -z "$AGENT_PRIVATE_KEY" ]; then
+            echo "::warning title=Board not refreshed::AGENT_PRIVATE_KEY is empty — set it with: gh secret set AGENT_PRIVATE_KEY --repo PugarHuda/amanat"
+            echo "## Board not refreshed" >> "$GITHUB_STEP_SUMMARY"
+            echo "The AGENT_PRIVATE_KEY secret is empty, so the paid screen was skipped and the last board was republished." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "key present (${#AGENT_PRIVATE_KEY} chars)"
+          fi
+
       - name: Screen the lanes
         # Paid, and the only step that can fail for a reason outside this
         # repo. It must not stop the free survey from publishing.
