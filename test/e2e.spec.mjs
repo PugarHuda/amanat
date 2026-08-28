@@ -175,6 +175,21 @@ test.describe("miner API — happy paths", () => {
     if (wk.signing.persistent) expect(body.attestation.public_key).toBe(wk.signing.public_key);
   });
 
+  test("answers a window at its worst hour, an exact hour at that hour", async ({ request }) => {
+    // livecert reported Manila at 0.8 for "the next 15 hours" where the reading
+    // at hour 15 alone was 0.548: the gusts were at hour 10. A cover written
+    // against a window pays on the worst hour in it, so that is the answer.
+    const w = await (await request.post(`${BASE}/forecast`, { data: { question: "Storm risk at 14.6, 120.98 in the next 24 hours?" } })).json();
+    const exact = await (await request.post(`${BASE}/forecast`, { data: { lat: 14.6, lon: 120.98, hours: 24 } })).json();
+    expect(w.window_hours).toBe(24);
+    expect(exact.window_hours).toBe(0);
+    expect(Date.parse(w.valid_at)).toBeLessThanOrEqual(Date.now() + 25 * 3600e3);
+    expect(w.risk).toBeGreaterThanOrEqual(exact.risk - 1e-9);
+    expect(w.summary).toMatch(/at its worst \d\d:\d\d UTC/);
+    // The attestation signs the hour actually answered.
+    expect(JSON.parse(w.attestation.canonical).valid_at).toBe(w.valid_at);
+  });
+
   test("reports health as itself", async ({ request }) => {
     const res = await request.get(`${BASE}/health`);
     expect(res.status()).toBe(200);

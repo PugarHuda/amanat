@@ -138,7 +138,7 @@ export function restate(question) {
 }
 
 export function summarise({ lat, lon, place, hours, question, temp_c, wind_kmh, precip_mm, gust_kmh, risk, valid_at, condition: cond, temp_min_c, temp_max_c, wave_m, cyclone,
-  humidity_pct, feels_like_c, wind_dir, cloud_pct, precip_prob_pct, days, risk_band }) {
+  humidity_pct, feels_like_c, wind_dir, cloud_pct, precip_prob_pct, days, risk_band, window = 0 }) {
   const level = risk >= 0.75 ? "severe" : risk >= 0.45 ? "elevated" : "low";
 
   const day = String(valid_at).slice(0, 10);
@@ -149,6 +149,8 @@ export function summarise({ lat, lon, place, hours, question, temp_c, wind_kmh, 
   // with "24.69, 46.72" is correct and reads as an answer to something else.
   const where = place ?? `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
   const horizon = Number.isFinite(hours) && hours > 0 ? ` over the next ${hours} hours` : "";
+  // A window is reported at its peak, and the sentence says which hour that is.
+  const peakNote = window > 0 ? `, at its worst ${String(valid_at).slice(11, 16)} UTC` : "";
 
   // Open by restating what was asked, then answer it.
   //
@@ -217,7 +219,7 @@ export function summarise({ lat, lon, place, hours, question, temp_c, wind_kmh, 
     `the temperature${scope} is ${temp_c.toFixed(1)} °C (${fahrenheit(temp_c)} °F)${feels}${humid}, ` +
     `${cond ?? "conditions unknown"}${cloud}, ` +
     `wind ${wind_kmh.toFixed(1)} km/h (${(wind_kmh / 3.6).toFixed(1)} m/s)${from}, gusts ${gust_kmh.toFixed(1)} km/h, ` +
-    `precipitation ${precip_mm.toFixed(1)} mm${prob}, valid at ${valid_at}. ` +
+    `precipitation ${precip_mm.toFixed(1)} mm${prob}, valid at ${valid_at}${peakNote}. ` +
     (daily ? `${day} forecast: ${daily}. ` : (cond ? `${day}: ${cond}${range}. ` : "")) +
     (Number.isFinite(wave_m) ? `Waves ${wave_m.toFixed(1)} m. ` : "") +
     (cyclone
@@ -265,7 +267,7 @@ function clampHours(n) {
   return Math.max(0, Math.min(168, Math.round(n)));
 }
 
-export async function forecast({ lat, lon, hours = 0, place, question }) {
+export async function forecast({ lat, lon, hours = 0, place, question, window = false }) {
   if (!Number.isFinite(lat) || lat < -90 || lat > 90) throw new RangeError("lat must be between -90 and 90");
   if (!Number.isFinite(lon) || lon < -180 || lon > 180) throw new RangeError("lon must be between -180 and 180");
   if (!Number.isInteger(hours) || hours < 0 || hours > 168) throw new RangeError("hours must be an integer 0..168");
@@ -296,7 +298,20 @@ export async function forecast({ lat, lon, hours = 0, place, question }) {
   const base = d.hourly?.time?.findIndex((t) => t.slice(0, 13) === nowHour);
   if (base === undefined || base < 0) throw new Error("open-meteo returned no hour matching now");
 
-  const i = base + hours;
+  // "In the next six hours" is a window, and the honest answer to a window is
+  // its worst hour, not its last. livecert answers STORM_ALERT that way and
+  // reported 0.8 for Manila where the reading at hour 15 alone was 0.548 —
+  // gusts of 72 km/h at hour 10 were the answer, and a cover written against
+  // the window would have paid on them. A contract passing an exact hour still
+  // gets that hour: `window` is set only when the question said "next".
+  let i = base + hours;
+  if (window && hours > 0) {
+    let worst = -1;
+    for (let j = base; j <= base + hours && j < d.hourly.time.length; j++) {
+      const r = riskScore({ wind_kmh: d.hourly.wind_speed_10m[j], gust_kmh: d.hourly.wind_gusts_10m[j], precip_mm: d.hourly.precipitation[j] });
+      if (r > worst) { worst = r; i = j; }
+    }
+  }
   const at = d.hourly.time[i];
   if (at === undefined) throw new Error("open-meteo returned no hour at that offset");
 
@@ -351,7 +366,13 @@ export async function forecast({ lat, lon, hours = 0, place, question }) {
 
   // The day being asked about and the one after, as a report prints them.
   const days = [];
-  for (const [k, label] of [[dayIdx, hours >= 24 ? at.slice(0, 10) : "today"], [dayIdx + 1, "tomorrow"]]) {
+  // Labelled by what day it is from now, not by how far ahead the hour was
+  // asked for: a 24-hour window whose worst hour is this morning is "today".
+  const todayUTC = new Date().toISOString().slice(0, 10);
+  const tomorrowUTC = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+  const labelFor = (date) => (date === todayUTC ? "today" : date === tomorrowUTC ? "tomorrow" : date);
+  for (const k of [dayIdx, dayIdx + 1]) {
+    const label = k >= 0 && k < (d.daily?.time?.length ?? 0) ? labelFor(d.daily.time[k]) : null;
     if (k < 0 || k >= (d.daily?.time?.length ?? 0)) continue;
     days.push({
       date: d.daily.time[k],
@@ -369,8 +390,12 @@ export async function forecast({ lat, lon, hours = 0, place, question }) {
       lat, lon, place, hours, question, temp_c, wind_kmh, precip_mm, gust_kmh, risk,
       valid_at: at + "Z", condition: cond, temp_min_c, temp_max_c, wave_m, cyclone,
       humidity_pct, feels_like_c, wind_dir: compass(wind_dir_deg), cloud_pct, precip_prob_pct, days, risk_band,
+      window: window && hours > 0 ? hours : 0,
     }),
     risk_band,
+    // When the question named a window, `valid_at` is the worst hour inside it
+    // and this says how wide the window was; 0 means an exact hour was asked.
+    window_hours: window && hours > 0 ? hours : 0,
     humidity_pct, feels_like_c, dew_point_c,
     wind_dir_deg, wind_dir: compass(wind_dir_deg),
     cloud_pct, precip_prob_pct,

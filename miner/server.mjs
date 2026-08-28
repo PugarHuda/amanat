@@ -265,7 +265,11 @@ export const server = createServer(async (req, res) => {
         : question !== undefined ? hoursIn(question)
         : 0;
       recordAsk({ field: askedField ?? (rawLat !== undefined ? "lat/lon" : null), question, lat, lon, hours, ua: req.headers["user-agent"] });
-      return send(res, 200, await forecast({ lat, lon, hours, place, question }));
+      // The hours came from the question, so they describe a window, not an
+      // instant. Explicit `hours` from a caller — the contract path — stays an
+      // exact hour, because that is what the on-chain mapping was written for.
+      const window = rawHours === undefined && question !== undefined && hours > 0;
+      return send(res, 200, await forecast({ lat, lon, hours, place, question, window }));
     }
 
     // What the network actually asks. Read this before reasoning about what a

@@ -212,15 +212,31 @@ export async function recentSignals({ intents = [], maxAgeMinutes = 240, limit =
  * must treat as "no reading", never as zero.
  */
 export function readRisk(result) {
+  // A field that says it is the risk, under any of the names miners use for
+  // it. livecert declares `risk_score`; the board read it correctly only
+  // because the regex below happened to find the same number first. A miner
+  // declaring `confidence: 0.96` beside `risk_score: 0.2` would have been read
+  // as a breach, and the contract pays on that reading.
+  for (const k of ["risk", "risk_score", "storm_risk", "risk_level", "score"]) {
+    const v = result?.[k];
+    if (typeof v === "number" && v >= 0 && v <= 1) return v;
+  }
+  // Never a confidence: it is how sure the miner is, not how bad the weather is.
+  const stripped = { ...(result ?? {}) };
+  for (const k of Object.keys(stripped)) if (/confidence|probability|certainty/i.test(k)) delete stripped[k];
+  result = stripped;
   const direct = result?.risk;
   if (typeof direct === "number" && direct >= 0 && direct <= 1) return direct;
 
-  // Only figures written with a decimal point count. A bare 0 or 1 somewhere in
-  // an answer is not identifiable as a risk, and reading `"precip_mm": 0` as
-  // risk 0 would report calm from an unrelated field — the same mistake as
-  // treating a missing coordinate as Null Island.
-  const fractions = [...JSON.stringify(result ?? {}).matchAll(/(?<![\d.])(?:0?\.\d+|1\.0+)(?![\d.])/g)]
-    .map((m) => Number(m[0]))
+  // A figure with a decimal point, and only one the answer itself calls a
+  // risk — "Overall risk: 0.8 on a scale of 0 to 1". The largest fraction
+  // anywhere in the JSON was the old rule, and it read onlookout-weather's
+  // canonical string "c0.958" — a confidence — as a 0.958 risk, which is a
+  // paid claim. A bare 0 or 1 still does not count: `"precip_mm": 0` is not
+  // calm weather, it is an unrelated field.
+  const text = JSON.stringify(result ?? {});
+  const fractions = [...text.matchAll(/risk[^0-9]{0,24}?(?<![\d.])(0?\.\d+|1\.0+)(?![\d.])/gi)]
+    .map((m) => Number(m[1]))
     .filter((n) => n >= 0 && n <= 1);
   return fractions.length ? Math.max(...fractions) : null;
 }

@@ -222,6 +222,21 @@ console.log("\nagent ok");
 }
 console.log("requests are built from what a miner declares, not from what ours has");
 
+// ── a risk is read from the field that names it, never from a confidence ────
+{
+  // livecert's shape: the number is under risk_score, and a regex finds it too.
+  assert.equal(readRisk({ risk_score: 0.8, verdict: "high", confidence: 1, max_wind_gust_kmh: 72.4 }), 0.8);
+  // onlookout's shape: no risk field at all, a confidence of 0.9575, and a
+  // canonical string carrying "c0.958". The old reading — the largest fraction
+  // in the JSON — returned 0.9575 and would have paid a claim on it.
+  assert.equal(readRisk({ answer: "Cebu forecast: today high 31C low 28C overcast.", confidence: 0.9575, canonical: "WEATHER_FORECAST|10.2988,123.8489|c0.958", risk_flags: ["none"] }), null);
+  // A declared risk beside a higher confidence: the risk wins.
+  assert.equal(readRisk({ risk_score: 0.2, confidence: 0.96 }), 0.2);
+  // Ours.
+  assert.equal(readRisk({ risk: 0.332, breach: false }), 0.332);
+}
+console.log("a risk is read from the field that names it, never from a confidence");
+
 // ── the survey ranks by a winnable slot, not by a loud number ────────────────
 {
   const champ = {

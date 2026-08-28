@@ -423,6 +423,26 @@ console.log("the social card is a valid PNG at the promised size");
 }
 console.log("what the network asked is on the record");
 
+// ── "in the next N hours" is a window, answered at its worst hour ───────────
+{
+  const ask = async (body) => (await fetch(`http://127.0.0.1:${port2}/forecast`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+  })).json();
+  const w = await ask({ question: "Storm risk at 14.6, 120.98 in the next 24 hours?" });
+  const exact = await ask({ lat: 14.6, lon: 120.98, hours: 24 });
+  const now = Date.now();
+
+  assert.equal(w.window_hours, 24, "the question named a window");
+  assert.equal(exact.window_hours, 0, "explicit hours are an exact hour — the contract path");
+  const at = Date.parse(w.valid_at);
+  assert.ok(at >= now - 3600e3 && at <= now + 25 * 3600e3, `the peak lies inside the window: ${w.valid_at}`);
+  // The worst hour of the window is never milder than the hour at its end.
+  assert.ok(w.risk >= exact.risk - 1e-9, `window ${w.risk} vs exact ${exact.risk}`);
+  assert.match(w.summary, /at its worst \d\d:\d\d UTC/, "the sentence says which hour");
+  assert.ok(!exact.summary.includes("at its worst"), "an exact hour has no peak note");
+}
+console.log("a window is answered at its worst hour, an exact hour at that hour");
+
 
 // ── backtest, band and attestation: the shapes, without the network ─────────
 {
