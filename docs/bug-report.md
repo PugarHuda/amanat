@@ -18,11 +18,12 @@ this repo. Ordered by what would cost a builder the most time.
 | 10 | [A signal commitment that cannot be re-derived](#a-signal-commitment-that-cannot-be-re-derived) | `verified: true` is the node vouching for itself. Thirty variants, two miners, no match. |
 | 11 | [`MAX_PARAM_VALUE` with `operator: lte` is evaluated backwards](#max_param_value-with-operator-lte-is-evaluated-backwards) | A policy that means "at most" enforces "at least". |
 | 12 | [A terminal rejection with an empty reason list](#a-terminal-rejection-with-an-empty-reason-list) | The one field that would say why is empty. |
-| 13 | [Two smaller things](#two-smaller-things-found-alongside) | A dead regex, and docs that describe a call the node does not make. |
+| 13 | [`updateMiner` takes a miner offline before the node has looked at the replacement](#updateminer-takes-a-miner-offline-before-the-node-has-looked-at-the-replacement) | The old registration is deregistered in the transaction; validation of the new one happens minutes later off-chain. A rejected YAML means no miner at all until the next attempt activates. |
+| 14 | [Two smaller things](#two-smaller-things-found-alongside) | A dead regex, and docs that describe a call the node does not make. |
 
 ---
 
-**Miner:** `amanat-weather-risk`, registration 218, id `20260821`
+**Miner:** `amanat-weather-risk`, registration 256 (previously 179, 206, 216–218, 229), id `20260821`
 **Contract:** [`0x0700c9300D5cfD8A4b2C7fBbaB2703087AB0590c`](https://sepolia.basescan.org/address/0x0700c9300D5cfD8A4b2C7fBbaB2703087AB0590c)
 **Superseded:** the jobs below were opened by [`0x51fa7d66…7B3c`](https://sepolia.basescan.org/address/0x51fa7d66af31dE4d94Bd14e0404465fd2D0c7B3c), which this replaced.
 **Jobs:** 7, 8, 9 on Base Sepolia
@@ -707,3 +708,36 @@ What would fix it: grade against a retrieved ground truth, and refuse to score
 an intent at all when none was found, rather than falling back to the prompt. A
 score of zero and a score of "not measured" are different facts, and only one of
 them should move a rank.
+
+## `updateMiner` takes a miner offline before the node has looked at the replacement
+
+`updateMiner(oldId, …)` is documented as the way to fix a registration in
+place: it swaps the entry atomically and keeps the slug bound to the wallet.
+What it actually does, in order:
+
+1. In the transaction, the old registration is marked deregistered on-chain.
+2. Minutes later, off-chain, the node fetches the new YAML and validates it.
+3. If validation fails, the new registration is rejected — terminally — and
+   the old one stays deregistered.
+
+Between step 1 and whenever a later attempt activates, the miner does not
+exist: `/api/miners` does not list it, no epoch scores it, no job can route to
+it. On 28 August that window was about twelve minutes for us. Registration 255
+replaced 229 and was refused at step 2 for `optional: true` on an on-chain
+field — a property the schema does not allow and the docs do not mention — and
+`/api/miners/229` answered `deregistered` while 255 answered `rejected`.
+Registration 256 then replaced 255 and went active at t+160 s.
+
+| Registration | Replaced | Outcome | Miner listed meanwhile |
+|---|---|---|---|
+| 229 | 218 | active | yes |
+| 255 | 229 | rejected — `optional` not allowed on `integers.4` | **no** |
+| 256 | 255 | active | yes, from t+160 s |
+
+The fix is ordering: validate the new YAML, then deregister the old one, and
+leave the old one in place when validation fails. As it stands, the safe way to
+update a live miner is to register a second slug first and deregister the first
+only after the second activates — which the slug-per-wallet rule appears to
+forbid. Every miner that has ever updated a live registration has been offline
+for at least the node's validation latency, and any of them that sent a YAML
+the schema disliked was offline until they noticed.

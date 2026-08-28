@@ -437,7 +437,7 @@ until it answers 200.
 Read from the chain and the node on 27 August; every figure below is checkable
 at the addresses given.
 
-**Track 1 — miner.** Registration 218, `amanat-weather-risk`, id `20260821`,
+**Track 1 — miner.** Registration 256, `amanat-weather-risk`, id `20260821`,
 active on `WEATHER_FORECAST`, `WEATHER_CHECK` and `STORM_ALERT`, served from
 https://amanat-miner.vercel.app. **359 requests served**, the most of any miner
 on this network. At epoch 285 it ranked **3 of 4** on `STORM_ALERT` at 0.005034
@@ -543,5 +543,8 @@ npm test                        # miner self-check + 27 scorer tests
 npm run build:profiles          # eight binaries, fails if any two match
 npm run bench && npm run attacks # against the real champion binaries
 npm run agent:dry               # the loop, read-only, spends nothing
+npm run survey                  # the scoring board: measured bar vs displayed score, free
+npm run impact                  # what changed on any intent our module scores, free
+npm run expire                  # release policies the network never answered, gas only
 ```
 
