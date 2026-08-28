@@ -152,7 +152,7 @@ console.log("both routes name the point identically");
   // scored 0.0086 against the real WEATHER_FORECAST champion where this scores
   // 0.9960, so the order of these clauses is load-bearing, not cosmetic.
   assert.ok(
-    j.summary.startsWith("The weather forecast for "),
+    j.summary.startsWith("Weather forecast for "),
     `summary must open by restating the question: ${j.summary}`,
   );
   assert.ok(j.summary.includes(j.valid_at), "summary must still carry the hour it is valid for");
@@ -450,7 +450,7 @@ server.close();
     precip_mm: 0, risk: 0.332, valid_at: "2026-08-27T11:00Z", condition: "Overcast",
     temp_min_c: 26.2, temp_max_c: 32.4,
   });
-  assert.ok(noQ.startsWith("The weather forecast for 10.32, 123.89 over the next 6 hours is "));
+  assert.ok(noQ.startsWith("Weather forecast for 10.32, 123.89 over the next 6 hours: "), noQ);
   assert.equal(noQ.match(/10\.32, 123\.89/g).length, 1, `the point is named once: ${noQ}`);
 
   // With one, it leads with that question and still carries every scalar.

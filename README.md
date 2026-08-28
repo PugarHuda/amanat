@@ -463,8 +463,14 @@ phrasing tried, on all three weather champions:
 | `STORM_ALERT` | reg 453 | 0.9978 |
 | `WEATHER_CHECK` | reg 510 | 0.9989 |
 
-Those are local measurements against the champion binary. The network's own
-verdict came at epoch 286, the first scored after the change went live:
+Those are local measurements against the champion binary with the question as
+the ground truth. With a *weather report* as the ground truth — the shape the
+miners ranked first actually answer in — the same binary scores every honest
+weather answer, ours included, at 0.008 to 0.016: the live band, reproduced.
+So the summary now carries what a report carries, humidity, feels-like, wind
+direction, chance of rain, a daily high and low in both units, every figure
+Open-Meteo's for the same hour. The network's own verdict on the first change
+came at epoch 286:
 `STORM_ALERT` 0.005034 → **0.007864**, rank 3 → 2; `WEATHER_FORECAST`
 0.005182 → 0.005971, rank 9 → 8; `WEATHER_CHECK` newly scored at 0.014812,
 rank 5. Real, and an order of magnitude short of what the local run predicted —

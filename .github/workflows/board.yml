@@ -37,15 +37,27 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: "22"
 
       - run: npm ci
 
+      # The last published board, so a failed screen below republishes what
+      # was there rather than force-pushing a branch with no board on it — the
+      # page already says "stale" when generated_at is old, and stale is a
+      # better thing to show than nothing. Every scheduled run from 26 August
+      # failed in ten seconds on a missing secret, and this step is why that
+      # can no longer take the survey down with it.
+      - name: Keep the last board
+        run: curl -fsSL https://raw.githubusercontent.com/PugarHuda/amanat/board/board.json -o board.json || true
+
       - name: Screen the lanes
+        # Paid, and the only step that can fail for a reason outside this
+        # repo. It must not stop the free survey from publishing.
+        continue-on-error: true
         env:
           AGENT_PRIVATE_KEY: ${{ secrets.AGENT_PRIVATE_KEY }}
           TELEGRAPH_NODE: https://devnode.telegraphprotocol.com
@@ -61,11 +73,13 @@ jobs:
       - name: Survey the scoring board
         # Public reads only, so this costs nothing and rides the board's
         # schedule rather than earning one of its own.
+        if: always()
         env:
           TELEGRAPH_NODE: https://devnode.telegraphprotocol.com
         run: node agent/survey.mjs --json
 
       - name: Publish to the board branch
+        if: always()
         run: |
           git config user.name "amanat-board"
           git config user.email "board@amanat.invalid"
@@ -74,6 +88,7 @@ jobs:
           # merge, and no path by which a data refresh can touch the source.
           git checkout --orphan board-tmp
           git rm -rf --cached . >/dev/null
-          git add -f board.json survey.json
+          [ -f board.json ] && git add -f board.json
+          [ -f survey.json ] && git add -f survey.json
           git commit -m "board $(date -u +%Y-%m-%dT%H:%MZ)"
           git push --force origin board-tmp:board

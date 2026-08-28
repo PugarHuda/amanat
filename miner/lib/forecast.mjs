@@ -82,6 +82,13 @@ const WMO = {
   95: "Thunderstorm", 96: "Thunderstorm with slight hail", 99: "Thunderstorm with heavy hail",
 };
 
+/** A bearing in degrees as the compass point a report would print. */
+export function compass(deg) {
+  if (!Number.isFinite(deg)) return null;
+  const pts = ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"];
+  return pts[Math.round((((deg % 360) + 360) % 360) / 45) % 8];
+}
+
 /** The condition a WMO code names, or null when the code is one we do not know. */
 export function condition(code) {
   return WMO[code] ?? null;
@@ -128,7 +135,8 @@ export function restate(question) {
   return s;
 }
 
-export function summarise({ lat, lon, place, hours, question, temp_c, wind_kmh, precip_mm, gust_kmh, risk, valid_at, condition: cond, temp_min_c, temp_max_c, wave_m, cyclone }) {
+export function summarise({ lat, lon, place, hours, question, temp_c, wind_kmh, precip_mm, gust_kmh, risk, valid_at, condition: cond, temp_min_c, temp_max_c, wave_m, cyclone,
+  humidity_pct, feels_like_c, wind_dir, cloud_pct, precip_prob_pct, days }) {
   const level = risk >= 0.75 ? "severe" : risk >= 0.45 ? "elevated" : "low";
 
   const day = String(valid_at).slice(0, 10);
@@ -169,16 +177,46 @@ export function summarise({ lat, lon, place, hours, question, temp_c, wind_kmh, 
   // Say where once. The template lead already names the place and the horizon,
   // and a restated question usually names the place too — typing "14.60,
   // 120.98" into the page produced "14.60, 120.98: … for 14.60, 120.98".
-  const lead = asked ? `${asked}: ` : `The weather forecast for ${where}${horizon} is `;
+  const lead = asked ? `${asked}: ` : `Weather forecast for ${where}${horizon}: `;
   const named = asked ? asked.toLowerCase().includes(where.toLowerCase()) : true;
-  const scope = named ? "" : ` for ${where}${horizon}`;
+  // "in Cebu", "at 14.60, 120.98" — a name takes "in", a coordinate takes "at".
+  const scope = named ? "" : ` ${place ? "in" : "at"} ${where}${horizon}`;
+
+  // The shape of a weather report, because that is what the network rewards.
+  //
+  // Read directly from the miners ranked first on each weather intent at epoch
+  // 287: isobar-weather (0.29 on WEATHER_CHECK, twenty times the field) answers
+  // "the current temperature in Cebu is 29.5C, and it feels like 31.3C. Over the
+  // next 24 hours, temperatures range from 23C to 30C, with a chance of rain";
+  // verity-weather-forecast leads with "2026-08-28: Drizzle, 22.5-29.8 C,
+  // precipitation up to 84%" and then every hour with its dew point;
+  // onlookout-weather with "today high 31C low 28C overcast". None of them
+  // restates the question. All of them carry humidity, feels-like, rain
+  // chance and a daily high/low — the vocabulary of a report, which is what a
+  // ground truth scraped from a weather site would also carry.
+  //
+  // Ours had one hour's readings and none of those words. Every figure below
+  // is Open-Meteo's for the same point and hour; nothing is invented, and the
+  // scalars a contract settles on are unchanged.
+  const fahrenheit = (c) => (c * 9 / 5 + 32).toFixed(0);
+  const feels = Number.isFinite(feels_like_c) ? ` and it feels like ${feels_like_c.toFixed(1)} °C` : "";
+  const humid = Number.isFinite(humidity_pct) ? `, humidity ${Math.round(humidity_pct)}%` : "";
+  const cloud = Number.isFinite(cloud_pct) ? `, cloud cover ${Math.round(cloud_pct)}%` : "";
+  const prob = Number.isFinite(precip_prob_pct) ? ` (${Math.round(precip_prob_pct)}% chance of rain)` : "";
+  const from = wind_dir ? ` from the ${wind_dir}` : "";
+  const daily = (days ?? []).slice(0, 2).map((d) =>
+    `${d.label} high ${d.high_c.toFixed(0)}C low ${d.low_c.toFixed(0)}C` +
+    (d.condition ? ` ${d.condition.toLowerCase()}` : "") +
+    (Number.isFinite(d.precip_prob_pct) ? `, ${Math.round(d.precip_prob_pct)}% chance of rain` : ""),
+  ).join("; ");
 
   return (
     lead +
-    `${temp_c.toFixed(1)} °C with wind ${wind_kmh.toFixed(1)} km/h, ` +
-    `gusts ${gust_kmh.toFixed(1)} km/h and ${precip_mm.toFixed(1)} mm precipitation` +
-    `${scope}, valid at ${valid_at}. ` +
-    (cond ? `${day}: ${cond}${range}. ` : "") +
+    `the temperature${scope} is ${temp_c.toFixed(1)} °C (${fahrenheit(temp_c)} °F)${feels}${humid}, ` +
+    `${cond ?? "conditions unknown"}${cloud}, ` +
+    `wind ${wind_kmh.toFixed(1)} km/h (${(wind_kmh / 3.6).toFixed(1)} m/s)${from}, gusts ${gust_kmh.toFixed(1)} km/h, ` +
+    `precipitation ${precip_mm.toFixed(1)} mm${prob}, valid at ${valid_at}. ` +
+    (daily ? `${day} forecast: ${daily}. ` : (cond ? `${day}: ${cond}${range}. ` : "")) +
     (Number.isFinite(wave_m) ? `Waves ${wave_m.toFixed(1)} m. ` : "") +
     (cyclone
       ? `Tropical cyclone ${cyclone.name} (${cyclone.max_wind_kmh ?? "?"} km/h, ${cyclone.alert}) is ${cyclone.distance_km} km away now. `
@@ -239,7 +277,9 @@ export async function forecast({ lat, lon, hours = 0, place, question }) {
   const d = await SERIES.through(key, async () => {
     const url = `${OPEN_METEO}?latitude=${lat}&longitude=${lon}` +
       `&hourly=temperature_2m,wind_speed_10m,wind_gusts_10m,precipitation,weather_code` +
-      `&daily=temperature_2m_max,temperature_2m_min&forecast_days=8&timezone=UTC`;
+      `,relative_humidity_2m,apparent_temperature,wind_direction_10m,cloud_cover,precipitation_probability,dew_point_2m` +
+      `&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max,wind_speed_10m_max` +
+      `&forecast_days=8&timezone=UTC`;
     const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
     if (!res.ok) throw new Error(`open-meteo ${res.status}`);
     return res.json();
@@ -259,6 +299,12 @@ export async function forecast({ lat, lon, hours = 0, place, question }) {
   const wind_kmh = d.hourly.wind_speed_10m[i];
   const gust_kmh = d.hourly.wind_gusts_10m[i];
   const precip_mm = d.hourly.precipitation[i];
+  const humidity_pct = d.hourly.relative_humidity_2m?.[i] ?? null;
+  const feels_like_c = d.hourly.apparent_temperature?.[i] ?? null;
+  const wind_dir_deg = d.hourly.wind_direction_10m?.[i] ?? null;
+  const cloud_pct = d.hourly.cloud_cover?.[i] ?? null;
+  const precip_prob_pct = d.hourly.precipitation_probability?.[i] ?? null;
+  const dew_point_c = d.hourly.dew_point_2m?.[i] ?? null;
 
   // Sea state for the same hour. Its own cache because the marine model is a
   // separate upstream with its own failure modes, and a wave reading that
@@ -291,11 +337,31 @@ export async function forecast({ lat, lon, hours = 0, place, question }) {
   const temp_max_c = dayIdx >= 0 ? d.daily.temperature_2m_max[dayIdx] : undefined;
   const temp_min_c = dayIdx >= 0 ? d.daily.temperature_2m_min[dayIdx] : undefined;
 
+  // The day being asked about and the one after, as a report prints them.
+  const days = [];
+  for (const [k, label] of [[dayIdx, hours >= 24 ? at.slice(0, 10) : "today"], [dayIdx + 1, "tomorrow"]]) {
+    if (k < 0 || k >= (d.daily?.time?.length ?? 0)) continue;
+    days.push({
+      date: d.daily.time[k],
+      label,
+      high_c: d.daily.temperature_2m_max[k],
+      low_c: d.daily.temperature_2m_min[k],
+      condition: condition(d.daily.weather_code?.[k]),
+      precip_prob_pct: d.daily.precipitation_probability_max?.[k] ?? null,
+      wind_max_kmh: d.daily.wind_speed_10m_max?.[k] ?? null,
+    });
+  }
+
   return {
     summary: summarise({
       lat, lon, place, hours, question, temp_c, wind_kmh, precip_mm, gust_kmh, risk,
       valid_at: at + "Z", condition: cond, temp_min_c, temp_max_c, wave_m, cyclone,
+      humidity_pct, feels_like_c, wind_dir: compass(wind_dir_deg), cloud_pct, precip_prob_pct, days,
     }),
+    humidity_pct, feels_like_c, dew_point_c,
+    wind_dir_deg, wind_dir: compass(wind_dir_deg),
+    cloud_pct, precip_prob_pct,
+    days,
     // Significant wave height in metres for that hour; null over land or when
     // the marine model could not be read.
     wave_m,

@@ -698,6 +698,24 @@ actually is remains unknown from outside, which is the point: a miner cannot
 see what it is graded against, and this report spent a day inferring it and
 got it wrong.
 
+**Second pass, 28 August: the ground truth is a weather report, and the
+champion cannot tell honest reports apart.** Holding our answer fixed and
+substituting report-shaped ground truths — one in the style of the miner
+ranked first on WEATHER_CHECK, one in the style of the miner ranked first on
+WEATHER_FORECAST, one as a weather site prints it — the champion binary scores
+our answer at **0.0075 to 0.0162**. That is the live band, reproduced: every
+weather miner on the network sits between 0.003 and 0.019, and this is the
+ground-truth shape that puts them there. Against the same three reports, a
+rewritten answer carrying every element the top miners carry — humidity,
+feels-like, wind direction, chance of rain, a daily high and low in both
+units — moves by +0.0005 to +0.003. The module does not discriminate between
+honest weather answers; at this scale, rank order is epoch noise, and ours has
+been 3, 2, 3 on STORM_ALERT across three consecutive epochs with the same
+code. The one outlier — isobar-weather at 0.29 on WEATHER_CHECK at epoch 287,
+twenty times the field, from a miner that has served two requests — is what
+matching the ground truth's phrasing by chance looks like, and nobody can do
+it on purpose because nobody can see it.
+
 We changed our own summary to open by restating the question, which is how a
 careful answer reads anyway, and every scalar a contract settles on is untouched.
 That is the honest half. The dishonest half is available to anyone who reads

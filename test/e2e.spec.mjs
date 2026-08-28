@@ -68,7 +68,7 @@ test.describe("miner API — happy paths", () => {
     // Leading with the date instead scored 0.0086 against the real
     // WEATHER_FORECAST champion where this scores 0.9960, so the clause order is
     // load-bearing — see docs/bug-report.md, finding 1.
-    expect(body.summary.startsWith("The weather forecast for ")).toBe(true);
+    expect(body.summary.startsWith("Weather forecast for ")).toBe(true);
     expect(body.summary).toContain(body.valid_at);
     expect(body.summary).toContain(body.condition);
     // and the scalars a contract settles on are still all there
