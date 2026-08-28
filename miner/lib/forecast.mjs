@@ -303,6 +303,14 @@ export async function forecast({ lat, lon, hours = 0, place, question }) {
     // not where it will be at the forecast hour, which this feed does not say.
     cyclone_name: cyclone?.name ?? null,
     cyclone_km_now: cyclone?.distance_km ?? null,
+    // The same two readings as integers that are never null, for the on-chain
+    // mapping: the node's YAML schema has no way to mark a field optional
+    // (registration 255 was rejected for trying), and a contract reading
+    // `integers[4]` needs a number there whether or not there is sea. Zero
+    // means "no sea state" and "no cyclone within reach" respectively, and the
+    // nullable fields above are the ones that say which.
+    wave_cm: Number.isFinite(wave_m) ? Math.round(wave_m * 100) : 0,
+    cyclone_km: cyclone?.distance_km ?? 0,
     cyclone_max_wind_kmh: cyclone?.max_wind_kmh ?? null,
     cyclone_alert: cyclone?.alert ?? null,
     condition: cond,

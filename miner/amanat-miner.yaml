@@ -87,6 +87,8 @@ output_schema:
     cyclone_km_now: { type: integer, description: Distance in km to that cyclone's current position. Its position at the forecast hour is not published, so this is where it is now. }
     cyclone_max_wind_kmh: { type: integer, description: That cyclone's maximum sustained wind in km/h. }
     cyclone_alert: { type: string, description: GDACS alert level for that cyclone - Green, Orange or Red. }
+    wave_cm: { type: integer, description: Significant wave height in centimetres, 0 over land or when unread. The on-chain form of wave_m. }
+    cyclone_km: { type: integer, description: Distance in km to the nearest active cyclone now, 0 when none within 500 km. The on-chain form of cyclone_km_now. }
     risk: { type: number, description: Storm risk between 0 and 1. The worst of wind, gusts, precipitation, wave height and cyclone proximity. }
     breach: { type: boolean, description: True when risk is at or above the 0.75 payout threshold. }
     valid_at: { type: string, description: UTC timestamp the forecast applies to. }
@@ -143,16 +145,13 @@ on_chain:
         source_path: risk
         multiplier: 10000
       - index: 4
-        name: wave_m_x100
-        description: Significant wave height in metres times 100. Zero over land.
-        source_path: wave_m
-        multiplier: 100
-        optional: true
+        name: wave_cm
+        description: Significant wave height in centimetres. Zero over land or when the sea state could not be read.
+        source_path: wave_cm
       - index: 5
-        name: cyclone_km_now
+        name: cyclone_km
         description: Distance in km to the nearest active named cyclone, now. Zero when none within 500 km.
-        source_path: cyclone_km_now
-        optional: true
+        source_path: cyclone_km
     bools:
       - index: 0
         name: breach
