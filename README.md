@@ -437,7 +437,7 @@ until it answers 200.
 Read from the chain and the node on 27 August; every figure below is checkable
 at the addresses given.
 
-**Track 1 — miner.** Registration 256, `amanat-weather-risk`, id `20260821`,
+**Track 1 — miner.** Registration 280, `amanat-weather-risk`, id `20260821`,
 active on `WEATHER_FORECAST`, `WEATHER_CHECK` and `STORM_ALERT`, served from
 https://amanat-miner.vercel.app. **359 requests served**, the most of any miner
 on this network. At epoch 285 it ranked **3 of 4** on `STORM_ALERT` at 0.005034

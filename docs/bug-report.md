@@ -23,7 +23,7 @@ this repo. Ordered by what would cost a builder the most time.
 
 ---
 
-**Miner:** `amanat-weather-risk`, registration 256 (previously 179, 206, 216–218, 229), id `20260821`
+**Miner:** `amanat-weather-risk`, registration 280 (previously 179, 206, 216–218, 229, 256), id `20260821`
 **Contract:** [`0x0700c9300D5cfD8A4b2C7fBbaB2703087AB0590c`](https://sepolia.basescan.org/address/0x0700c9300D5cfD8A4b2C7fBbaB2703087AB0590c)
 **Superseded:** the jobs below were opened by [`0x51fa7d66…7B3c`](https://sepolia.basescan.org/address/0x51fa7d66af31dE4d94Bd14e0404465fd2D0c7B3c), which this replaced.
 **Jobs:** 7, 8, 9 on Base Sepolia
