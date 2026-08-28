@@ -44,9 +44,15 @@
         "parameters": [
           { "name": "from", "in": "query", "required": true, "schema": { "type": "string" }, "description": "A place name or \"lat, lon\"" },
           { "name": "to", "in": "query", "required": true, "schema": { "type": "string" } },
-          { "name": "speed", "in": "query", "schema": { "type": "number", "default": 37 }, "description": "km/h" },
-          { "name": "legs", "in": "query", "schema": { "type": "integer", "minimum": 2, "maximum": 12, "default": 6 } }
+          { "name": "speed", "in": "query", "schema": { "type": "number", "default": 37 }, "description": "km/h; `speed_kmh` is accepted as an alias" },
+          { "name": "legs", "in": "query", "schema": { "type": "integer", "minimum": 2, "maximum": 12, "default": 8 }, "description": "`max_legs` is accepted as an alias" }
         ],
+        "responses": { "200": { "description": "Legs with risk, the worst leg, and whether it breaches" }, "429": { "description": "The per-minute route budget is spent; the quota is shared with /forecast" } }
+      },
+      "post": {
+        "operationId": "routeJson",
+        "summary": "The same, as a JSON body",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["from", "to"], "properties": { "from": { "type": "string" }, "to": { "type": "string" }, "speed_kmh": { "type": "number", "default": 37 }, "max_legs": { "type": "integer", "minimum": 2, "maximum": 12, "default": 8 } } } } } },
         "responses": { "200": { "description": "Legs with risk, the worst leg, and whether it breaches" } }
       }
     },
@@ -98,6 +104,7 @@
           "precip_mm": { "type": "number" }, "precip_prob_pct": { "type": ["number", "null"] },
           "days": { "type": "array", "items": { "type": "object", "properties": { "date": { "type": "string" }, "label": { "type": "string" }, "high_c": { "type": "number" }, "low_c": { "type": "number" }, "condition": { "type": ["string", "null"] }, "precip_prob_pct": { "type": ["number", "null"] }, "wind_max_kmh": { "type": ["number", "null"] } } } },
           "wave_m": { "type": ["number", "null"], "description": "Significant wave height; null over land" },
+          "sea_level_m": { "type": ["number", "null"], "description": "Sea level above mean, tide and surge together; reported, not scored; null over land" },
           "wave_cm": { "type": "integer", "description": "The on-chain form of wave_m; 0 over land" },
           "cyclone_name": { "type": ["string", "null"] }, "cyclone_km_now": { "type": ["integer", "null"] },
           "cyclone_max_wind_kmh": { "type": ["integer", "null"] }, "cyclone_alert": { "type": ["string", "null"] },

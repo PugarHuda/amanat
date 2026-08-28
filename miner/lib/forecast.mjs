@@ -138,7 +138,7 @@ export function restate(question) {
 }
 
 export function summarise({ lat, lon, place, hours, question, temp_c, wind_kmh, precip_mm, gust_kmh, risk, valid_at, condition: cond, temp_min_c, temp_max_c, wave_m, cyclone,
-  humidity_pct, feels_like_c, wind_dir, cloud_pct, precip_prob_pct, days, risk_band, window = 0 }) {
+  humidity_pct, feels_like_c, wind_dir, cloud_pct, precip_prob_pct, days, risk_band, window = 0, sea_level_m = null }) {
   const level = risk >= 0.75 ? "severe" : risk >= 0.45 ? "elevated" : "low";
 
   const day = String(valid_at).slice(0, 10);
@@ -221,7 +221,7 @@ export function summarise({ lat, lon, place, hours, question, temp_c, wind_kmh, 
     `wind ${wind_kmh.toFixed(1)} km/h (${(wind_kmh / 3.6).toFixed(1)} m/s)${from}, gusts ${gust_kmh.toFixed(1)} km/h, ` +
     `precipitation ${precip_mm.toFixed(1)} mm${prob}, valid at ${valid_at}${peakNote}. ` +
     (daily ? `${day} forecast: ${daily}. ` : (cond ? `${day}: ${cond}${range}. ` : "")) +
-    (Number.isFinite(wave_m) ? `Waves ${wave_m.toFixed(1)} m. ` : "") +
+    (Number.isFinite(wave_m) ? `Waves ${wave_m.toFixed(1)} m${Number.isFinite(sea_level_m) ? `, sea level ${sea_level_m >= 0 ? "+" : ""}${sea_level_m.toFixed(1)} m against mean` : ""}. ` : "") +
     (cyclone
       ? `Tropical cyclone ${cyclone.name} (${cyclone.max_wind_kmh ?? "?"} km/h, ${cyclone.alert}) is ${cyclone.distance_km} km away now. `
       : "") +
@@ -342,24 +342,26 @@ export async function forecast({ lat, lon, hours = 0, place, question, window = 
   // null and the risk is computed without it, never an error on the forecast.
   // They are fetched together, not in turn — a cold point took 5.7 s when
   // each waited for the last, and the three do not depend on each other.
-  const [wave_m, cyclone, ens] = await Promise.all([
+  const [seaState, cyclone, ens] = await Promise.all([
     SEA.through(key, async () => {
-    const url = `${MARINE}?latitude=${lat}&longitude=${lon}&hourly=wave_height&forecast_days=8&timezone=UTC`;
+    const url = `${MARINE}?latitude=${lat}&longitude=${lon}&hourly=wave_height,sea_level_height_msl&forecast_days=8&timezone=UTC`;
     const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
     if (!res.ok) throw new Error(`open-meteo marine ${res.status}`);
     const m = await res.json();
-    return { time: m.hourly?.time ?? [], wave: m.hourly?.wave_height ?? [] };
+    return { time: m.hourly?.time ?? [], wave: m.hourly?.wave_height ?? [], level: m.hourly?.sea_level_height_msl ?? [] };
     }).then((sea) => {
       const j = sea.time.indexOf(at);
-      const v = j >= 0 ? sea.wave[j] : null;
-      return Number.isFinite(v) ? v : null;
-    }).catch(() => null),
+      const w = j >= 0 ? sea.wave[j] : null;
+      const l = j >= 0 ? sea.level[j] : null;
+      return { wave_m: Number.isFinite(w) ? w : null, sea_level_m: Number.isFinite(l) ? l : null };
+    }).catch(() => ({ wave_m: null, sea_level_m: null })),
     // Any named storm within reach, from where it is now.
     activeCyclones().then((list) => nearest(list, { lat, lon })).catch(() => null),
     // The member series; scored below once the sea and the storm are known.
     ensembleSeries({ lat, lon }).catch(() => null),
   ]);
 
+  const { wave_m, sea_level_m } = seaState;
   const risk = riskScore({ wind_kmh, gust_kmh, precip_mm, wave_m, cyclone: cycloneRisk(cyclone) });
 
   // The same score across the ensemble, so the answer says how sure it is.
@@ -401,7 +403,7 @@ export async function forecast({ lat, lon, hours = 0, place, question, window = 
       lat, lon, place, hours, question, temp_c, wind_kmh, precip_mm, gust_kmh, risk,
       valid_at: at + "Z", condition: cond, temp_min_c, temp_max_c, wave_m, cyclone,
       humidity_pct, feels_like_c, wind_dir: compass(wind_dir_deg), cloud_pct, precip_prob_pct, days, risk_band,
-      window: window && hours > 0 ? hours : 0,
+      window: window && hours > 0 ? hours : 0, sea_level_m,
     }),
     risk_band,
     // When the question named a window, `valid_at` is the worst hour inside it
@@ -414,6 +416,11 @@ export async function forecast({ lat, lon, hours = 0, place, question, window = 
     // Significant wave height in metres for that hour; null over land or when
     // the marine model could not be read.
     wave_m,
+    // Sea level above mean sea level, tide and surge together, for that hour.
+    // Reported, not scored: an ordinary spring tide reaches 1.6 m at Cebu, and
+    // a trigger that fires on the tide is not a storm trigger. The figure is
+    // here so a contract or an operator can read it against their own quay.
+    sea_level_m,
     // The nearest named cyclone within 500 km, positioned where it is now —
     // not where it will be at the forecast hour, which this feed does not say.
     cyclone_name: cyclone?.name ?? null,

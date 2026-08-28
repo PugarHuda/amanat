@@ -758,6 +758,8 @@ function showResult(r) {
       // An inland point saying "waves —" would be answering a question nobody
       // asked about it.
       ...(Number.isFinite(r.wave_m) ? [figure("waves", `${Number(r.wave_m).toFixed(1)} m`)] : []),
+      // Tide and surge together, against mean sea level. Read, not scored.
+      ...(Number.isFinite(r.sea_level_m) ? [figure("sea level", `${r.sea_level_m >= 0 ? "+" : ""}${Number(r.sea_level_m).toFixed(1)} m`)] : []),
       ...(r.cyclone_name
         ? [figure("cyclone", `${r.cyclone_name} · ${r.cyclone_km_now} km · ${r.cyclone_max_wind_kmh} km/h`)]
         : []),

@@ -407,3 +407,58 @@ test.describe("the backtest says where the cover would have paid @ui", () => {
     await expect(figures).not.toContainText("ephemeral");
   });
 });
+
+test.describe("every reading is a URL @ui", () => {
+  const READING = { ...FORECAST, summary: "Storm risk in Cebu: 29.0 °C, wind 10.7 km/h. Storm risk is low (0.252).", risk: 0.252 };
+
+  test("a reading arrived by URL runs on load, and the address follows a new one", async ({ page }) => {
+    let asked = [];
+    await page.route("**/forecast", (route) => { asked.push((route.request().postDataJSON() ?? {}).question); return route.fulfill({ json: READING }); });
+    await page.goto(BASE + "/?q=Cebu");
+    await expect(page.locator("#result .summary")).toBeVisible();
+    expect(asked).toContain("Cebu");
+    expect(await page.locator("#ask").inputValue()).toBe("Cebu");
+
+    // A new question rewrites the address only once its answer has landed.
+    await page.fill("#ask", "Manila");
+    await page.click("#go");
+    await expect(page.locator("#result .summary")).toBeVisible();
+    await expect(page).toHaveURL(/q=Manila/);
+
+    // And the back button retraces the trail: the previous reading returns.
+    await page.goBack();
+    await expect(page).toHaveURL(/q=Cebu/);
+    await expect(page.locator("#ask")).toHaveValue("Cebu");
+  });
+
+  test("a failed reading leaves the address alone", async ({ page }) => {
+    await page.route("**/forecast", (route) => route.fulfill({ status: 400, json: { error: "no place found" } }));
+    await page.goto(BASE);
+    await page.fill("#ask", "zzzqqq");
+    await page.click("#go");
+    await expect(page.locator("#result .err")).toBeVisible();
+    await expect(page).not.toHaveURL(/q=/);
+  });
+});
+
+test.describe("the replay respects motion preferences @ui", () => {
+  const series = Array.from({ length: 10 }, (_, i) => ({ at: `2021-12-16T${String(i).padStart(2, "0")}:00Z`, risk: i === 6 ? 1 : 0.2 }));
+  const run = { lat: 10.32, lon: 123.89, start: "2021-12-15", end: "2021-12-18", trigger: 0.75, hours: 10, peak: { at: "2021-12-16T06:00Z", risk: 1, wind_kmh: 90, gust_kmh: 170, precip_mm: 12 }, breach: true, hours_above_trigger: 1, series, source: "test" };
+
+  test("with reduced motion the needle rests on the peak hour", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.route("**/api/backtest*", (route) => route.fulfill({ status: 200, json: run }));
+    await page.goto(BASE);
+    await expect(page.locator("#replay")).toBeVisible();
+    await expect(page.locator("#replayval")).toHaveText("1.000");
+    await expect(page.locator("#replayclock")).toContainText("16 Dec 06:00 UTC");
+  });
+
+  test("with motion the needle advances through the hours once in view", async ({ page }) => {
+    await page.route("**/api/backtest*", (route) => route.fulfill({ status: 200, json: run }));
+    await page.goto(BASE);
+    await page.locator("#replay").scrollIntoViewIfNeeded();
+    // Ten steps at 70 ms: the replay ends on the last hour within a second.
+    await expect(page.locator("#replayclock")).toContainText("16 Dec 09:00 UTC", { timeout: 5000 });
+  });
+});

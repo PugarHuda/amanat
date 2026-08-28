@@ -87,8 +87,22 @@ output_schema:
     cyclone_km_now: { type: integer, description: Distance in km to that cyclone's current position. Its position at the forecast hour is not published, so this is where it is now. }
     cyclone_max_wind_kmh: { type: integer, description: That cyclone's maximum sustained wind in km/h. }
     cyclone_alert: { type: string, description: GDACS alert level for that cyclone - Green, Orange or Red. }
+    sea_level_m: { type: number, description: Sea level above mean sea level in metres for that hour, tide and surge together, from the Open-Meteo marine model. Reported, not scored. Null over land. }
     wave_cm: { type: integer, description: Significant wave height in centimetres, 0 over land or when unread. The on-chain form of wave_m. }
     cyclone_km: { type: integer, description: Distance in km to the nearest active cyclone now, 0 when none within 500 km. The on-chain form of cyclone_km_now. }
+    place: { type: string, description: The place the reading is for, as resolved from the question. Null when coordinates were given. }
+    humidity_pct: { type: number, description: Relative humidity in percent for that hour. }
+    feels_like_c: { type: number, description: Apparent temperature in degrees Celsius for that hour. }
+    dew_point_c: { type: number, description: Dew point in degrees Celsius for that hour. }
+    wind_dir_deg: { type: number, description: Wind direction in degrees, meteorological (from). }
+    wind_dir: { type: string, description: Wind direction as a compass point, e.g. south-west. }
+    cloud_pct: { type: number, description: Cloud cover in percent for that hour. }
+    precip_prob_pct: { type: number, description: Probability of precipitation in percent for that hour. }
+    days: { type: array, description: Today and tomorrow as a report prints them - date, label, high_c, low_c, condition, precip_prob_pct, wind_max_kmh. }
+    window_hours: { type: integer, description: When the question named a window ("in the next 24 hours"), its width in hours; valid_at is then the worst hour inside it. 0 when an exact hour was asked. }
+    risk_band: { type: object, description: The same risk across ECMWF ensemble members at that hour - model, members, p10, p50, p90, max, breach_probability. Null when the ensemble could not be read. }
+    attestation: { type: object, description: Ed25519 signature over the settle fields - algorithm, signed_fields, canonical, sha256, signature, public_key, key_persistent. Verify with Node crypto.verify; the key is also at /.well-known/amanat.json. }
+    attribution: { type: object, description: Data sources and licence - Open-Meteo CC BY 4.0, GDACS. }
     risk: { type: number, description: Storm risk between 0 and 1. The worst of wind, gusts, precipitation, wave height and cyclone proximity. }
     breach: { type: boolean, description: True when risk is at or above the 0.75 payout threshold. }
     valid_at: { type: string, description: UTC timestamp the forecast applies to. }

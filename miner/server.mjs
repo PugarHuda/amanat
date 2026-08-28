@@ -363,10 +363,12 @@ export const server = createServer(async (req, res) => {
       const from = await endpointOf(body.from ?? searchParams.get("from"), "from");
       const to = await endpointOf(body.to ?? searchParams.get("to"), "to");
 
-      const speedKmh = Number(body.speed_kmh ?? searchParams.get("speed_kmh") ?? 37);
+      // `speed` and `legs` are what a person types; `speed_kmh` and `max_legs`
+      // are what the page sends. Both are accepted, and the spec names both.
+      const speedKmh = Number(body.speed_kmh ?? body.speed ?? searchParams.get("speed_kmh") ?? searchParams.get("speed") ?? 37);
       // Each leg costs an upstream call, and Open-Meteo's free tier is what
       // pays for it. The ceiling is a real limit, not a round number.
-      const max = Math.min(12, Math.max(2, Number(body.max_legs ?? searchParams.get("max_legs") ?? 8)));
+      const max = Math.min(12, Math.max(2, Number(body.max_legs ?? body.legs ?? searchParams.get("max_legs") ?? searchParams.get("legs") ?? 8)));
 
       return send(res, 200, await assessRoute({
         from, to, speedKmh, max,

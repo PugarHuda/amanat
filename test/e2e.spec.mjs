@@ -190,6 +190,28 @@ test.describe("miner API — happy paths", () => {
     expect(JSON.parse(w.attestation.canonical).valid_at).toBe(w.valid_at);
   });
 
+  test("takes a route by query string with the short names the spec promises", async ({ request }) => {
+    // The page sends speed_kmh and max_legs; a person typing a URL sends speed
+    // and legs. The spec names both, so both have to work.
+    const res = await request.get(`${BASE}/api/route?from=Cebu&to=Manila&speed=37&legs=3`);
+    expect(res.status()).toBe(200);
+    const r = await res.json();
+    expect(r.speed_kmh).toBe(37);
+    expect(r.legs.length).toBe(3);
+    expect(typeof r.breach).toBe("boolean");
+  });
+
+  test("reports sea level beside the waves, and neither inland", async ({ request }) => {
+    const sea = await (await request.post(`${BASE}/forecast`, { data: { ...CEBU, hours: 6 } })).json();
+    expect(typeof sea.sea_level_m).toBe("number");
+    // Tide and surge together sit within a few metres of mean sea level.
+    expect(Math.abs(sea.sea_level_m)).toBeLessThan(5);
+    expect(sea.summary).toContain("sea level");
+    const inland = await (await request.post(`${BASE}/forecast`, { data: { lat: 24.69, lon: 46.72, hours: 6 } })).json();
+    expect(inland.sea_level_m).toBeNull();
+    expect(inland.summary).not.toContain("sea level");
+  });
+
   test("reports health as itself", async ({ request }) => {
     const res = await request.get(`${BASE}/health`);
     expect(res.status()).toBe(200);

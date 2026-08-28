@@ -65,13 +65,19 @@ const W = 1200;
 const H = 630;
 
 // The barograph palette, matching the page.
-const PAPER = [0xe9, 0xed, 0xe6];
-const CARD = [0xfd, 0xfe, 0xfc];
-const RULE = [0xcb, 0xd6, 0xc8];
-const INK = [0x14, 0x1d, 0x18];
-const TRACE = [0x1e, 0x60, 0x49];
-const TRIGGER = [0xae, 0x3a, 0x24];
-const MUTED = [0x5e, 0x6d, 0x63];
+// The page's own world, as DESIGN.md records it: one ivory plate on a night
+// sea, black ink, chart blue-grey keylines, sea green below the trigger, and
+// the band from 0.75 in the only red.
+const SEA = [0x0b, 0x1f, 0x2e];
+const ON_SEA = [0xe9, 0xee, 0xf0];
+const ON_SEA_2 = [0xa9, 0xbc, 0xc7];
+const PLATE = [0xf2, 0xec, 0xe0];
+const KEY = [0x8f, 0xa9, 0xb8];
+const INK = [0x14, 0x11, 0x0c];
+const INK_3 = [0x57, 0x53, 0x49];
+const CALM = [0x2a, 0x5d, 0x4e];
+const TRIGGER = [0xc8, 0x34, 0x1e];
+const TRIGGER_TINT = [0xf1, 0xcf, 0xc5];
 
 /** A canvas of raw RGB pixels, and the few shapes this card is made of. */
 function canvas(width, height, fill) {
@@ -189,24 +195,23 @@ function png(width, height, rgb) {
  * it, rather than invented columns.
  */
 export function drawCard(lanes = []) {
-  const c = canvas(W, H, PAPER);
+  const c = canvas(W, H, SEA);
 
-  // The ruled stock, same 64px rhythm as the page.
-  for (let y = 0; y < H; y += 64) c.rect(0, y, W, 1, RULE);
-
-  // The plot sits on card stock with a margin, so the ruling reads as paper
-  // underneath rather than through it.
+  // The plate: ivory on the sea, edged in ink, the same object the page is.
   const px = 90;
-  const py = 168;
+  const py = 150;
   const pw = W - px * 2;
-  const ph = 330;
-  c.rect(px, py, pw, ph, CARD);
-  c.rect(px, py, pw, 2, RULE);
-  c.rect(px, py + ph - 2, pw, 2, RULE);
+  const ph = 360;
+  c.rect(px - 3, py - 3, pw + 6, ph + 6, INK);
+  c.rect(px, py, pw, ph, PLATE);
 
-  // The one red line, at 0.75 of the plot height measured from the bottom.
+  // The band from 0.75 up is the only red: a field, not a line, the way the
+  // plate prints it. Its lower edge is the trigger.
   const triggerY = py + Math.round(ph * (1 - 0.75));
-  c.rect(px, triggerY, pw, 4, TRIGGER);
+  c.rect(px, py, pw, triggerY - py, TRIGGER_TINT);
+  c.rect(px, triggerY, pw, 3, TRIGGER);
+  // Keylines at 0.25 and 0.5, like the track's scale.
+  for (const f of [0.25, 0.5]) c.rect(px, py + Math.round(ph * (1 - f)), pw, 1, KEY);
 
   const readings = lanes
     .map((l) => (l && l.worst ? l.worst.risk : null))
@@ -223,11 +228,12 @@ export function drawCard(lanes = []) {
       const y = py + ph - Math.round(ph * Math.min(risk, 1));
       const over = risk >= 0.75;
 
-      // Stem down to the baseline, then the dot: the trace and the reading.
-      c.rect(x - 1, y, 3, py + ph - y, RULE);
-      c.disc(x, y, 13, over ? TRIGGER : TRACE);
-      c.disc(x, y, 7, CARD);
-      c.disc(x, y, 5, over ? TRIGGER : TRACE);
+      // The pin: a stem up from the foot of the plate and a round head at the
+      // reading, green below the band and red inside it.
+      // The stem stops above the caption band at the foot of the plate.
+      c.rect(x - 2, y, 4, Math.max(0, py + ph - 36 - y), over ? TRIGGER : CALM);
+      c.disc(x, y, 12, over ? TRIGGER : CALM);
+      c.disc(x, y, 5, PLATE);
 
       // The figure above its own dot. A card that shows a shape without a
       // number is a mood; the number is the reason to look.
@@ -236,17 +242,19 @@ export function drawCard(lanes = []) {
     });
   } else {
     const none = "NO BOARD PUBLISHED YET";
-    c.text(px + Math.round((pw - textWidth(none, 2)) / 2), py + Math.round(ph / 2), none, 2, RULE);
+    c.text(px + Math.round((pw - textWidth(none, 2)) / 2), py + Math.round(ph / 2), none, 2, INK_3);
   }
 
-  c.text(px, 52, "AMANAT", 7, INK, 2);
-  c.text(px, 116, "STORM RISK ON SHIPPING LANES, SETTLED ON CHAIN", 2, TRACE);
+  // The plate's own caption, inside it at the foot, where a plate prints one.
+  c.rect(px, py + ph - 34, pw, 1, KEY);
+  c.text(px + 14, py + ph - 24, "STORM RISK ON SHIPPING LANES, WORST HOUR ON EACH", 2, INK_3);
 
-  // Footer rule, echoing the page.
-  c.rect(px, H - 92, pw, 1, RULE);
-  c.text(px, H - 68, "TELEGRAPH PROTOCOL", 2, TRIGGER);
+  // On the sea: the name above, the sources below.
+  c.text(px, 46, "AMANAT", 7, ON_SEA, 2);
+  c.text(px, 108, "WEATHER COVER THAT PAYS ITSELF, SETTLED ON CHAIN", 2, ON_SEA_2);
+  c.text(px, H - 66, "TELEGRAPH PROTOCOL", 2, ON_SEA);
   const src = "OPEN-METEO, CC BY 4.0";
-  c.text(px + pw - textWidth(src, 2), H - 68, src, 2, MUTED);
+  c.text(px + pw - textWidth(src, 2), H - 66, src, 2, ON_SEA_2);
 
   return png(W, H, c.px);
 }
