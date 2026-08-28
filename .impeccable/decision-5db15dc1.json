@@ -1,0 +1,133 @@
+{
+  "title": "Choose the visual world for amanat-miner.vercel.app",
+  "question": "The roll assigned the Beaufort plate. Keep it, take an alternate, or re-roll.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Beaufort Plate",
+      "kicker": "THE ROLL",
+      "lineage": "the illustrated Beaufort sea-state plate every mariner memorises",
+      "thesis": "Storm risk is a force number on a plate you already know how to read; the trigger is the band where the plate turns red.",
+      "palette": ["#0b1f2e", "#f2ece0", "#8fa9b8", "#c8341e", "#2a5d4e"],
+      "materials": ["plate-book stock", "halftone sea photographs", "keyline rules", "one red band"],
+      "viewport": "A single plate, edge to edge: twelve force bands down the left, the live reading for the asked place pinned to its band, the red band at 0.75 carrying the words 'the cover pays'. The question field sits inside the plate's caption line. Nothing above it.",
+      "risk": "A plate is static by nature; without the live pin moving, it reads as a reference page rather than an instrument.",
+      "raised": [
+        { "from": "challenger-vu-meter-bridge", "raise": "The live reading is a needle with mass: it swings to its band over 300 ms with overshoot, never snaps." },
+        { "from": "challenger-pulp-rack", "raise": "Every reading ranks hook, place, and number in three fixed positions, so the eye lands the same way on each." },
+        { "from": "challenger-fashion-flagship", "raise": "One thing per viewport: the plate, then the Rai backtest, then the ledger, each given the whole screen." },
+        { "from": "challenger-hypercard", "raise": "Every reading, route and backtest is a URL; the back button retraces the exact trail." },
+        { "from": "challenger-papercut", "raise": "Depth by overlap only: flat layered colour, no gradients, no shadows, no tone." },
+        { "from": "challenger-rain-garden", "raise": "The Rai backtest replays deterministically, hour by hour, the needle crossing into the red at 13:00 UTC." }
+      ],
+      "hero": "https://impeccable.style/worlds/cards/signals-instruments-vu-meter-bridge-hero.webp"
+    },
+    {
+      "id": "model-pick",
+      "label": "Admiralty Chart",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "the nautical chart: soundings, compass rose, magenta warnings",
+      "thesis": "The five lanes and the named storm plotted on the chart the ports already sail by; the trigger is an isoline.",
+      "palette": ["#f4ecd6", "#c9b98a", "#1c2b3a", "#d1268d", "#3e6b8c"],
+      "materials": ["buff land, white sea", "tiny sounding numerals", "magenta caution ink", "compass rose"],
+      "viewport": "The Visayas and Luzon as a chart filling the viewport, the five board lanes drawn as tracks with their risk figure at the worst leg, DOLLY-class storms as the typhoon symbol where GDACS puts them, the question field styled as the chart's title cartouche.",
+      "risk": "Maps are the direction most weather products land on; familiar, and it needs real basemap data to stop being a diagram."
+    },
+    {
+      "id": "challenger-vu-meter-bridge",
+      "label": "VU Meter Bridge",
+      "verdict": "wins",
+      "lineage": "a row of ballistic VU needles behind glass on a recording desk",
+      "thesis": "The five lanes are five meters in a row; the only red on the page is the arc past 0.75, and the needles lean into it together when a storm comes.",
+      "palette": ["#141210", "#efe6cf", "#1a1613", "#c1281c", "#6b5030"],
+      "materials": ["ivory meter faces behind glass", "black scale arcs and needles", "walnut and steel desk", "strip labels"],
+      "viewport": "A desk-dark ground; across it, five ivory meter faces edge to edge, one per lane, needles at their live risk with true VU ballistics; the red arc from 0.75 to 1 on every face. Below the bridge, one strip: ask a place, and a sixth meter swings to it.",
+      "case": "Fuses cleanly: a meter is legible to anyone in under a second, the red arc is the trigger without a word of explanation, and the row reads the whole board at a sweep. Beats the plate on both axes.",
+      "risk": "Ivory faces on a dark desk is a committed scene; rendered timidly it collapses into a dashboard of gauges.",
+      "hero": "https://impeccable.style/worlds/cards/signals-instruments-vu-meter-bridge-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/signals-instruments-vu-meter-bridge.webp"
+    },
+    {
+      "id": "challenger-pulp-rack",
+      "label": "Pulp Paperback Rack",
+      "verdict": "declined",
+      "lineage": "drugstore wire rack of painted doom covers",
+      "thesis": "Each port a lurid cover promising a storm.",
+      "palette": ["#1b2a4a", "#f2c526", "#c8102e", "#efe4c8"],
+      "materials": ["painted covers", "pulp stock", "wire rack"],
+      "viewport": "A spinning rack of port covers.",
+      "case": "Judges and builders do not identify with pulp dread, and a cover hides the number.",
+      "kept": "A fixed three-tier hierarchy on every reading.",
+      "risk": "Melodrama where the product is measured.",
+      "hero": "https://impeccable.style/worlds/cards/posters-covers-sleeves-pulp-rack-hero.webp"
+    },
+    {
+      "id": "challenger-fashion-flagship",
+      "label": "Fashion Flagship",
+      "verdict": "declined",
+      "lineage": "monumental editorial type over full-bleed imagery",
+      "thesis": "One enormous figure set low on acres of space.",
+      "palette": ["#f7f5f0", "#111111", "#8a1c1c"],
+      "materials": ["bone-white space", "full-bleed photography"],
+      "viewport": "A single risk figure, monumental, and nothing else.",
+      "case": "No imagery to lead with, and the offer would hide behind the whitespace.",
+      "kept": "One thing per viewport.",
+      "risk": "Beautiful and mute.",
+      "hero": "https://impeccable.style/worlds/cards/luxury-fashion-flagship-hero.webp"
+    },
+    {
+      "id": "challenger-hypercard",
+      "label": "HyperCard Stack",
+      "verdict": "declined",
+      "lineage": "one-bit cards linked by painted buttons",
+      "thesis": "Every reading a card in a shoebox stack.",
+      "palette": ["#000000", "#ffffff"],
+      "materials": ["one-bit dither", "hand-drawn borders"],
+      "viewport": "A card with the reading and painted buttons to the next.",
+      "case": "Retro identification is narrow, and one-bit cannot carry a red trigger.",
+      "kept": "Every reading, route and backtest addressable by URL.",
+      "risk": "Novelty over instrument.",
+      "hero": "https://impeccable.style/worlds/cards/medium-native-hypercard-stack-shoebox-hero.webp"
+    },
+    {
+      "id": "challenger-papercut",
+      "label": "Layered Papercut",
+      "verdict": "declined",
+      "lineage": "Łowicz roundel cut from folded paper",
+      "thesis": "The risk gauge as a symmetrical roundel of pasted layers.",
+      "palette": ["#e63946", "#f1c40f", "#2a9d8f", "#264653", "#ffffff"],
+      "materials": ["flat glossy paper", "overlap for depth"],
+      "viewport": "A roundel that gains a layer per reading.",
+      "case": "Folk ornament does not identify with a settlement contract.",
+      "kept": "Depth by overlap only; no gradients, no shadows.",
+      "risk": "Decoration where the product is a number.",
+      "hero": "https://impeccable.style/worlds/cards/craft-making-lowicz-layered-papercut-hero.webp"
+    },
+    {
+      "id": "challenger-rain-garden",
+      "label": "Gravity Rain Garden",
+      "verdict": "declined",
+      "lineage": "surreal garden where rain obeys each cloud's colour",
+      "thesis": "Storms as coloured rains with their own gravity.",
+      "palette": ["#3f5a4c", "#2c6fd6", "#d63b2c", "#111111"],
+      "materials": ["vector-field rain", "dusk garden ground"],
+      "viewport": "Rain bending around the ports.",
+      "case": "Surreal physics contradicts a product whose whole claim is measured truth.",
+      "kept": "Deterministic replay: the Rai backtest replays the same way every time.",
+      "risk": "Whimsy against a trust product.",
+      "hero": "https://impeccable.style/worlds/cards/dream-surreal-impossible-worlds-gravity-rain-garden-hero.webp"
+    }
+  ],
+  "reroll": { "registers": ["safer", "bolder"] },
+  "buildPath": { "value": "code", "toggle": false },
+  "canon": true,
+  "canonCard": {
+    "label": "The category standard",
+    "thesis": "A dark protocol landing page: headline, three feature cards, a stats row, a call to action, executed impeccably.",
+    "palette": ["#0b0f14", "#e6edf3", "#3b82f6", "#22c55e"],
+    "materials": ["clean grid", "card grid", "monospace addresses"],
+    "viewport": "Headline and lede, a gauge card beside them, three feature cards below, then the ledger table.",
+    "risk": "Indistinguishable from every other entry by design."
+  },
+  "steer": true
+}

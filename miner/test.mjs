@@ -1,7 +1,7 @@
 // Self-check for the Amanat miner. One runnable file, no framework.
 //   node miner/test.mjs
 import assert from "node:assert/strict";
-import { riskScore, summarise, forecast, hoursIn, condition, restate } from "./lib/forecast.mjs";
+import { riskScore, summarise, forecast, hoursIn, windowIn, condition, restate } from "./lib/forecast.mjs";
 import { placeCandidates, coordinatesIn } from "./lib/geocode.mjs";
 import { greatCircleKm, waypoints, assessRoute } from "./lib/route.mjs";
 import { ttlCache, bucket } from "./lib/cache.mjs";
@@ -90,6 +90,14 @@ assert.equal(hoursIn("Will it be hot tomorrow?"), 24);
 assert.equal(hoursIn("How much rain tonight?"), 6);
 assert.equal(hoursIn("What is the weather in New York City?"), 0, "no time named means now");
 assert.equal(hoursIn("in 900 hours"), 168, "clamped to the forecast horizon");
+
+// A window and an instant are different questions. "In the next 48 hours" is
+// answered at its worst hour; "in 48 hours" at that hour, two days out.
+assert.equal(windowIn("Storm risk in Cebu in the next 48 hours?"), true);
+assert.equal(windowIn("Will it storm within 6 hours?"), true);
+assert.equal(windowIn("How much rain tonight?"), true);
+assert.equal(windowIn("Storm risk in Cebu in 48 hours?"), false);
+assert.equal(windowIn("Will it be hot tomorrow?"), false, "tomorrow names a day, answered at hour 24");
 
 // "Will Riyadh exceed…" starts a sentence, so "Will" is capitalised too and the
 // naive capitalised-run reading looks up "Will Riyadh", which is nowhere.

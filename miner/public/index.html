@@ -6,6 +6,7 @@
 <title>Amanat — weather cover that pays itself</title>
 <meta name="description" content="A contract that buys a verified storm reading and pays the claim itself. Built on Telegraph Protocol, settled on Base.">
 <link rel="canonical" href="https://amanat-miner.vercel.app/">
+<meta name="theme-color" content="#0b1f2e">
 
 <!-- Every link to this site posted on X rendered as a bare URL: no title, no
      description, no image. A quarter of the hackathon score is engagement
@@ -25,220 +26,280 @@
 <meta name="twitter:title" content="Amanat — weather cover that pays itself">
 <meta name="twitter:description" content="A contract buys a verified storm reading from Telegraph and pays the claim itself when it crosses 0.75.">
 <meta name="twitter:image" content="https://amanat-miner.vercel.app/card.png">
-<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="7" fill="%23E9EDE6"/><g stroke="%23CBD6C8" stroke-width="1.5"><line x1="7" y1="18" x2="57" y2="18"/><line x1="7" y1="46" x2="57" y2="46"/></g><line x1="7" y1="32" x2="57" y2="32" stroke="%23AE3A24" stroke-width="1.6" stroke-dasharray="4 3.5" stroke-linecap="round"/><g fill="none" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><polyline points="10,53 16,48 21,49 27,40 31,32" stroke="%231E6049"/><polyline points="31,32 36,24 42,21 48,13 53,11" stroke="%23AE3A24"/></g><circle cx="53" cy="11" r="4.5" fill="%23AE3A24"/></svg>'>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="7" fill="%23F2ECE0"/><g stroke="%238FA9B8" stroke-width="1.5"><line x1="7" y1="18" x2="57" y2="18"/><line x1="7" y1="46" x2="57" y2="46"/></g><line x1="7" y1="32" x2="57" y2="32" stroke="%23C8341E" stroke-width="1.6" stroke-dasharray="4 3.5" stroke-linecap="round"/><g fill="none" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><polyline points="10,53 16,48 21,49 27,40 31,32" stroke="%232A5D4E"/><polyline points="31,32 36,24 42,21 48,13 53,11" stroke="%23C8341E"/></g><circle cx="53" cy="11" r="4.5" fill="%23C8341E"/></svg>'>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Archivo:wght@400;500;600&family=Azeret+Mono:wght@400;500&display=swap">
 <style>
-/* Barograph paper: pale ruled stock, ink trace, one red trigger line.
-   The trigger is the only red on the page and the only thing that means
-   anything is about to be paid. */
+/* The Beaufort plate. One ivory reference plate on a night sea. The plate's
+   ink is black, its keylines are chart blue-grey, and the only red on the page
+   is the band from 0.75 up: the line the contract pays on. Below the trigger
+   a reading is sea green. Depth comes from overlap of flat colour, never from
+   a gradient or a shadow. */
 :root{
-  --paper:#E9EDE6; --paper-2:#F4F7F2; --card:#FDFEFC;
-  --ink:#141D18; --ink-2:#3B4A42; --muted:#5E6D63;
-  --rule:#CBD6C8; --rule-2:#DDE5DA;
-  --trace:#1E6049; --trace-soft:#DCEAE2;
-  --trigger:#AE3A24; --trigger-soft:#F6E2DC;
-  --shadow:0 1px 0 rgba(20,29,24,.04), 0 12px 32px -22px rgba(20,29,24,.5);
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --paper:#0D1411; --paper-2:#111A16; --card:#141F1A;
-    --ink:#E4EBE5; --ink-2:#B9C7BE; --muted:#7E9086;
-    --rule:#24322B; --rule-2:#1B2721;
-    --trace:#4FBE93; --trace-soft:#152A22;
-    --trigger:#E2664B; --trigger-soft:#2A1913;
-    --shadow:0 1px 0 rgba(0,0,0,.3), 0 12px 32px -22px rgba(0,0,0,.9);
-  }
-}
-:root[data-theme="dark"]{
-  --paper:#0D1411; --paper-2:#111A16; --card:#141F1A;
-  --ink:#E4EBE5; --ink-2:#B9C7BE; --muted:#7E9086;
-  --rule:#24322B; --rule-2:#1B2721;
-  --trace:#4FBE93; --trace-soft:#152A22;
-  --trigger:#E2664B; --trigger-soft:#2A1913;
-  --shadow:0 1px 0 rgba(0,0,0,.3), 0 12px 32px -22px rgba(0,0,0,.9);
+  --sea:#0b1f2e; --sea-2:#10293b; --sea-3:#163448;
+  --on-sea:#e9eef0; --on-sea-2:#a9bcc7;
+  --plate:#f2ece0; --plate-2:#e6dcc7; --plate-3:#d9ccb2;
+  --ink:#14110c; --ink-2:#3d3a33; --ink-3:#575349;
+  --key:#8fa9b8; --key-2:#b9c9d2;
+  --trigger:#c8341e; --trigger-ink:#ffffff; --trigger-tint:#f1cfc5;
+  --calm:#2a5d4e; --calm-tint:#cfe0d6;
+  --display:"Big Shoulders Display","Big Shoulders",Impact,"Arial Narrow",sans-serif;
+  --body:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --mono:"Azeret Mono",ui-monospace,Menlo,Consolas,monospace;
+  --swing:cubic-bezier(.34,1.56,.64,1);
 }
 
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
+html{-webkit-text-size-adjust:100%; scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto} }
 body{
-  margin:0; background:var(--paper); color:var(--ink);
-  font-family:"Public Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  font-size:17px; line-height:1.6;
-  /* the ruled stock itself */
-  background-image:repeating-linear-gradient(to bottom, transparent 0 63px, var(--rule-2) 63px 64px);
+  margin:0; background:var(--sea); color:var(--on-sea);
+  font-family:var(--body); font-size:17px; line-height:1.55;
+  font-variant-numeric:tabular-nums;
 }
-.wrap{max-width:1040px; margin:0 auto; padding:0 24px}
-h1,h2,h3{font-family:"Familjen Grotesk",system-ui,sans-serif; margin:0; text-wrap:balance; letter-spacing:-.02em}
-a{color:var(--trace); text-underline-offset:3px}
-a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--trace); outline-offset:3px; border-radius:2px}
-.mono{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
-.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:.7rem; letter-spacing:.2em;
-  text-transform:uppercase; color:var(--muted)}
+::selection{background:var(--trigger); color:var(--trigger-ink)}
+.plate ::selection{background:var(--ink); color:var(--plate)}
+a{color:inherit; text-decoration-thickness:1px; text-underline-offset:3px}
+:focus-visible{outline:2px solid var(--trigger); outline-offset:3px}
+.plate :focus-visible{outline-color:var(--ink)}
+h1,h2,h3{font-family:var(--display); font-weight:900; margin:0; line-height:.95; letter-spacing:-.01em; text-wrap:balance}
+h1{font-size:clamp(2.8rem,6.6vw,5.2rem); text-transform:uppercase}
+h2{font-size:clamp(2rem,5vw,3.6rem); text-transform:uppercase}
+h3{font-size:1.35rem; text-transform:uppercase; letter-spacing:.01em}
+p{margin:0}
+code,.mono{font-family:var(--mono); font-size:.92em; overflow-wrap:anywhere}
+/* Grid children default to min-width:auto, which lets a long unbreakable
+   string (a URL in a code span, a lane name) push the whole plate past the
+   viewport edge. Firefox measured 86px of sideways scroll on a phone from it. */
+.band > *, .reading > *, .foot-note > *, .plate-head > *, ol.flow li > *{min-width:0}
+.foot-note span{overflow-wrap:anywhere}
+.wrap{max-width:1180px; margin:0 auto; padding:0 24px}
+button{font:inherit}
 
-/* ── masthead ─────────────────────────────────────── */
-header{border-bottom:1px solid var(--rule); background:var(--paper-2)}
-.bar{display:flex; align-items:baseline; justify-content:space-between; gap:16px; padding:18px 0; flex-wrap:wrap}
-.mark{font-family:"Familjen Grotesk",sans-serif; font-weight:700; font-size:1.15rem; letter-spacing:.02em;
-  display:flex; align-items:center; gap:10px}
-.mark .glyph{width:30px; height:30px; flex:0 0 auto; display:block}
-.mark span{color:var(--muted); font-weight:400; font-size:.8rem; letter-spacing:.14em; text-transform:uppercase}
-/* The name sits tight against the mark; only the tagline is set apart. */
-.mark .word{color:var(--ink); font-weight:700; font-size:1.15rem; letter-spacing:.02em; text-transform:none}
-@media (max-width:560px){ .mark span:not(.word){display:none} }
-nav{display:flex; gap:20px; font-size:.85rem; flex-wrap:wrap}
-/* Each link stays on one line and the row wraps between them, rather than
-   every label breaking mid-phrase and the last one falling off the edge. */
-nav a{color:var(--ink-2); text-decoration:none; white-space:nowrap}
-nav a:hover{color:var(--trace)}
+/* ── masthead: a strip label across the top of the desk ─────────────────── */
+header{border-bottom:1px solid var(--sea-3)}
+.bar{display:flex; align-items:center; justify-content:space-between; gap:20px; padding:18px 0; flex-wrap:wrap}
+.mark{display:flex; align-items:center; gap:12px; color:var(--on-sea); text-decoration:none}
+.mark .glyph{width:34px; height:34px; flex:0 0 auto; display:block}
+.mark .word{font-family:var(--display); font-weight:900; font-size:1.7rem; letter-spacing:.06em; text-transform:uppercase; line-height:1}
+.mark .sub{font-size:.8rem; color:var(--on-sea-2); letter-spacing:.02em}
+@media (max-width:560px){ .mark .sub{display:none} }
+nav{display:flex; gap:4px 18px; font-size:.9rem; flex-wrap:wrap}
+nav a{color:var(--on-sea-2); text-decoration:none; white-space:nowrap; padding:4px 0; border-bottom:2px solid transparent}
+nav a:hover{color:var(--on-sea); border-bottom-color:var(--key)}
 
-/* ── hero: the trigger line ───────────────────────── */
-.hero{padding:76px 0 0}
-.hero h1{font-size:clamp(2.4rem,6.4vw,4.1rem); line-height:1.02; font-weight:700; max-width:15ch}
-.hero p.lede{font-size:1.18rem; color:var(--ink-2); max-width:56ch; margin:22px 0 0}
+/* ── the plate ───────────────────────────────────────────────────────────── */
+.plate{
+  background:var(--plate); color:var(--ink);
+  border:2px solid var(--ink);
+  margin:28px 0 0;
+}
+.plate-head{position:relative; padding:38px 36px 20px; border-bottom:2px solid var(--ink); display:grid; grid-template-columns:1fr; gap:14px}
+.plate-head .lede{font-size:1.04rem; color:var(--ink-2); max-width:62ch}
+/* The plate's number, printed in the margin the way a plate book prints it:
+   top right, out of the heading's way. Never a label above a title. */
+.plate-no{position:absolute; top:12px; right:16px; font-family:var(--display); font-weight:700; font-size:.95rem; color:var(--ink-3)}
+.sheet{position:relative}
+@media (min-width:900px){
+  .plate-head{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); align-items:end; gap:32px}
+}
+.plate-body{display:grid; grid-template-columns:1fr}
+@media (min-width:900px){ .plate-body{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)} }
+/* The scale on the left, the lanes and the question on the right, so the
+   first viewport carries the instrument and the action together. On a phone
+   the lanes and the question come first; the scale is the reference below. */
+.side{display:flex; flex-direction:column}
+.side .caption{border-top:2px solid var(--ink); flex:1}
+@media (max-width:899px){
+  .side{order:-1}
+  .bands{border-top:2px solid var(--ink)}
+}
 
-/* The signature: one horizontal line that everything is either under or over. */
-.gauge{margin:56px 0 0; position:relative; height:290px; border-top:1px solid var(--rule); border-bottom:1px solid var(--rule); background:var(--card)}
-.gauge-inner{position:absolute; inset:0; padding:26px 22px}
-.trigger-line{position:absolute; left:0; right:0; top:25%; height:0; border-top:2px solid var(--trigger)}
-.trigger-tag{position:absolute; right:14px; top:calc(25% - 26px); font-family:"IBM Plex Mono",monospace;
-  font-size:.7rem; letter-spacing:.12em; text-transform:uppercase; color:var(--trigger);
-  background:var(--trigger-soft); padding:3px 8px; border-radius:2px}
-/* The band above the line is empty when no policy is near its trigger. Saying so
-   turns the emptiness into the reading it actually is. */
-.quiet-band{position:absolute; left:22px; top:14px; font-family:"IBM Plex Mono",monospace;
-  font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted)}
-.plot{position:absolute; inset:26px 22px 26px 22px; display:flex; align-items:flex-end; gap:clamp(6px,2.4vw,26px)}
-.reading.missing .val{color:var(--muted); font-style:italic}
-.reading{flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; height:100%; position:relative}
-.stem{width:2px; background:var(--rule); flex:0 0 auto}
-.dot{width:11px; height:11px; border-radius:50%; background:var(--trace); border:2px solid var(--card);
-  box-shadow:0 0 0 1px var(--trace); transition:transform .5s cubic-bezier(.22,1,.36,1)}
-.reading.over .dot{background:var(--trigger); box-shadow:0 0 0 1px var(--trigger)}
-.reading .val{font-family:"IBM Plex Mono",monospace; font-size:.78rem; color:var(--ink-2); margin-bottom:8px}
-.reading.over .val{color:var(--trigger); font-weight:600}
-.reading .place{font-family:"IBM Plex Mono",monospace; font-size:.66rem; letter-spacing:.06em;
-  text-transform:uppercase; color:var(--muted); margin-top:10px; white-space:nowrap;
-  position:absolute; bottom:-4px; transform:translateY(100%)}
-.stale{color:var(--trigger)}
-.gauge-foot{display:flex; justify-content:space-between; gap:12px; padding:14px 0 0; font-size:.82rem; color:var(--muted); flex-wrap:wrap}
+/* the bands: the scale itself, 0.0 at the foot, 1.0 at the head */
+.bands{list-style:none; margin:0; padding:0; display:flex; flex-direction:column-reverse; border-right:0}
+@media (min-width:900px){ .bands{border-right:2px solid var(--ink)} }
+.band{
+  display:grid; grid-template-columns:5.4rem 1fr 4.6rem; align-items:center; gap:12px;
+  padding:9px 18px 9px 22px; border-top:1px solid var(--key-2); min-height:52px;
+}
+.band:last-child{border-top:0}
+.band .f{font-family:var(--display); font-weight:900; font-size:1.9rem; line-height:1; letter-spacing:.01em}
+.band .f small{display:block; font-family:var(--body); font-weight:500; font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3); margin-top:3px}
+.band .what{font-size:.9rem; color:var(--ink-2); line-height:1.35}
+.band .what b{color:var(--ink); font-weight:600}
+.band svg{width:100%; height:34px; display:block}
+.band.pays{background:var(--trigger); color:var(--trigger-ink); border-top-color:var(--trigger)}
+.band.pays .f small,.band.pays .what,.band.pays .what b{color:var(--trigger-ink)}
+.band.pays + .band{border-top-color:var(--trigger)}
+.band.rim{background:var(--plate-2)}
 
-/* ── check a location ─────────────────────────────── */
-.check{margin:104px 0 0; border:1px solid var(--rule); border-radius:4px; background:var(--card); box-shadow:var(--shadow); overflow:hidden}
-.check-head{padding:24px 26px 0}
-.check h2{font-size:1.55rem; font-weight:600}
-.check-head p{color:var(--ink-2); margin:10px 0 0; max-width:58ch}
-form{display:flex; gap:10px; padding:22px 26px 26px; flex-wrap:wrap}
-input{flex:1 1 220px; min-width:0; font:inherit; font-family:"IBM Plex Mono",monospace; font-size:.92rem;
-  padding:12px 14px; border:1px solid var(--rule); border-radius:3px; background:var(--paper-2); color:var(--ink)}
-button{font:inherit; font-family:"Familjen Grotesk",sans-serif; font-weight:600; font-size:.95rem;
-  padding:12px 22px; border:0; border-radius:3px; background:var(--trace); color:var(--card); cursor:pointer}
-button:hover{filter:brightness(1.08)}
-button[disabled]{opacity:.55; cursor:progress}
-.presets{display:flex; gap:8px; flex-wrap:wrap; padding:0 26px 24px}
-.presets button{background:transparent; color:var(--ink-2); border:1px solid var(--rule); font-weight:500; padding:7px 13px; font-size:.82rem}
-.presets button:hover{border-color:var(--trace); color:var(--trace); filter:none}
-.result{border-top:1px solid var(--rule); padding:24px 26px; display:none}
+/* the pins: the five lanes read against the scale */
+.pins{padding:18px 22px 14px; display:flex; flex-direction:column; gap:4px}
+.pins-head{display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:10px}
+.pins-head h2{font-size:1.5rem}
+.pins-head .note{font-size:.86rem; color:var(--ink-3)}
+#plot{display:flex; flex-direction:column; gap:10px; min-height:60px}
+#plot .err{color:var(--trigger); font-weight:500; padding:8px 0}
+.reading{display:grid; grid-template-columns:minmax(0,12.5rem) 1fr 3.9rem; align-items:center; gap:10px}
+.reading .place{font-weight:600; font-size:.92rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.reading .val{font-family:var(--display); font-weight:900; font-size:1.55rem; text-align:right; line-height:1}
+.reading.over .val{color:var(--trigger)}
+.reading.missing .val{font-family:var(--body); font-weight:500; font-size:.82rem; color:var(--ink-3)}
+.track{position:relative; height:26px; background:var(--plate-2); border:1px solid var(--key)}
+.track::after{content:""; position:absolute; top:-1px; bottom:-1px; left:75%; right:-1px; background:var(--trigger-tint); border-left:2px solid var(--trigger)}
+.pin{
+  position:absolute; top:-6px; bottom:-6px; width:3px; background:var(--calm); left:0;
+  transition:left .55s var(--swing); z-index:1;
+}
+.pin::before{content:""; position:absolute; left:50%; top:-5px; width:11px; height:11px; margin-left:-5.5px; background:inherit; border-radius:50%}
+.reading.over .pin{background:var(--trigger)}
+@media (prefers-reduced-motion:reduce){ .pin{transition:none} }
+.scale-foot{display:flex; justify-content:space-between; font-size:.78rem; color:var(--ink-3); padding:4px 0 0 calc(12.5rem + 10px)}
+.scale-foot span:last-child{color:var(--trigger); font-weight:600}
+@media (max-width:560px){
+  .reading{grid-template-columns:minmax(0,7.5rem) 1fr 3.4rem}
+  /* A lane name wraps to two lines here rather than losing its far end: the
+     port it is going to is the half a reader needs. */
+  .reading .place{white-space:normal; line-height:1.15; font-size:.84rem}
+  .scale-foot{padding-left:calc(7.5rem + 10px)}
+}
+.stamp{margin-top:8px; font-size:.86rem; color:var(--ink-3); display:flex; gap:8px 16px; flex-wrap:wrap; justify-content:space-between}
+#plotstamp.stale{color:var(--trigger); font-weight:600}
+
+/* the caption line: where the plate is asked a question */
+.caption{padding:18px 36px 28px}
+.caption h2{font-size:1.5rem; margin-bottom:4px}
+.caption > p{font-size:.96rem; color:var(--ink-2); max-width:70ch; margin-bottom:12px}
+form{display:flex; gap:10px; flex-wrap:wrap}
+input{
+  flex:1 1 16rem; min-width:0; padding:13px 14px; font-size:1.02rem; color:var(--ink);
+  background:#fff; border:2px solid var(--ink); border-radius:0; font-family:var(--body);
+}
+input::placeholder{color:var(--ink-3)}
+button{
+  padding:13px 22px; background:var(--ink); color:var(--plate); border:2px solid var(--ink); border-radius:0;
+  font-family:var(--display); font-weight:900; font-size:1.15rem; letter-spacing:.06em; text-transform:uppercase; cursor:pointer;
+}
+button:hover{background:var(--sea)}
+button:disabled{background:var(--ink-3); border-color:var(--ink-3); cursor:wait}
+.presets{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px}
+.presets button{padding:7px 12px; font-family:var(--body); font-weight:500; font-size:.86rem; letter-spacing:0; text-transform:none; background:transparent; color:var(--ink); border:1px solid var(--ink-3)}
+.presets button:hover{background:var(--ink); color:var(--plate); border-color:var(--ink)}
+
+/* a reading, in three fixed positions: the hook, the place, the number */
+.result{display:none; margin-top:22px; border-top:2px solid var(--ink); padding-top:18px}
 .result.shown{display:block}
-.verdict{font-family:"Familjen Grotesk",sans-serif; font-size:1.35rem; font-weight:600; display:flex; align-items:baseline; gap:12px; flex-wrap:wrap}
-.verdict .num{font-family:"IBM Plex Mono",monospace; font-size:2.1rem; font-weight:600; color:var(--trace)}
+.verdict{display:grid; grid-template-columns:auto 1fr; align-items:end; gap:16px}
+.verdict .num{font-family:var(--display); font-weight:900; font-size:clamp(3.4rem,9vw,5.6rem); line-height:.85; color:var(--calm)}
 .result.breach .verdict .num{color:var(--trigger)}
-.summary{color:var(--ink-2); margin:12px 0 0; font-size:.98rem}
-.figures{display:flex; gap:26px; flex-wrap:wrap; margin:18px 0 0; padding:16px 0 0; border-top:1px dashed var(--rule)}
-.figures div{font-family:"IBM Plex Mono",monospace; font-size:.82rem; color:var(--muted)}
-.figures b{display:block; font-size:1.02rem; color:var(--ink); font-weight:500; margin-top:3px}
-.err{color:var(--trigger); font-family:"IBM Plex Mono",monospace; font-size:.86rem}
+.verdict span:last-child{font-family:var(--display); font-weight:700; font-size:1.3rem; text-transform:uppercase; letter-spacing:.04em; padding-bottom:6px}
+.result.breach .verdict span:last-child{color:var(--trigger)}
+.summary{margin-top:14px; font-size:1rem; color:var(--ink-2); max-width:78ch}
+.figures{display:flex; gap:10px 26px; flex-wrap:wrap; margin-top:16px; padding-top:14px; border-top:1px solid var(--key-2)}
+.figures div{font-size:.82rem; color:var(--ink-3)}
+.figures b{display:block; font-family:var(--display); font-weight:700; font-size:1.25rem; color:var(--ink); margin-top:2px; letter-spacing:.01em}
+.err{color:var(--trigger); font-weight:500}
 
-/* ── a route, leg by leg ──────────────────────────── */
-.legs{margin:18px 0 0; display:flex; flex-direction:column; gap:2px}
-.leg{display:grid; grid-template-columns:5.5rem 3.2rem 1fr 3.6rem; gap:0 12px; align-items:center;
-  font-family:"IBM Plex Mono",monospace; font-size:.78rem; color:var(--muted); padding:5px 0}
-.leg .bar{height:9px; background:var(--rule-2); border-radius:1px; position:relative; overflow:hidden}
-.leg .bar i{display:block; height:100%; background:var(--trace)}
+/* legs of a route */
+.legs{margin-top:16px; border-top:1px solid var(--key-2)}
+.legs-head,.leg{display:grid; grid-template-columns:5rem 4rem 1fr 4.2rem; gap:12px; align-items:center; padding:8px 0; border-bottom:1px solid var(--key-2); font-size:.9rem}
+.legs-head{color:var(--ink-3); font-size:.8rem}
+.leg .bar{position:relative; height:14px; background:var(--plate-2); border:1px solid var(--key)}
+.leg .bar::after{content:""; position:absolute; top:-1px; bottom:-1px; left:75%; width:2px; background:var(--trigger)}
+.leg .bar i{position:absolute; left:0; top:0; bottom:0; background:var(--calm)}
 .leg.over .bar i{background:var(--trigger)}
-.leg .risk{text-align:right; color:var(--ink); font-size:.86rem}
-.leg.over .risk{color:var(--trigger)}
-.leg.unread .risk{font-style:italic; color:var(--muted)}
-/* The trigger sits at 0.75 of the bar, the same line the gauge draws. */
-.leg .bar::after{content:""; position:absolute; left:75%; top:0; bottom:0; width:1px; background:var(--trigger); opacity:.45}
-.legs-head{display:grid; grid-template-columns:5.5rem 3.2rem 1fr 3.6rem; gap:0 12px;
-  font-family:"IBM Plex Mono",monospace; font-size:.66rem; letter-spacing:.1em; text-transform:uppercase;
-  color:var(--muted); padding-bottom:6px; border-bottom:1px solid var(--rule-2)}
+.leg.over .risk{color:var(--trigger); font-weight:600}
+.leg.unread{color:var(--ink-3)}
+.leg .risk{text-align:right; font-family:var(--display); font-weight:700; font-size:1.1rem}
 
-/* ── how it settles ───────────────────────────────── */
-.steps{margin:104px 0 0}
-.steps h2{font-size:1.9rem; font-weight:700}
-.steps > p{color:var(--ink-2); max-width:62ch; margin:14px 0 0}
-ol.flow{list-style:none; margin:36px 0 0; padding:0; display:grid; gap:0; border:1px solid var(--rule); border-radius:4px; overflow:hidden; background:var(--card)}
-ol.flow li{padding:22px 26px; border-bottom:1px solid var(--rule-2); display:grid; grid-template-columns:auto 1fr; gap:0 20px; align-items:start}
+/* ── plates further down: one thing per viewport ─────────────────────────── */
+.sheet{padding:34px 36px 32px}
+.sheet > p{font-size:1.02rem; color:var(--ink-2); max-width:66ch; margin:14px 0 0}
+.tablewrap{margin-top:20px; overflow-x:auto; border:1px solid var(--ink); padding:6px 14px 10px; background:#fff}
+/* Forty-five intents is the whole board and the whole board is the point, but
+   it must not be the whole page: the table scrolls inside its own frame. */
+#survey .tablewrap{max-height:520px; overflow:auto}
+#survey thead th{position:sticky; top:0; background:#fff}
+table{border-collapse:collapse; width:100%; font-size:.92rem}
+th,td{text-align:left; padding:10px 12px; border-bottom:1px solid var(--key-2); white-space:nowrap}
+th{font-size:.78rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-3)}
+tr:last-child td{border-bottom:0}
+td.m,th.m{text-align:right}
+.tag{display:inline-block; padding:3px 9px; font-size:.78rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; background:var(--trigger); color:var(--trigger-ink)}
+.tag.declined{background:var(--plate-2); color:var(--ink-2); border:1px solid var(--key)}
+.tag.active{background:var(--calm); color:#fff}
+.foot-note{font-size:.84rem; color:var(--ink-3); margin-top:14px; display:flex; gap:6px 14px; flex-wrap:wrap}
+.foot-note code{font-size:.8rem}
+
+/* the replay: the archive run through the needle, hour by hour */
+.replay{margin-top:22px; border-top:2px solid var(--ink); padding-top:18px; display:grid; gap:12px}
+.replay-head{display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap}
+.replay-head h3{font-size:1.2rem}
+.replay .clock{font-family:var(--display); font-weight:700; font-size:1.2rem; color:var(--ink-2); letter-spacing:.03em}
+.replay .track{height:34px}
+.replay .pin{transition:left .12s linear}
+.replay .pin.red{background:var(--trigger)}
+.replay .read{display:flex; justify-content:space-between; font-size:.86rem; color:var(--ink-3)}
+.replay .read b{font-family:var(--display); font-size:1.35rem; color:var(--ink)}
+.replay .read b.red{color:var(--trigger)}
+
+/* the steps, as rows of the plate */
+ol.flow{list-style:none; margin:24px 0 0; padding:0; border-top:2px solid var(--ink)}
+ol.flow li{display:grid; grid-template-columns:8rem 1fr; gap:18px; padding:18px 0; border-bottom:1px solid var(--key-2)}
 ol.flow li:last-child{border-bottom:0}
-ol.flow .who{font-family:"IBM Plex Mono",monospace; font-size:.68rem; letter-spacing:.14em; text-transform:uppercase;
-  color:var(--muted); padding-top:5px; white-space:nowrap}
-ol.flow h3{font-size:1.05rem; font-weight:600}
-ol.flow p{margin:6px 0 0; color:var(--ink-2); font-size:.95rem}
-ol.flow code{font-family:"IBM Plex Mono",monospace; font-size:.85em; background:var(--trace-soft); padding:1px 5px; border-radius:2px; color:var(--trace)}
+ol.flow .who{font-family:var(--display); font-weight:900; font-size:1.7rem; text-transform:uppercase; line-height:1; color:var(--ink)}
+ol.flow h3{margin-bottom:6px}
+ol.flow p{font-size:.98rem; color:var(--ink-2); max-width:66ch}
+@media (max-width:640px){ ol.flow li{grid-template-columns:1fr; gap:8px} }
 
-/* ── ledger ───────────────────────────────────────── */
-.ledger{margin:104px 0 0}
-.ledger h2{font-size:1.9rem; font-weight:700}
-.ledger > p{color:var(--ink-2); max-width:62ch; margin:14px 0 0}
-.tablewrap{overflow-x:auto; border:1px solid var(--rule); border-radius:4px; margin:30px 0 0; background:var(--card)}
-table{border-collapse:collapse; width:100%; font-size:.88rem}
-th,td{text-align:left; padding:11px 16px; border-bottom:1px solid var(--rule-2); white-space:nowrap}
-thead th{font-family:"IBM Plex Mono",monospace; font-size:.66rem; letter-spacing:.12em; text-transform:uppercase;
-  color:var(--muted); background:var(--paper-2)}
-tbody tr:last-child td{border-bottom:0}
-td.m{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums}
-.tag{font-family:"IBM Plex Mono",monospace; font-size:.68rem; letter-spacing:.06em; text-transform:uppercase;
-  padding:2px 7px; border-radius:2px; background:var(--trace-soft); color:var(--trace)}
-.tag.declined{background:var(--paper-2); color:var(--muted)}
-.tag.active{background:var(--trigger-soft); color:var(--trigger)}
+footer{margin:56px 0 40px; padding-top:20px; border-top:1px solid var(--sea-3); font-size:.86rem; color:var(--on-sea-2); display:grid; gap:8px}
+footer a{color:var(--on-sea)}
 
-footer{margin:104px 0 0; border-top:1px solid var(--rule); padding:26px 0 60px;
-  display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap;
-  font-family:"IBM Plex Mono",monospace; font-size:.76rem; color:var(--muted)}
-footer a{color:var(--muted)}
-
-@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
 @media (max-width:640px){
-  body{font-size:16px}
-  .bar{padding:14px 0 16px}
-  nav{gap:8px 16px; font-size:.8rem}
-  .gauge{height:250px}
-  .reading .place{font-size:.58rem}
-  ol.flow li{grid-template-columns:1fr; gap:8px}
+  .plate-head,.caption,.sheet{padding-left:18px; padding-right:18px}
+  .band{grid-template-columns:4.4rem 1fr 3.6rem; padding-left:14px; padding-right:12px}
+  .band .f{font-size:1.5rem}
+  .pins{padding:18px 14px 14px}
 }
 </style>
 </head>
 <body>
+<!--
+THESIS: Storm risk is a force number on a plate a mariner already knows how to read, and the band where the plate turns red is the line the contract pays on. It refuses the category's dark protocol landing: headline, three cards, stats row.
+OWN-WORLD: one ivory plate (#f2ece0) on a night sea (#0b1f2e); black ink, chart blue-grey keylines, sea green below the trigger, and exactly one red, the band from 0.75. Big Shoulders Display for every number and heading, Archivo for reading, Azeret Mono for hashes. Depth by overlap of flat colour only.
+STORY: a judge or builder sees the scale, sees five lanes pinned against it with needles that swung in, asks the plate about a place, gets a reading in three fixed positions, then follows a number to the chain or the archive.
+FIRST VIEWPORT: the plate edge to edge. Head: the title and the lede. Body: eleven risk bands down the left, 0.0 at the foot, red from 0.75; the five lanes on the right as pins on tracks. Caption: the question field and the button. Nothing above the plate but the masthead.
+FORM: Beaufort plate, candidate 6 of 7 on the grounded list, assigned by seed 5db15dc1; raised with VU ballistics, one thing per viewport, a fixed three-position reading, URL-addressable readings, overlap-only depth, and a deterministic replay of Typhoon Rai.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance.
+-->
 
 <header>
   <div class="wrap bar">
-    <div class="mark">
+    <a class="mark" href="/" aria-label="Amanat, home">
       <!-- The same geometry as /logo.svg, inlined so it takes the page's own
-           tokens and follows the theme rather than carrying a second palette. -->
+           tokens: sea green below the line, the red of the trigger above. -->
       <svg class="glyph" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
-        <g stroke="var(--rule)" stroke-width="1.5">
+        <rect width="64" height="64" rx="7" fill="var(--plate)"/>
+        <g stroke="var(--key)" stroke-width="1.5">
           <line x1="7" y1="18" x2="57" y2="18"/>
           <line x1="7" y1="46" x2="57" y2="46"/>
         </g>
-        <line x1="7" y1="32" x2="57" y2="32" stroke="var(--trigger)"
-              stroke-width="1.6" stroke-dasharray="4 3.5" stroke-linecap="round"/>
+        <line x1="7" y1="32" x2="57" y2="32" stroke="var(--trigger)" stroke-width="1.6" stroke-dasharray="4 3.5" stroke-linecap="round"/>
         <g fill="none" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="10,53 16,48 21,49 27,40 31,32" stroke="var(--trace)"/>
+          <polyline points="10,53 16,48 21,49 27,40 31,32" stroke="var(--calm)"/>
           <polyline points="31,32 36,24 42,21 48,13 53,11" stroke="var(--trigger)"/>
         </g>
         <circle cx="53" cy="11" r="4.5" fill="var(--trigger)"/>
       </svg>
-      <span class="word">Amanat</span><span>parametric weather cover</span>
-    </div>
-    <nav>
-      <a href="#check">Check a location</a>
+      <span class="word">Amanat</span><span class="sub">parametric weather cover</span>
+    </a>
+    <nav aria-label="Sections">
+      <a href="#check">Check a place</a>
       <a href="#route">Check a route</a>
+      <a href="#backtest">Backtest</a>
       <a href="#settles">How it settles</a>
       <a href="#ledger">Ledger</a>
-      <a href="#backtest">Backtest</a>
       <a href="#use">Use it</a>
       <a href="https://github.com/PugarHuda/amanat">Source</a>
     </nav>
@@ -247,244 +308,326 @@ footer a{color:var(--muted)}
 
 <main class="wrap">
 
-  <section class="hero">
-    <span class="eyebrow">Telegraph Protocol · Base Sepolia</span>
-    <h1>One reading, one line, no adjuster.</h1>
-    <p class="lede">
-      A policy here is a mandate the contract carries out on its holder's behalf.
-      It buys a storm reading from whichever miner the network ranks best, and
-      pays the claim itself when the reading crosses the line. Nobody approves it.
-      Nobody can decline it out of turn.
-    </p>
+  <!-- ── Plate I: the scale, the lanes, the question ─────────────────────── -->
+  <section class="plate" id="plate" aria-labelledby="title">
+    <div class="plate-head">
+      <div>
+        <div class="plate-no">Plate I · storm risk, 0 to 1</div>
+        <h1 id="title">One reading, one line, no adjuster.</h1>
+      </div>
+      <p class="lede">
+        A policy here is a mandate the contract carries out by itself. It buys a
+        storm reading from whichever miner the network ranks best, and pays the
+        claim the moment the reading crosses the red band. Nobody approves it.
+        Nobody can decline it out of turn.
+      </p>
+    </div>
 
-    <div class="gauge" aria-label="Storm risk on the watched shipping lanes, against the payout trigger">
-      <div class="gauge-inner">
-        <div class="trigger-line" role="presentation"></div>
-        <div class="trigger-tag">pays at 0.75</div>
-        <div class="quiet-band">worst hour on each lane · nothing here means nothing is owed</div>
-        <div class="plot" id="plot"></div>
+    <div class="plate-body">
+      <!-- The scale. Each band names what reaches it: the sustained wind, the
+           gust, the hour of rain or the sea that scores this high on its own.
+           Risk is the worst single driver, so any one of them is enough. -->
+      <ol class="bands" aria-label="The risk scale, with what reaches each band">
+        <li class="band">
+          <div class="f">0.0<small>calm</small></div>
+          <div class="what">Sea like a mirror. Nothing here is owed.</div>
+          <svg viewBox="0 0 100 34" aria-hidden="true"><path d="M0 24 H100" stroke="var(--key)" stroke-width="1.5" fill="none"/></svg>
+        </li>
+        <li class="band">
+          <div class="f">0.1<small>light air</small></div>
+          <div class="what">Wind <b>6 km/h</b>, gusts <b>9</b>, rain <b>3 mm/h</b> or seas <b>0.4 m</b>.</div>
+          <svg viewBox="0 0 100 34" aria-hidden="true"><path d="M0 24 q12-3 25 0 t25 0 t25 0 t25 0" stroke="var(--key)" stroke-width="1.5" fill="none"/></svg>
+        </li>
+        <li class="band">
+          <div class="f">0.2<small>light breeze</small></div>
+          <div class="what">Wind <b>12 km/h</b>, gusts <b>18</b>, rain <b>6 mm/h</b> or seas <b>0.8 m</b>.</div>
+          <svg viewBox="0 0 100 34" aria-hidden="true"><path d="M0 24 q12-5 25 0 t25 0 t25 0 t25 0" stroke="var(--key)" stroke-width="1.5" fill="none"/></svg>
+        </li>
+        <li class="band">
+          <div class="f">0.3<small>gentle</small></div>
+          <div class="what">Wind <b>19 km/h</b>, gusts <b>27</b>, rain <b>9 mm/h</b> or seas <b>1.2 m</b>.</div>
+          <svg viewBox="0 0 100 34" aria-hidden="true"><path d="M0 26 q10-8 20 0 t20 0 t20 0 t20 0 t20 0" stroke="var(--key)" stroke-width="1.5" fill="none"/><path d="M0 30 q10-6 20 0 t20 0 t20 0 t20 0 t20 0" stroke="var(--key-2)" stroke-width="1.5" fill="none"/></svg>
+        </li>
+        <li class="band">
+          <div class="f">0.4<small>moderate</small></div>
+          <div class="what">Wind <b>25 km/h</b>, gusts <b>36</b>, rain <b>12 mm/h</b> or seas <b>1.6 m</b>. Whitecaps.</div>
+          <svg viewBox="0 0 100 34" aria-hidden="true"><path d="M0 26 q8-10 16 0 t16 0 t16 0 t16 0 t16 0 t16 0" stroke="var(--key)" stroke-width="1.5" fill="none"/><path d="M0 31 q8-7 16 0 t16 0 t16 0 t16 0 t16 0 t16 0" stroke="var(--key-2)" stroke-width="1.5" fill="none"/><path d="M14 17 l3 -3 M46 17 l3 -3 M78 17 l3 -3" stroke="var(--ink)" stroke-width="1.5" fill="none"/></svg>
+        </li>
+        <li class="band">
+          <div class="f">0.5<small>fresh</small></div>
+          <div class="what">Wind <b>31 km/h</b>, gusts <b>45</b>, rain <b>15 mm/h</b> or seas <b>2.0 m</b>.</div>
+          <svg viewBox="0 0 100 34" aria-hidden="true"><path d="M0 26 q7-13 14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0" stroke="var(--key)" stroke-width="1.5" fill="none"/><path d="M0 31 q7-9 14 0 t14 0 t14 0 t14 0 t14 0 t14 0 t14 0" stroke="var(--key-2)" stroke-width="1.5" fill="none"/><path d="M12 14 l3 -3 M40 14 l3 -3 M68 14 l3 -3 M96 14 l3 -3" stroke="var(--ink)" stroke-width="1.5" fill="none"/></svg>
+        </li>
+        <li class="band">
+          <div class="f">0.6<small>strong</small></div>
+          <div class="what">Wind <b>37 km/h</b>, gusts <b>54</b>, rain <b>18 mm/h</b> or seas <b>2.4 m</b>. A tropical storm within 200 km.</div>
+          <svg viewBox="0 0 100 34" aria-hidden="true"><path d="M0 27 q6-16 12 0 t12 0 t12 0 t12 0 t12 0 t12 0 t12 0 t12 0" stroke="var(--key)" stroke-width="1.5" fill="none"/><path d="M0 32 q6-11 12 0 t12 0 t12 0 t12 0 t12 0 t12 0 t12 0 t12 0" stroke="var(--key-2)" stroke-width="1.5" fill="none"/><path d="M10 12 l4 -4 M34 12 l4 -4 M58 12 l4 -4 M82 12 l4 -4" stroke="var(--ink)" stroke-width="1.5" fill="none"/></svg>
+        </li>
+        <li class="band rim">
+          <div class="f">0.7<small>near gale</small></div>
+          <div class="what">Wind <b>43 km/h</b>, gusts <b>63</b>, rain <b>21 mm/h</b> or seas <b>2.8 m</b>. Elevated: worth covering.</div>
+          <svg viewBox="0 0 100 34" aria-hidden="true"><path d="M0 27 q5-18 10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0" stroke="var(--key)" stroke-width="1.5" fill="none"/><path d="M0 32 q5-12 10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0" stroke="var(--key-2)" stroke-width="1.5" fill="none"/><path d="M8 10 l4 -4 M28 10 l4 -4 M48 10 l4 -4 M68 10 l4 -4 M88 10 l4 -4" stroke="var(--ink)" stroke-width="1.5" fill="none"/></svg>
+        </li>
+        <li class="band pays">
+          <div class="f">0.75<small>the cover pays</small></div>
+          <div class="what">Wind <b>46 km/h</b>, gusts <b>68</b>, rain <b>22 mm/h</b> or seas <b>3 m</b>. At or above this band the contract pays the holder in the same transaction.</div>
+          <svg viewBox="0 0 100 34" aria-hidden="true"><path d="M0 27 q5-19 10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0" stroke="var(--trigger-ink)" stroke-width="1.5" fill="none"/><path d="M0 32 q5-13 10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0" stroke="var(--trigger-tint)" stroke-width="1.5" fill="none"/><path d="M8 9 l4 -4 M28 9 l4 -4 M48 9 l4 -4 M68 9 l4 -4 M88 9 l4 -4" stroke="var(--trigger-ink)" stroke-width="1.5" fill="none"/></svg>
+        </li>
+        <li class="band pays">
+          <div class="f">0.9<small>strong gale</small></div>
+          <div class="what">Wind <b>56 km/h</b>, gusts <b>81</b>, rain <b>27 mm/h</b> or seas <b>3.6 m</b>.</div>
+          <svg viewBox="0 0 100 34" aria-hidden="true"><path d="M0 28 q4-22 8 0 t8 0 t8 0 t8 0 t8 0 t8 0 t8 0 t8 0 t8 0 t8 0 t8 0 t8 0" stroke="var(--trigger-ink)" stroke-width="1.5" fill="none"/><path d="M0 32 q4-14 8 0 t8 0 t8 0 t8 0 t8 0 t8 0 t8 0 t8 0 t8 0 t8 0 t8 0 t8 0" stroke="var(--trigger-tint)" stroke-width="1.5" fill="none"/><path d="M6 7 l4 -4 M22 7 l4 -4 M38 7 l4 -4 M54 7 l4 -4 M70 7 l4 -4 M86 7 l4 -4" stroke="var(--trigger-ink)" stroke-width="1.5" fill="none"/></svg>
+        </li>
+        <li class="band pays">
+          <div class="f">1.0<small>storm</small></div>
+          <div class="what">Wind <b>62 km/h</b>, gusts <b>90</b>, rain <b>30 mm/h</b>, seas <b>4 m</b>, or a typhoon overhead. Typhoon Rai read 1.000 at Cebu.</div>
+          <svg viewBox="0 0 100 34" aria-hidden="true"><path d="M0 29 q3-26 6 0 t6 0 t6 0 t6 0 t6 0 t6 0 t6 0 t6 0 t6 0 t6 0 t6 0 t6 0 t6 0 t6 0 t6 0 t6 0" stroke="var(--trigger-ink)" stroke-width="1.5" fill="none"/><path d="M0 32 q3-16 6 0 t6 0 t6 0 t6 0 t6 0 t6 0 t6 0 t6 0 t6 0 t6 0 t6 0 t6 0 t6 0 t6 0 t6 0 t6 0" stroke="var(--trigger-tint)" stroke-width="1.5" fill="none"/><path d="M4 5 l4 -4 M16 5 l4 -4 M28 5 l4 -4 M40 5 l4 -4 M52 5 l4 -4 M64 5 l4 -4 M76 5 l4 -4 M88 5 l4 -4" stroke="var(--trigger-ink)" stroke-width="1.5" fill="none"/></svg>
+        </li>
+      </ol>
+
+      <div class="side">
+      <div class="pins" aria-label="Storm risk on the watched shipping lanes, against the payout trigger">
+        <div class="pins-head">
+          <h2>Five lanes, read now</h2>
+          <span class="note">worst hour on each lane, screened through Telegraph</span>
+        </div>
+        <div id="plot"></div>
+        <div class="scale-foot"><span>0</span><span>0.25</span><span>0.5</span><span>pays at 0.75</span></div>
+        <div class="stamp">
+          <span>A pin in the red is a claim the contract pays.</span>
+          <span class="mono" id="plotstamp">loading…</span>
+        </div>
+      </div>
+
+    <div class="caption" id="check">
+      <h2>Ask the plate about a place</h2>
+      <p>
+        The same call the contract makes before it spends anything. Name a place,
+        give a coordinate pair, or ask in a sentence. No wallet, no sign-up. The
+        reading comes back signed.
+      </p>
+      <form id="form">
+        <input id="ask" value="10.32, 123.89" aria-label="A place, a coordinate pair, or a question"
+               placeholder="Cebu, or 10.32, 123.89, or a question">
+        <button type="submit" id="go">Read the risk</button>
+      </form>
+      <div class="presets" id="presets">
+        <button type="button" data-ask="Manila">Manila</button>
+        <button type="button" data-ask="Hong Kong">Hong Kong</button>
+        <button type="button" data-ask="Jakarta">Jakarta</button>
+        <button type="button" data-ask="Miami">Miami</button>
+        <button type="button" data-ask="Storm risk in Cebu in the next 24 hours?">Ask a question</button>
+      </div>
+      <div class="result" id="result" aria-live="polite"></div>
+    </div>
       </div>
     </div>
-    <div class="gauge-foot">
-      <span>Shipping lanes screened through Telegraph. A dot above the line is a claim the contract pays.</span>
-      <span class="mono" id="plotstamp">loading…</span>
-    </div>
   </section>
 
-  <section class="check" id="check">
-    <div class="check-head">
-      <h2>Check a location</h2>
+  <!-- ── Plate II: a route ───────────────────────────────────────────────── -->
+  <section class="plate" id="route" aria-labelledby="route-title">
+    <div class="sheet">
+      <div class="plate-no">Plate II · a route</div>
+      <h2 id="route-title">Cargo meets the weather where it is, not where it left.</h2>
       <p>
-        The same call the contract makes before it spends anything. Name a place
-        or give it a coordinate pair — no wallet, no sign-up. This asks the miner
-        directly and shows you what it answers.
-      </p>
-    </div>
-    <form id="form">
-      <input id="ask" class="mono" value="10.32, 123.89" aria-label="A place, a coordinate pair, or a question"
-             placeholder="Cebu, or 10.32, 123.89, or a question">
-      <button type="submit" id="go">Read the risk</button>
-    </form>
-    <div class="presets" id="presets">
-      <button data-ask="Manila">Manila</button>
-      <button data-ask="Hong Kong">Hong Kong</button>
-      <button data-ask="Jakarta">Jakarta</button>
-      <button data-ask="Miami">Miami</button>
-      <button data-ask="Will Riyadh exceed 40 degrees tomorrow?">Ask a question</button>
-    </div>
-    <div class="result" id="result" aria-live="polite"></div>
-  </section>
-
-  <section class="check" id="route">
-    <div class="check-head">
-      <h2>Check a route</h2>
-      <p>
-        Cargo is not exposed to the weather at the port it left. Each leg is
-        forecast for the hour the shipment actually reaches it, so the time axis
-        moves with the cargo — and the verdict is the worst hour on the way,
+        Each leg is forecast for the hour the shipment reaches it, so the time
+        axis moves with the cargo. The verdict is the worst hour on the way,
         because that is the one it has to survive.
       </p>
+      <form id="routeform" style="margin-top:18px">
+        <input id="routefrom" value="Cebu" aria-label="Origin" placeholder="from">
+        <input id="routeto" value="Manila" aria-label="Destination" placeholder="to">
+        <input id="routespeed" value="37" aria-label="Speed in km/h" placeholder="km/h" style="flex:0 1 7rem">
+        <button type="submit" id="routego">Read the route</button>
+      </form>
+      <div class="presets" id="routepresets">
+        <button type="button" data-from="Cebu" data-to="Manila" data-speed="37">Cebu → Manila</button>
+        <button type="button" data-from="Singapore" data-to="Jakarta" data-speed="37">Singapore → Jakarta</button>
+        <button type="button" data-from="Hong Kong" data-to="Manila" data-speed="37">Hong Kong → Manila</button>
+        <button type="button" data-from="Jakarta" data-to="Surabaya" data-speed="80">Jakarta → Surabaya by road</button>
+      </div>
+      <div class="result" id="routeresult" aria-live="polite"></div>
     </div>
-    <form id="routeform">
-      <input id="routefrom" class="mono" value="Cebu" aria-label="Origin" placeholder="from">
-      <input id="routeto" class="mono" value="Manila" aria-label="Destination" placeholder="to">
-      <input id="routespeed" class="mono" value="37" aria-label="Speed in km/h" placeholder="km/h" style="flex:0 1 7rem">
-      <button type="submit" id="routego">Read the route</button>
-    </form>
-    <div class="presets" id="routepresets">
-      <button data-from="Cebu" data-to="Manila" data-speed="37">Cebu → Manila</button>
-      <button data-from="Singapore" data-to="Jakarta" data-speed="37">Singapore → Jakarta</button>
-      <button data-from="Hong Kong" data-to="Manila" data-speed="37">Hong Kong → Manila</button>
-      <button data-from="Jakarta" data-to="Surabaya" data-speed="80">Jakarta → Surabaya by road</button>
-    </div>
-    <div class="result" id="routeresult" aria-live="polite"></div>
   </section>
 
-  <section class="steps" id="settles">
-    <h2>How a claim settles</h2>
-    <p>
-      Four steps, and a person appears in none of them. The contract is the
-      customer of the intelligence, not a screen someone reads it on.
-    </p>
-    <ol class="flow">
-      <li>
-        <span class="who">contract</span>
-        <div>
-          <h3>Opens a job</h3>
-          <p>It calls <code>createJob</code> against <code>STORM_ALERT</code> — the intent, not a miner. Which miner answers is the protocol's decision, and it goes to whoever currently ranks best.</p>
+  <!-- ── Plate III: would it have paid ───────────────────────────────────── -->
+  <section class="plate" id="backtest" aria-labelledby="backtest-title">
+    <div class="sheet">
+      <div class="plate-no">Plate III · Typhoon Rai, 15 to 18 December 2021</div>
+      <h2 id="backtest-title">Would it have paid?</h2>
+      <p>
+        The same thresholds, run over what actually happened. Rai, Odette in the
+        Philippines, crossed the Visayas on 16 December 2021. These are the
+        board's ports on those four days, hour by hour, from the reanalysis
+        archive: the cover pays where the storm went and stays quiet where it
+        did not.
+      </p>
+      <div class="tablewrap" tabindex="0" role="region" aria-label="Typhoon Rai backtest by port">
+        <table>
+          <thead>
+            <tr><th>Port</th><th class="m">Peak risk</th><th class="m">Peak gust</th><th>Peak hour (UTC)</th><th class="m">Hours over 0.75</th><th>Outcome</th></tr>
+          </thead>
+          <tbody id="backtestbody">
+            <tr><td colspan="6" class="m" style="color:var(--ink-3)">reading the archive…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="replay" id="replay" hidden>
+        <div class="replay-head">
+          <h3>Cebu, hour by hour</h3>
+          <span class="clock" id="replayclock">15 Dec 00:00 UTC</span>
         </div>
-      </li>
-      <li>
-        <span class="who">network</span>
-        <div>
-          <h3>Answers and is checked</h3>
-          <p>A miner returns a reading. Validators score it against ground truth and finalise it before anything is paid.</p>
-        </div>
-      </li>
-      <li>
-        <span class="who">protocol</span>
-        <div>
-          <h3>Delivers it back</h3>
-          <p>The result arrives at the contract through <code>subnetMessage</code>. It arrives packed the way that miner declares its fields, so the contract reads defensively and declines a payload it cannot interpret rather than guessing at a payout.</p>
-        </div>
-      </li>
-      <li>
-        <span class="who">contract</span>
-        <div>
-          <h3>Pays, or does not</h3>
-          <p>Risk at or above 0.75 pays the holder in the same transaction. Below it, the policy closes as declined. If no answer ever comes, the holder reclaims the reserve after 24 hours.</p>
-        </div>
-      </li>
-    </ol>
-  </section>
-
-  <section class="steps" id="use">
-    <h2>Call it from your own agent</h2>
-    <p>
-      Four ways in, cheapest first. The reading is useful anywhere a decision
-      waits on weather — the contract is only one thing to do with it.
-    </p>
-    <ol class="flow">
-      <li>
-        <span class="who">free</span>
-        <div>
-          <h3>Straight over HTTP</h3>
-          <p><code>POST /forecast</code> with <code>lat</code>, <code>lon</code> and an <code>hours</code> offset. No wallet, no key, no sign-up. Nothing is verified by validators on this route, and it costs nothing — those go together.</p>
-        </div>
-      </li>
-      <li>
-        <span class="who">$0.01</span>
-        <div>
-          <h3>From an agent, over MCP</h3>
-          <p>The Telegraph MCP server discovers every registered miner, so Amanat is already a tool in Claude Desktop, Cursor, Continue, Goose and LangChain — nothing to integrate. It appears as <code>tg_amanat_weather_risk_forecast</code>.</p>
-        </div>
-      </li>
-      <li>
-        <span class="who">$0.01</span>
-        <div>
-          <h3>Through the Engine</h3>
-          <p>Ask in plain language and the protocol picks the miner. You may or may not get Amanat — that is the point, and it is how you find out whether we are any good.</p>
-        </div>
-      </li>
-      <li>
-        <span class="who">$1.00</span>
-        <div>
-          <h3>From a contract</h3>
-          <p>Escrow USDC, open a job against an intent, receive the answer through <code>subnetMessage</code>. The contract on this page is a working receiver you can copy.</p>
-        </div>
-      </li>
-    </ol>
-    <p style="margin-top:20px">
-      <a href="https://github.com/PugarHuda/amanat/blob/main/docs/use-amanat.md">Copy-paste configs and the full field reference →</a>
-    </p>
-  </section>
-
-  <section class="ledger" id="ledger">
-    <h2>What it has settled</h2>
-    <p>
-      Every one of these is on Base Sepolia and none of it is a screenshot —
-      follow the job id to the chain and read it yourself.
-    </p>
-    <div class="tablewrap">
-      <table>
-        <thead>
-          <tr><th>Policy</th><th>Point</th><th class="m">Cover</th><th>Job</th><th class="m">Risk read</th><th>Outcome</th></tr>
-        </thead>
-        <tbody id="ledgerbody">
-          <tr><td colspan="6" class="m" style="color:var(--muted)">reading the chain…</td></tr>
-        </tbody>
-      </table>
+        <div class="track"><div class="pin" id="replaypin"></div></div>
+        <div class="read"><span>the archive, replayed the same way every time</span><b id="replayval">0.000</b></div>
+      </div>
+      <div class="foot-note">
+        <span>Any point, any dates: <code>/api/backtest?lat=10.32&amp;lon=123.89&amp;start=2021-12-15&amp;end=2021-12-18</code></span>
+        <span id="backteststat">archive: Open-Meteo ERA5</span>
+      </div>
     </div>
-    <p class="mono" style="font-size:.78rem;color:var(--muted);margin-top:16px">
-      Contract <a href="https://sepolia.basescan.org/address/0x0700c9300D5cfD8A4b2C7fBbaB2703087AB0590c">0x0700c930…590c</a>
-      · <span id="bookstat">reading the book…</span>
-    </p>
   </section>
 
-  <section class="ledger" id="backtest">
-    <h2>Would it have paid?</h2>
-    <p>
-      The same thresholds, run over what actually happened. Typhoon Rai —
-      Odette in the Philippines — crossed the Visayas on 16 December 2021.
-      These are the board's ports on those four days, hour by hour, from the
-      reanalysis archive: the cover pays where it should and stays quiet where
-      it should not.
-    </p>
-    <div class="tablewrap">
-      <table>
-        <thead>
-          <tr><th>Port</th><th class="m">Peak risk</th><th class="m">Peak gust</th><th>Peak hour (UTC)</th><th class="m">Hours over 0.75</th><th>Outcome</th></tr>
-        </thead>
-        <tbody id="backtestbody">
-          <tr><td colspan="6" class="m" style="color:var(--muted)">reading the archive…</td></tr>
-        </tbody>
-      </table>
+  <!-- ── Plate IV: how it settles ────────────────────────────────────────── -->
+  <section class="plate" id="settles" aria-labelledby="settles-title">
+    <div class="sheet">
+      <div class="plate-no">Plate IV · settlement</div>
+      <h2 id="settles-title">Four steps, and a person appears in none of them.</h2>
+      <p>The contract is the customer of the intelligence, not a screen someone reads it on.</p>
+      <ol class="flow">
+        <li>
+          <span class="who">contract</span>
+          <div>
+            <h3>Opens a job</h3>
+            <p>It calls <code>createJob</code> against <code>STORM_ALERT</code>, the intent, not a miner. Which miner answers is the protocol's decision, and it goes to whoever currently ranks best.</p>
+          </div>
+        </li>
+        <li>
+          <span class="who">network</span>
+          <div>
+            <h3>Answers and is checked</h3>
+            <p>A miner returns a reading. Validators score it against ground truth and finalise it before anything is paid.</p>
+          </div>
+        </li>
+        <li>
+          <span class="who">protocol</span>
+          <div>
+            <h3>Delivers it back</h3>
+            <p>The result arrives at the contract through <code>subnetMessage</code>, packed the way that miner declares its fields. The contract reads defensively and declines a payload it cannot interpret rather than guessing at a payout.</p>
+          </div>
+        </li>
+        <li>
+          <span class="who">contract</span>
+          <div>
+            <h3>Pays, or does not</h3>
+            <p>Risk at or above 0.75 pays the holder in the same transaction. Below it, the policy closes as declined. If no answer ever comes, the reserve is released after 24 hours; that rail has been run, and the transactions are in the ledger below.</p>
+          </div>
+        </li>
+      </ol>
     </div>
-    <p class="mono" style="font-size:.78rem;color:var(--muted);margin-top:16px">
-      Any point, any dates: <code>/api/backtest?lat=10.32&amp;lon=123.89&amp;start=2021-12-15&amp;end=2021-12-18</code>
-      · <span id="backteststat">archive: Open-Meteo ERA5</span>
-    </p>
   </section>
 
-  <section class="ledger" id="survey">
-    <h2>What the network scores</h2>
-    <p>
-      A scoring module decides what a miner's answer is worth, and one is
-      chosen per intent. These are the ones in force, read from the node — the
-      bar a challenger must clear, the score the board displays for it, and
-      what the best miner on that intent actually scored.
-    </p>
-    <div class="tablewrap">
-      <table>
-        <thead>
-          <tr><th>Intent</th><th class="m">Bar</th><th class="m">Shown</th><th class="m">Best miner</th><th>Tries</th></tr>
-        </thead>
-        <tbody id="surveybody">
-          <tr><td colspan="5" class="m" style="color:var(--muted)">reading the node…</td></tr>
-        </tbody>
-      </table>
+  <!-- ── Plate V: the ledger ─────────────────────────────────────────────── -->
+  <section class="plate" id="ledger" aria-labelledby="ledger-title">
+    <div class="sheet">
+      <div class="plate-no">Plate V · Base Sepolia</div>
+      <h2 id="ledger-title">What it has settled</h2>
+      <p>Every row is on chain and none of it is a screenshot. Follow the job id and read it yourself.</p>
+      <div class="tablewrap" tabindex="0" role="region" aria-label="Policies settled on Base Sepolia">
+        <table>
+          <thead>
+            <tr><th>Policy</th><th>Point</th><th class="m">Cover</th><th>Job</th><th class="m">Risk read</th><th>Outcome</th></tr>
+          </thead>
+          <tbody id="ledgerbody">
+            <tr><td colspan="6" class="m" style="color:var(--ink-3)">reading the chain…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="foot-note">
+        <span>Contract <a class="mono" href="https://sepolia.basescan.org/address/0x0700c9300D5cfD8A4b2C7fBbaB2703087AB0590c">0x0700c930…590c</a></span>
+        <span id="bookstat">reading the book…</span>
+      </div>
     </div>
-    <p class="mono" style="font-size:.78rem;color:var(--muted);margin-top:16px">
-      <span id="surveystat">reading…</span>
-    </p>
+  </section>
+
+  <!-- ── Plate VI: what the network scores ───────────────────────────────── -->
+  <section class="plate" id="survey" aria-labelledby="survey-title">
+    <div class="sheet">
+      <div class="plate-no">Plate VI · the scoring board</div>
+      <h2 id="survey-title">What the network scores</h2>
+      <p>
+        A scoring module decides what a miner's answer is worth, one per intent.
+        These are the ones in force, read from the node: the bar a challenger
+        must clear, the score the board displays for it, and what the best miner
+        on that intent actually scored.
+      </p>
+      <div class="tablewrap" tabindex="0" role="region" aria-label="What the network scores, per intent">
+        <table>
+          <thead>
+            <tr><th>Intent</th><th class="m">Bar</th><th class="m">Shown</th><th class="m">Best miner</th><th>Tries</th></tr>
+          </thead>
+          <tbody id="surveybody">
+            <tr><td colspan="5" class="m" style="color:var(--ink-3)">reading the node…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="foot-note"><span id="surveystat">reading…</span></div>
+    </div>
+  </section>
+
+  <!-- ── Plate VII: call it ──────────────────────────────────────────────── -->
+  <section class="plate" id="use" aria-labelledby="use-title">
+    <div class="sheet">
+      <div class="plate-no">Plate VII · four ways in</div>
+      <h2 id="use-title">Call it from your own agent.</h2>
+      <p>Cheapest first. The reading is useful anywhere a decision waits on weather; the contract is only one thing to do with it.</p>
+      <ol class="flow">
+        <li>
+          <span class="who">free</span>
+          <div>
+            <h3>Straight over HTTP</h3>
+            <p><code>POST /forecast</code> with <code>lat</code>, <code>lon</code> and <code>hours</code>, or a question. No wallet, no key. Nothing is verified by validators on this route, and it costs nothing; those go together. The spec is at <a href="/openapi.json">/openapi.json</a>, the signing key at <a href="/.well-known/amanat.json">/.well-known/amanat.json</a>.</p>
+          </div>
+        </li>
+        <li>
+          <span class="who">$0.01</span>
+          <div>
+            <h3>From an agent, over MCP</h3>
+            <p>The Telegraph MCP server discovers every registered miner, so Amanat is already a tool in Claude Desktop, Cursor, Continue, Goose and LangChain. It appears as <code>tg_amanat_weather_risk_forecast</code>.</p>
+          </div>
+        </li>
+        <li>
+          <span class="who">$0.01</span>
+          <div>
+            <h3>Through the Engine</h3>
+            <p>Ask in plain language and the protocol picks the miner. You may or may not get Amanat. That is the point, and it is how you find out whether we are any good.</p>
+          </div>
+        </li>
+        <li>
+          <span class="who">$1.00</span>
+          <div>
+            <h3>From a contract</h3>
+            <p>Escrow USDC, open a job against an intent, receive the answer through <code>subnetMessage</code>. The contract on this page is a working receiver you can copy.</p>
+          </div>
+        </li>
+      </ol>
+      <p style="margin-top:20px"><a href="https://github.com/PugarHuda/amanat/blob/main/docs/use-amanat.md">Copy-paste configs and the full field reference</a></p>
+    </div>
   </section>
 
   <footer>
-    <span>Amanat · a miner, a scoring module and a contract on Telegraph</span>
+    <span>Amanat: a miner, a scoring module and a contract on Telegraph Protocol, settled on Base Sepolia.</span>
     <span>
-      Weather data by <a href="https://open-meteo.com">Open-Meteo</a>,
-      <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a> — storm risk derived from
-      their published wind, gust and precipitation readings.
+      Weather, marine, ensemble and archive data by <a href="https://open-meteo.com">Open-Meteo</a>,
+      <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>; storm risk derived from
+      their published wind, gust, precipitation and wave readings. Cyclone positions by <a href="https://www.gdacs.org">GDACS</a>.
     </span>
-    <span><a href="https://github.com/PugarHuda/amanat">github.com/PugarHuda/amanat</a></span>
+    <span><a href="https://github.com/PugarHuda/amanat">github.com/PugarHuda/amanat</a> · <a href="https://github.com/PugarHuda/amanat/blob/main/docs/bug-report.md">what broke on the network</a></span>
   </footer>
 
 </main>
 
 <script>
 const TRIGGER = 0.75;
-const PLOT_TOP = 1.0;            // the gauge is drawn from 0 to 1
-const TRIGGER_TOP_PCT = 25;      // the red line sits at 25% from the top => 0.75
 
 const $ = (id) => document.getElementById(id);
 
@@ -521,48 +664,46 @@ async function read(question) {
   return body;
 }
 
-/** Place a reading in the gauge. 0 sits on the floor, 1.0 at the ceiling. */
-function place(risk) {
-  const clamped = Math.max(0, Math.min(risk, PLOT_TOP));
-  return (clamped / PLOT_TOP) * 100;
+/**
+ * A pin on a track. The needle has mass: it is placed at zero, then on the
+ * next frame told where to go, and the transition swings it there with a
+ * little overshoot, the way a meter's needle does. Instant placement reads as
+ * a diagram; a swing reads as an instrument taking a reading.
+ */
+function pinTo(pin, risk) {
+  const pct = Math.max(0, Math.min(risk, 1)) * 100;
+  requestAnimationFrame(() => requestAnimationFrame(() => { pin.style.left = `${pct}%`; }));
 }
 
 function drawPlot(rows) {
   $("plot").replaceChildren(...rows.map((r) => {
     if (r.risk === null) {
-      return el("div", { className: "reading missing", attrs: { style: "justify-content:flex-end" } }, [
-        el("div", { attrs: { style: "height:100%" } }),
-        el("div", { className: "val", text: "no reading" }),
+      return el("div", { className: "reading missing" }, [
         el("div", { className: "place", text: r.name }),
+        el("div", { className: "track" }),
+        el("div", { className: "val", text: "no reading" }),
       ]);
     }
-    const pct = place(r.risk);
     const over = r.risk >= TRIGGER;
-    return el("div", {
-      className: `reading ${over ? "over" : ""}`,
-      attrs: { style: "justify-content:flex-end" },
-    }, [
-      el("div", { attrs: { style: `height:${100 - pct}%` } }),
-      el("div", { className: "val", text: r.risk.toFixed(3) }),
-      el("div", { className: "dot" }),
-      el("div", { className: "stem", attrs: { style: `height:${pct}%` } }),
+    const pin = el("div", { className: "pin" });
+    const row = el("div", { className: `reading ${over ? "over" : ""}` }, [
       el("div", { className: "place", text: r.name }),
+      el("div", { className: "track" }, [pin]),
+      el("div", { className: "val", text: r.risk.toFixed(3) }),
     ]);
+    pinTo(pin, r.risk);
+    return row;
   }));
 }
 
 /**
- * The gauge reads the published board, not five live forecasts.
+ * The lanes read the published board, not five live forecasts.
  *
- * It used to ask the miner about five stations on every page load. That is five
- * upstream calls per visitor against a 10 000-a-day quota — about two thousand
- * visits before the miner stops answering anyone, validators included. The
- * board is screened on a schedule through Telegraph, so one cached request now
- * does what five live ones did, and every column has a signal hash behind it
- * rather than an unverified reading.
- *
- * The lanes are the better thing to show anyway: they are what the contract
- * covers. Five arbitrary cities never were.
+ * Five upstream calls per visitor against a 10 000-a-day quota is about two
+ * thousand visits before the miner stops answering anyone, validators
+ * included. The board is screened on a schedule through Telegraph, so one
+ * cached request does what five live ones did, and every pin has a signal
+ * hash behind it rather than an unverified reading.
  */
 async function loadPlot() {
   let board;
@@ -571,20 +712,22 @@ async function loadPlot() {
     board = await res.json();
     if (!res.ok) throw new Error(board.error || `board ${res.status}`);
   } catch (err) {
-    // No columns rather than invented ones. A gauge drawn from nothing is the
+    // No pins rather than invented ones. A plate drawn from nothing is the
     // same lie as a reading of zero.
     $("plot").replaceChildren(el("p", { className: "err", text: err.message }));
     $("plotstamp").textContent = "no board published";
     return;
   }
 
+  // A zero-width space after the arrow lets a long lane name break there on a
+  // phone, between the ports, never inside one.
   drawPlot(board.lanes.map((lane) => ({
-    name: lane.name.replace(" → ", "→"),
+    name: lane.name.replace(" → ", "→​"),
     risk: lane.worst ? lane.worst.risk : null,
   })));
   // A timestamp alone does not tell a reader whether they are looking at
   // current weather. The board refreshes every twelve hours, so anything much
-  // older than that means the schedule has stopped — and a stale storm reading
+  // older than that means the schedule has stopped, and a stale storm reading
   // presented as current is worse than no reading at all.
   const ageHours = (Date.now() - Date.parse(board.generated_at)) / 3600e3;
   const when = board.generated_at.replace("T", " ").slice(0, 16) + " UTC";
@@ -593,6 +736,7 @@ async function loadPlot() {
   stamp.className = ageHours > 26 ? "mono stale" : "mono";
 }
 
+// The hook, the place, the number: three fixed positions on every reading.
 function showResult(r) {
   const over = r.risk >= TRIGGER;
   const panel = $("result");
@@ -602,7 +746,7 @@ function showResult(r) {
   panel.replaceChildren(
     el("div", { className: "verdict" }, [
       el("span", { className: "num", text: r.risk.toFixed(3) }),
-      el("span", { text: over ? "the contract pays this claim" : "below the line — no payout" }),
+      el("span", { text: over ? "the contract pays this claim" : "below the band. No payout." }),
     ]),
     el("p", { className: "summary", text: r.summary }),
     el("div", { className: "figures" }, [
@@ -620,7 +764,7 @@ function showResult(r) {
       ...(r.risk_band
         ? [figure(`risk band · ${r.risk_band.members} runs`, `${Number(r.risk_band.p10).toFixed(2)}–${Number(r.risk_band.p90).toFixed(2)} · ${Math.round(r.risk_band.breach_probability * 100)}% pay`)]
         : []),
-      figure("valid at", r.valid_at),
+      figure(r.window_hours ? `worst hour of ${r.window_hours}` : "valid at", r.valid_at),
       // The signature, shortened. The full attestation is in the JSON; what a
       // person needs to see is that there is one and whose key it is.
       ...(r.attestation
@@ -630,13 +774,27 @@ function showResult(r) {
   );
 }
 
+/**
+ * Every reading is a URL. The address updates only once an answer has landed,
+ * so a reload mid-request comes back to a plain page, and a reload after one
+ * comes back to the same reading. The back button retraces the trail.
+ */
+function remember(question) {
+  const url = new URL(location.href);
+  url.searchParams.set("q", question);
+  url.hash = "";
+  if (url.href !== location.href) history.pushState({ q: question }, "", url);
+}
+
 $("form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const go = $("go");
   go.disabled = true;
   go.textContent = "Reading…";
   try {
-    showResult(await read($("ask").value));
+    const question = $("ask").value;
+    showResult(await read(question));
+    remember(question);
   } catch (err) {
     const panel = $("result");
     panel.className = "result shown";
@@ -654,6 +812,10 @@ $("presets").addEventListener("click", (e) => {
   $("form").requestSubmit();
 });
 
+window.addEventListener("popstate", (e) => {
+  const q = e.state?.q ?? new URL(location.href).searchParams.get("q");
+  if (q) { $("ask").value = q; $("form").requestSubmit(); }
+});
 
 async function readRoute(from, to, speed) {
   const res = await fetch("/api/route", {
@@ -741,7 +903,7 @@ fetch("/api/policies")
   .then(({ rows, unreadable }) => {
     if (!rows.length) {
       $("ledgerbody").replaceChildren(el("tr", {}, [
-        el("td", { className: "m", text: "no policies yet", attrs: { colspan: 6, style: "color:var(--muted)" } }),
+        el("td", { className: "m", text: "no policies yet", attrs: { colspan: 6, style: "color:var(--ink-3)" } }),
       ]));
       return;
     }
@@ -795,15 +957,61 @@ fetch("/api/book")
  * eval_score as published: the margin it recorded on the day it won, frozen.
  * "Bar" is that same champion re-measured on the current corpus, which is what
  * a new registration is actually held against. On WEATHER_FORECAST they are
- * 0.53 and 0.99 — reading the first one is how four of our registrations went
+ * 0.53 and 0.99; reading the first one is how four of our registrations went
  * at the strongest incumbent on the board believing it was the weakest.
  */
 const four = (n) => (n === null || n === undefined ? "—" : Number(n).toFixed(4));
 
 // Below a ten-thousandth, a fixed-point number reads as 0.0000 and loses the
-// only interesting thing about it — that CRYPTO_PRICE tops out at 1.4e-8.
+// only interesting thing about it: that CRYPTO_PRICE tops out at 1.4e-8.
 const small = (n) =>
   n === null || n === undefined ? "—" : n > 0 && n < 1e-4 ? Number(n).toExponential(1) : Number(n).toFixed(4);
+
+/**
+ * The replay. Cebu's 96 archive hours run through the needle once, in order,
+ * the same way every time: deterministic, from data, and the one authored
+ * motion on the page besides the pins swinging in. Reduced motion jumps to
+ * the peak hour and stays there.
+ */
+function replay(series) {
+  if (!series || series.length < 2) return;
+  const box = $("replay");
+  const pin = $("replaypin");
+  const clock = $("replayclock");
+  const val = $("replayval");
+  box.hidden = false;
+
+  const show = (pt) => {
+    const d = new Date(pt.at);
+    clock.textContent = `${d.getUTCDate()} Dec ${String(d.getUTCHours()).padStart(2, "0")}:00 UTC`;
+    val.textContent = pt.risk.toFixed(3);
+    pin.style.left = `${Math.min(pt.risk, 1) * 100}%`;
+    const red = pt.risk >= TRIGGER;
+    pin.classList.toggle("red", red);
+    val.classList.toggle("red", red);
+  };
+
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (still) { show(series.reduce((w, p) => (p.risk > w.risk ? p : w), series[0])); return; }
+
+  let i = 0;
+  let started = false;
+  const step = () => {
+    show(series[i]);
+    i++;
+    if (i < series.length) setTimeout(step, 70);
+  };
+  // Start when the plate scrolls into view, once; a replay nobody saw ran for
+  // nobody.
+  const io = new IntersectionObserver((entries) => {
+    if (started || !entries.some((e) => e.isIntersecting)) return;
+    started = true;
+    io.disconnect();
+    step();
+  }, { threshold: 0.3 });
+  io.observe(box);
+  show(series[0]);
+}
 
 // The board's ports during Typhoon Rai. Each is one archive read, cached a
 // day server-side, so the section costs the archive nothing after first load.
@@ -841,6 +1049,8 @@ Promise.all(PORTS.map(([name, lat, lon]) =>
   $("backteststat").textContent = paid.length
     ? `pays at ${paid.join(" and ")} · archive: Open-Meteo ERA5`
     : "no port breached · archive: Open-Meteo ERA5";
+  const cebu = rows.find((b) => b.name === "Cebu" && !b.error && Array.isArray(b.series));
+  if (cebu) replay(cebu.series);
 }).catch(() => {
   $("backtestbody").replaceChildren(el("tr", {}, [
     el("td", { className: "m", text: "could not read the archive", attrs: { colspan: 6, style: "color:var(--trigger)" } }),
@@ -878,12 +1088,18 @@ fetch("/api/survey")
   })
   .catch(() => {
     $("surveybody").replaceChildren(el("tr", {}, [
-      el("td", { className: "m", text: "the survey has not been published yet", attrs: { colspan: 5, style: "color:var(--muted)" } }),
+      el("td", { className: "m", text: "the survey has not been published yet", attrs: { colspan: 5, style: "color:var(--ink-3)" } }),
     ]));
     $("surveystat").textContent = "";
   });
 
 loadPlot();
+
+// A reading arrived by URL runs on load. The trail is how the page is shared.
+{
+  const q = new URL(location.href).searchParams.get("q");
+  if (q) { $("ask").value = q; $("form").requestSubmit(); }
+}
 </script>
 </body>
 </html>

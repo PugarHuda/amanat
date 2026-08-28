@@ -562,6 +562,15 @@ What is not working is as much of the result as what is: the on-chain rail
 settled five jobs and then stopped, and from outside a job record says only
 `Funded` and never why.
 
+## The page
+
+The site is one Beaufort plate on a night sea: the risk scale down the left with
+what reaches each band, the five lanes pinned against it, the band from 0.75 in
+the only red on the page. Its visual system is recorded in [`DESIGN.md`](DESIGN.md)
+and the product truth it serves in [`PRODUCT.md`](PRODUCT.md); the direction was
+chosen through Impeccable's roll (seed `5db15dc1`) and the page passes its
+59-rule detector with no findings.
+
 ## Reproducing any of it
 
 ```bash

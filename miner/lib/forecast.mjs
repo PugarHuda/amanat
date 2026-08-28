@@ -262,6 +262,17 @@ export function hoursIn(text) {
   return 0;
 }
 
+/**
+ * Whether a question names a window or an instant. "In the next 48 hours"
+ * asks about the whole stretch and is answered at its worst hour; "in 48
+ * hours" asks about one hour two days out and is answered at that hour. The
+ * words that make it a window are the ones that span: next, within, coming,
+ * over the next, tonight, today.
+ */
+export function windowIn(text) {
+  return /\b(next|within|coming|tonight|today|this (?:evening|afternoon|morning))\b/i.test(String(text ?? ""));
+}
+
 function clampHours(n) {
   if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.min(168, Math.round(n)));

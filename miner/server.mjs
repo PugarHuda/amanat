@@ -5,7 +5,7 @@ import { createServer } from "node:http";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { forecast, hoursIn, seriesCacheSize, seaCacheSize } from "./lib/forecast.mjs";
+import { forecast, hoursIn, windowIn, seriesCacheSize, seaCacheSize } from "./lib/forecast.mjs";
 import { backtest } from "./lib/backtest.mjs";
 import { publicKey, keyIsPersistent, SIGNED_FIELDS } from "./lib/sign.mjs";
 import { locate, placeCacheSize } from "./lib/geocode.mjs";
@@ -268,7 +268,7 @@ export const server = createServer(async (req, res) => {
       // The hours came from the question, so they describe a window, not an
       // instant. Explicit `hours` from a caller — the contract path — stays an
       // exact hour, because that is what the on-chain mapping was written for.
-      const window = rawHours === undefined && question !== undefined && hours > 0;
+      const window = rawHours === undefined && question !== undefined && hours > 0 && windowIn(question);
       return send(res, 200, await forecast({ lat, lon, hours, place, question, window }));
     }
 

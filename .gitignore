@@ -16,3 +16,9 @@ onchain/cache/
 board.json
 survey.json
 pw-full.log
+
+# Impeccable working files: screenshots and live-mode state are per-machine
+.impeccable/review/
+.impeccable/live/
+.impeccable/config.local.json
+.claude/settings.local.json

@@ -4,7 +4,7 @@ import js from "@eslint/js";
 import globals from "globals";
 
 export default [
-  { ignores: ["node_modules/**", "onchain/lib/**", "onchain/out/**", "scorer/target/**", "test-results/**", "playwright-report/**"] },
+  { ignores: ["node_modules/**", "onchain/lib/**", "onchain/out/**", "scorer/target/**", "test-results/**", "playwright-report/**", ".claude/**", ".github/skills/**", ".github/agents/**", ".github/hooks/**", ".impeccable/**"] },
 
   {
     files: ["**/*.mjs"],

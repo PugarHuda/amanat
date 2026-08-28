@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-28T05:40:00Z",
+  "title": "Design System: Amanat",
+  "extensions": {
+    "colorMeta": {
+      "sea": { "role": "neutral", "displayName": "Night Sea", "canonical": "oklch(21% 0.035 235)", "tonalRamp": ["#05111a", "#0b1f2e", "#10293b", "#163448", "#2a4a63", "#4a6f8c", "#8fa9b8", "#e9eef0"] },
+      "plate": { "role": "neutral", "displayName": "Plate Stock", "canonical": "oklch(94% 0.018 85)", "tonalRamp": ["#3d3a33", "#575349", "#8a8474", "#b8b19e", "#d9ccb2", "#e6dcc7", "#f2ece0", "#fbf8f2"] },
+      "ink": { "role": "neutral", "displayName": "Plate Ink", "canonical": "oklch(14% 0.008 80)", "tonalRamp": ["#14110c", "#3d3a33", "#575349", "#7a7568", "#9c9688", "#bdb7a8", "#d9d4c8", "#f2ece0"] },
+      "key": { "role": "tertiary", "displayName": "Chart Key", "canonical": "oklch(70% 0.03 230)", "tonalRamp": ["#2f4552", "#4a6472", "#6c8797", "#8fa9b8", "#b9c9d2", "#d5dfe5", "#e8eef1", "#f5f8f9"] },
+      "trigger": { "role": "primary", "displayName": "Trigger Red", "canonical": "oklch(52% 0.19 32)", "tonalRamp": ["#4a130a", "#7d2113", "#a52a18", "#c8341e", "#d9604d", "#e88f80", "#f1cfc5", "#faece8"] },
+      "calm": { "role": "secondary", "displayName": "Calm Green", "canonical": "oklch(41% 0.06 170)", "tonalRamp": ["#122a22", "#1d4236", "#2a5d4e", "#3f7a68", "#6a9d8c", "#9dc0b3", "#cfe0d6", "#eaf2ee"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "The page title only; uppercase, balanced." },
+      "headline": { "displayName": "Headline", "purpose": "One per plate; uppercase." },
+      "title": { "displayName": "Title", "purpose": "Step and caption headings; the button face." },
+      "figure": { "displayName": "Figure", "purpose": "Every actionable number: lane risks, band numerals, verdict figures." },
+      "body": { "displayName": "Body", "purpose": "Prose, 62-78ch." },
+      "label": { "displayName": "Label", "purpose": "Table heads, tags, band names; under twenty characters." },
+      "mono": { "displayName": "Mono", "purpose": "Hashes, addresses, code and timestamps; never inputs or prose." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "swing", "value": "left 0.55s cubic-bezier(0.34, 1.56, 0.64, 1)", "purpose": "A pin moving to its reading with overshoot, like a meter needle; removed under prefers-reduced-motion." },
+      { "name": "replay-step", "value": "left 0.12s linear, stepped every 70ms", "purpose": "The archive replay advancing hour by hour." }
+    ],
+    "breakpoints": [
+      { "name": "phone", "value": "560px" },
+      { "name": "narrow", "value": "640px" },
+      { "name": "plate-two-column", "value": "900px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one action on a plate: ink on plate, square, display face.",
+      "html": "<button class=\"ds-btn-primary\">Read the risk</button>",
+      "css": ".ds-btn-primary { background: #14110c; color: #f2ece0; border: 2px solid #14110c; border-radius: 0; padding: 13px 22px; font-family: 'Big Shoulders Display', Impact, 'Arial Narrow', sans-serif; font-weight: 900; font-size: 1.15rem; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; } .ds-btn-primary:hover { background: #0b1f2e; } .ds-btn-primary:focus-visible { outline: 2px solid #14110c; outline-offset: 3px; } .ds-btn-primary:disabled { background: #575349; border-color: #575349; cursor: wait; }"
+    },
+    {
+      "name": "Preset Button",
+      "kind": "button",
+      "refersTo": "button-preset",
+      "description": "A suggested question; quiet until hovered, then inverts to ink.",
+      "html": "<button class=\"ds-btn-preset\">Hong Kong</button>",
+      "css": ".ds-btn-preset { background: transparent; color: #14110c; border: 1px solid #575349; border-radius: 0; padding: 7px 12px; font-family: Archivo, 'Helvetica Neue', Arial, sans-serif; font-weight: 500; font-size: 0.86rem; cursor: pointer; } .ds-btn-preset:hover { background: #14110c; color: #f2ece0; border-color: #14110c; } .ds-btn-preset:focus-visible { outline: 2px solid #14110c; outline-offset: 3px; }"
+    },
+    {
+      "name": "Question Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "White on the plate, 2px ink, square; takes a place, a coordinate pair or a sentence.",
+      "html": "<input class=\"ds-input\" value=\"10.32, 123.89\" aria-label=\"A place, a coordinate pair, or a question\">",
+      "css": ".ds-input { background: #ffffff; color: #14110c; border: 2px solid #14110c; border-radius: 0; padding: 13px 14px; font-family: Archivo, 'Helvetica Neue', Arial, sans-serif; font-size: 1.02rem; min-width: 16rem; } .ds-input::placeholder { color: #575349; } .ds-input:focus-visible { outline: 2px solid #14110c; outline-offset: 3px; }"
+    },
+    {
+      "name": "Masthead",
+      "kind": "nav",
+      "description": "The mark and a wrapping row of quiet links on the sea.",
+      "html": "<div class=\"ds-bar\"><span class=\"ds-word\">Amanat</span><nav class=\"ds-nav\"><a href=\"#\">Check a place</a><a href=\"#\">Check a route</a><a href=\"#\">Backtest</a><a href=\"#\">Ledger</a></nav></div>",
+      "css": ".ds-bar { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px 24px; background: #0b1f2e; color: #e9eef0; border-bottom: 1px solid #163448; flex-wrap: wrap; } .ds-word { font-family: 'Big Shoulders Display', Impact, sans-serif; font-weight: 900; font-size: 1.7rem; letter-spacing: 0.06em; text-transform: uppercase; } .ds-nav { display: flex; gap: 18px; font-family: Archivo, Arial, sans-serif; font-size: 0.9rem; flex-wrap: wrap; } .ds-nav a { color: #a9bcc7; text-decoration: none; padding: 4px 0; border-bottom: 2px solid transparent; } .ds-nav a:hover { color: #e9eef0; border-bottom-color: #8fa9b8; } .ds-nav a:focus-visible { outline: 2px solid #c8341e; outline-offset: 3px; }"
+    },
+    {
+      "name": "Tag",
+      "kind": "chip",
+      "refersTo": "tag-pays",
+      "description": "An outcome word whose colour is its meaning: pays, declined, active.",
+      "html": "<span class=\"ds-tag\">pays</span> <span class=\"ds-tag ds-tag-declined\">no claim</span> <span class=\"ds-tag ds-tag-active\">active</span>",
+      "css": ".ds-tag { display: inline-block; padding: 3px 9px; font-family: Archivo, Arial, sans-serif; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; background: #c8341e; color: #ffffff; border-radius: 0; } .ds-tag-declined { background: #e6dcc7; color: #3d3a33; border: 1px solid #8fa9b8; } .ds-tag-active { background: #2a5d4e; color: #ffffff; }"
+    },
+    {
+      "name": "Plate",
+      "kind": "card",
+      "refersTo": "plate",
+      "description": "One idea per plate: ivory stock, 2px ink border, the plate number in the margin, no radius, no shadow.",
+      "html": "<section class=\"ds-plate\"><span class=\"ds-plate-no\">Plate II · a route</span><h2 class=\"ds-plate-h\">Cargo meets the weather where it is.</h2><p class=\"ds-plate-p\">Each leg is forecast for the hour the shipment reaches it.</p></section>",
+      "css": ".ds-plate { position: relative; background: #f2ece0; color: #14110c; border: 2px solid #14110c; border-radius: 0; padding: 34px 36px 32px; } .ds-plate-no { position: absolute; top: 12px; right: 16px; font-family: 'Big Shoulders Display', Impact, sans-serif; font-weight: 700; font-size: 0.95rem; color: #575349; } .ds-plate-h { margin: 0; font-family: 'Big Shoulders Display', Impact, sans-serif; font-weight: 900; font-size: 2.4rem; line-height: 0.95; letter-spacing: -0.01em; text-transform: uppercase; } .ds-plate-p { margin: 14px 0 0; font-family: Archivo, Arial, sans-serif; font-size: 1.02rem; line-height: 1.55; color: #3d3a33; max-width: 66ch; }"
+    },
+    {
+      "name": "Pin on a Track",
+      "kind": "custom",
+      "description": "A reading: place, a track whose top quarter is the red zone, a pin that swings to its value, and the figure.",
+      "html": "<div class=\"ds-reading ds-over\"><div class=\"ds-place\">Cebu→Manila</div><div class=\"ds-track\"><div class=\"ds-pin\" style=\"left:80%\"></div></div><div class=\"ds-val\">0.800</div></div>",
+      "css": ".ds-reading { display: grid; grid-template-columns: 12.5rem 1fr 3.9rem; align-items: center; gap: 10px; font-family: Archivo, Arial, sans-serif; color: #14110c; background: #f2ece0; padding: 8px; } .ds-place { font-weight: 600; font-size: 0.92rem; } .ds-track { position: relative; height: 26px; background: #e6dcc7; border: 1px solid #8fa9b8; } .ds-track::after { content: ''; position: absolute; top: -1px; bottom: -1px; left: 75%; right: -1px; background: #f1cfc5; border-left: 2px solid #c8341e; } .ds-pin { position: absolute; top: -6px; bottom: -6px; width: 3px; background: #2a5d4e; transition: left 0.55s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 1; } .ds-pin::before { content: ''; position: absolute; left: 50%; top: -5px; width: 11px; height: 11px; margin-left: -5.5px; background: inherit; border-radius: 50%; } .ds-over .ds-pin { background: #c8341e; } .ds-val { font-family: 'Big Shoulders Display', Impact, sans-serif; font-weight: 900; font-size: 1.55rem; text-align: right; line-height: 1; } .ds-over .ds-val { color: #c8341e; }"
+    },
+    {
+      "name": "Scale Band",
+      "kind": "custom",
+      "description": "One row of the scale: numeral and force name, what reaches the band, a layered wave glyph. Red from 0.75.",
+      "html": "<div class=\"ds-band ds-pays\"><div class=\"ds-f\">0.75<small>the cover pays</small></div><div class=\"ds-what\">Wind <b>46 km/h</b>, gusts <b>68</b>, rain <b>22 mm/h</b> or seas <b>3 m</b>.</div><svg viewBox=\"0 0 100 34\" aria-hidden=\"true\"><path d=\"M0 27 q5-19 10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0\" stroke=\"#ffffff\" stroke-width=\"1.5\" fill=\"none\"/><path d=\"M0 32 q5-13 10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0\" stroke=\"#f1cfc5\" stroke-width=\"1.5\" fill=\"none\"/></svg></div>",
+      "css": ".ds-band { display: grid; grid-template-columns: 5.4rem 1fr 4.6rem; align-items: center; gap: 12px; padding: 9px 18px 9px 22px; border-top: 1px solid #b9c9d2; background: #f2ece0; color: #14110c; font-family: Archivo, Arial, sans-serif; } .ds-band.ds-pays { background: #c8341e; color: #ffffff; border-top-color: #c8341e; } .ds-f { font-family: 'Big Shoulders Display', Impact, sans-serif; font-weight: 900; font-size: 1.9rem; line-height: 1; } .ds-f small { display: block; font-family: Archivo, Arial, sans-serif; font-weight: 500; font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 3px; opacity: 0.85; } .ds-what { font-size: 0.9rem; line-height: 1.35; } .ds-band svg { width: 100%; height: 34px; display: block; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Beaufort Plate",
+    "overview": "Amanat's surface is a reference plate a mariner memorises: a scale down the left with what reaches each band, live readings pinned against it, and one band printed in red where the contract pays. Ivory stock, black ink, chart blue-grey keylines, on a night sea. Depth is made only by flat colour overlapping flat colour; there are no cards, gradients or shadows. Numbers are set in a heavy condensed grotesk and prose in a plain one; red appears exactly once in meaning.",
+    "keyCharacteristics": [
+      "One plate per idea, edge to edge, numbered in its own margin",
+      "The scale is the hero: eleven bands, 0.0 at the foot, red from 0.75",
+      "Readings are pins on tracks with a needle that swings in",
+      "Exactly one red, and it always means the cover pays",
+      "Flat colour, 2px ink rules, no radius, no shadow, no gradient",
+      "Every figure in the display face with tabular numerals"
+    ],
+    "rules": [
+      { "name": "The One Red Rule", "body": "Red is the trigger and nothing else; a new element may be red only if it means the contract pays or something is wrong.", "section": "colors" },
+      { "name": "The Overlap Rule", "body": "Depth is one flat colour over another. No gradient, shadow, blur or tone; a 2px ink rule or a flat band brings a region forward.", "section": "elevation" },
+      { "name": "The Number Rule", "body": "Every number a reader might act on is set in the display face with tabular numerals.", "section": "typography" },
+      { "name": "The No-Kicker Rule", "body": "Nothing sits above a heading; a plate's number is marginalia in the top-right corner.", "section": "typography" }
+    ],
+    "dos": [
+      "Do put every new idea on its own plate with a 2px ink border and 36px padding.",
+      "Do set actionable numbers in Big Shoulders Display 900 and sentences in Archivo.",
+      "Do reserve red for the trigger and errors, and tint the top quarter of every track.",
+      "Do say what is missing in words: no reading, stale, could not read the archive."
+    ],
+    "donts": [
+      "Don't put a label or eyebrow above a heading.",
+      "Don't use shadows, gradients, blur, glass, or rounded corners beyond the pin head and the mark.",
+      "Don't use monospace for inputs or prose.",
+      "Don't render readings as bars, sparklines or rings.",
+      "Don't use a card grid, a stats row, or a hero metric."
+    ]
+  }
+}
