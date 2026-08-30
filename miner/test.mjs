@@ -116,7 +116,12 @@ for (const [field, question, expect] of [
   const r = await fetch(`http://127.0.0.1:${port2}/forecast`, {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ [field]: question }),
   });
-  assert.equal(r.status, 200, `${field} must be answered: ${question}`);
+  if (r.status !== 200) {
+    // A bare status told us nothing across two red CI runs. Print what the
+    // server actually said, so the next failure names its own upstream.
+    assert.fail(`${field} must be answered: ${question}
+  status ${r.status}, body: ${await r.text()}`);
+  }
   const j = await r.json();
   assert.match(j.summary, expect, `summary must name where it answered about: ${j.summary}`);
   assert.match(j.summary, /Storm risk is (low|elevated|severe)/);
@@ -597,6 +602,26 @@ console.log("a mistyped budget falls back instead of failing open");
   await assert.rejects(() => s.through("k", async () => { throw new Error("still down"); }), /still down/);
 }
 console.log("an upstream blink is not a scored failure, but stale weather is not served forever");
+
+// ── one transient upstream failure is retried, not surfaced ────────────────
+{
+  let attempts = 0;
+  const flaky = async () => { attempts++; if (attempts === 1) throw new Error("open-meteo 429"); return "second time"; };
+  assert.equal(await watched("test-flaky", flaky, { pauseMs: 1 }), "second time");
+  assert.equal(attempts, 2, "a transient failure is retried once");
+  const r = report().upstreams["test-flaky"];
+  assert.equal(r.failures, 0, "a call that succeeded on retry is not a failure");
+  assert.equal(r.retries, 1, "but the retry is on the record");
+
+  // Retried once, not forever: a service that is genuinely down still errors.
+  let tries = 0;
+  await assert.rejects(
+    () => watched("test-down", async () => { tries++; throw new Error("down"); }, { pauseMs: 1 }),
+    /down/,
+  );
+  assert.equal(tries, 2, "one retry, then the honest error");
+}
+console.log("a transient upstream failure is retried once, a real outage still fails");
 
 server.close();
 

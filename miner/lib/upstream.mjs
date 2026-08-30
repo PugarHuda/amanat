@@ -17,7 +17,7 @@ const LEDGER = new Map();
 function entry(name) {
   let e = LEDGER.get(name);
   if (!e) {
-    e = { calls: 0, failures: 0, last_ok_at: null, last_fail_at: null, last_error: null, last_ms: null };
+    e = { calls: 0, failures: 0, retries: 0, last_ok_at: null, last_fail_at: null, last_error: null, last_ms: null };
     LEDGER.set(name, e);
   }
   return e;
@@ -38,19 +38,39 @@ export function note(name, ok, ms, error) {
 }
 
 /**
- * Run a fetch-shaped task and record it. The task's own errors still
- * propagate; this only watches.
+ * Run a fetch-shaped task, retry it once, and record the outcome.
+ *
+ * Every upstream call goes through here, so this is the one place a transient
+ * failure can be absorbed for all six of them. It is worth absorbing: these are
+ * free public services with per-IP quotas, a 429 or a 5xx from one of them
+ * currently becomes a 502 on `/forecast`, and the network records that as a
+ * miner which could not answer. CI proved the same thing from the other side —
+ * the suite hammers Open-Meteo from a shared GitHub runner IP and the question
+ * tests failed intermittently on exactly this.
+ *
+ * One retry, not a loop: the requests are idempotent GETs so repeating is safe,
+ * but the failure mode being guarded against is often a rate limit, and
+ * hammering a service that just asked us to slow down earns a longer block. The
+ * pause is short enough to stay inside the caller's own timeout budget.
  */
-export async function watched(name, task) {
+export async function watched(name, task, { retries = 1, pauseMs = 500 } = {}) {
   const t0 = performance.now();
-  try {
-    const out = await task();
-    note(name, true, performance.now() - t0);
-    return out;
-  } catch (e) {
-    note(name, false, performance.now() - t0, e);
-    throw e;
+  let last;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    if (attempt > 0) {
+      entry(name).retries++;
+      await new Promise((r) => setTimeout(r, pauseMs));
+    }
+    try {
+      const out = await task();
+      note(name, true, performance.now() - t0);
+      return out;
+    } catch (e) {
+      last = e;
+    }
   }
+  note(name, false, performance.now() - t0, last);
+  throw last;
 }
 
 /** The ledger as /health prints it, plus whether the scored path is healthy. */
