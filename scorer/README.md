@@ -8,7 +8,7 @@ WASM.
 
 ```bash
 cargo test                       # 27 unit tests
-npm run build:profiles           # seven profile builds into scorer/dist/
+npm run build:profiles           # eight profile builds into scorer/dist/
 npm run bench                    # every module against every champion we hold
 npm run attacks                  # each attack must score below the honest answer
 node scorer/harness.mjs --agreement <ours.wasm> <champion.wasm>
@@ -74,8 +74,18 @@ The weather binaries are 24–29 MB — embedded transformer weights, from
 
 That is not a complaint. It is the thing to know before spending another
 registration: a binary is burned per (address, binary) across all intents, so
-every blind attempt costs one permanently. Six unused builds remain, and they
-are worth more held than spent on a guess.
+every blind attempt costs one permanently. **No unused build remains** — all
+seven earlier binaries are spent across 23 registrations, so another attempt
+needs a genuinely new build first, differing in bytes rather than in filename.
+`authenticity2` is the eighth, built for one measured reason rather than a
+guess: TEXT_AUTHENTICITY_CHECK rejected three of our attempts on the *ordering*
+gate at 12-13 of 14, never on separation, and the same three fixtures were lost
+across three builds. A tie is a lost pair, and contrast passes are what create
+ties by saturating mid-quality answers toward 0 and 1 — so this profile drops
+the third pass. On our own corpus that trades a little margin (0.4950 → 0.4782)
+for a tighter spread (stddev 0.3588 → 0.3300), which is the shape of less
+saturation. Our corpus is not the node fixture set, so this is a reasoned bet,
+not a prediction.
 
 ## The gates, in the order they bite
 

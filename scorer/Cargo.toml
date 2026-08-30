@@ -23,6 +23,11 @@ finance  = []   # a price or count is exact
 verdict  = []   # the answer is the call, not the figure
 prose    = []   # no figure to check
 authenticity = []   # a verdict on text with nothing to measure
+# Same shape as `authenticity`, one fewer contrast pass. Three passes were
+# already a retreat from four, and TEXT_AUTHENTICITY_CHECK still lost the same
+# three fixtures across three builds — mid-quality answers saturating until
+# they tie, and a tie is a lost pair under the ordering gate.
+authenticity2 = []
 
 [dependencies]
 

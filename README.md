@@ -34,28 +34,36 @@ rank-1 miner on `WEATHER_CHECK` scored **0.0206** and on `STORM_ALERT`
 text, and those miners answer with numbers. A leaderboard built from those
 scores is noise — and routing follows the leaderboard.
 
-**2. The on-chain rail is real but unused.** The Diamond answers
-`getJobBasePrice()` with `1000000` and has **139 miner registrations**, but only
-**6 ERC-8183 jobs have ever been created** — the last two by a single
-participant, on 17 August. In a 77-hour window there were 44 `MinerRegistered`
-events and 2 `JobCreated`. Meanwhile the organisers name on-chain intelligence
-pipelines as the highest-value thing to build.
+*2. The on-chain rail is real but unused.** The Diamond answers
+`getJobBasePrice()` with `1000000` and, on 21 August, carried **139 miner
+registrations** against **6 ERC-8183 jobs in its entire lifetime** — the last
+two by a single participant, on 17 August. In a 77-hour window there were 44
+`MinerRegistered` events and 2 `JobCreated`. Meanwhile the organisers name
+on-chain intelligence pipelines as the highest-value thing to build.
 
-By 27 August the count is 14, and 8 of those are ours. Five settled; the last
-three have not moved.
+Read again on 31 August: **341 miner registrations, and still only 14 jobs.**
+Eight of the fourteen are ours. Five settled; the last three have not moved.
 
-**3. Almost no miner can receive a job at all.** A job hands the node raw
+*3. Almost no miner can receive a job at all.** A job hands the node raw
 `OnChainData` arrays; without an `on_chain.request` block in its YAML the node
 cannot turn those into an HTTP call. `npm run audit` fetches every registered
-YAML and checks: of 63 live miners, a handful qualify, and each name-hashable
-intent has **one** job-able miner. That is the bottleneck under problem 2.
+YAML and checks. On 31 August: of **125 live miners, 29 declare an `on_chain`
+block at all**, and a name-hashable intent has between one and three job-able
+miners — `STORM_ALERT` has exactly one, and it is this one. That is the
+bottleneck under problem 2, and it has loosened rather than closed: on 21 August
+there were 63 live miners and every name-hashable intent had a single job-able
+miner.
 
 **What the network actually looks like** (read from `/api/epochs`,
 `/api/validators` and the Diamond, 21 August): epochs run **hourly** on testnet,
 not the 24 hours the docs describe. Each one scores 70 results across 17 intents
 and **29 of the 66 registered miners** — more than half are never scored at all.
-There is **one active validator**, `telegraph-node-1`, so the 43-of-64 BFT
+here is **one active validator**, `telegraph-node-1`, so the 43-of-64 BFT
 threshold is a mainnet property, not something running today.
+
+The shape held; the size did not. At epoch 294 on 30 August the network scored
+242 results across 42 intents and all 125 live miners, and epochs had stopped
+being hourly — the last five landed 3 to 9 hours apart. Still one validator.
 
 ---
 
@@ -70,14 +78,23 @@ reading under Tropical Storm Dolly says so by name rather than reporting "38 km/
 wind". Storm risk is the worst of wind, gusts, rain, waves and cyclone
 proximity — a 4 m sea or a typhoon overhead reaches the ceiling on its own.
 
-```json
+``json
 {
-  "summary": "At 2026-08-21T06:00Z the forecast for -6.20, 106.85 is 26.2 °C with wind 2.7 km/h, gusts 5.0 km/h and 0.0 mm precipitation. Storm risk is low (0.056).",
-  "temp_c": 26.2, "wind_kmh": 2.7, "gust_kmh": 5.0, "precip_mm": 0.0,
-  "wave_m": 0.3, "cyclone_name": null, "cyclone_km_now": null,
-  "risk": 0.056, "breach": false, "valid_at": "2026-08-21T06:00Z", "source": "open-meteo"
+  "summary": "Weather forecast for -6.20, 106.85: the temperature is 27.8 °C (82 °F) and it feels like 32.3 °C, humidity 73%, Clear sky, cloud cover 0%, wind 4.4 km/h (1.2 m/s) from the south-east, gusts 11.9 km/h, precipitation 0.0 mm (2% chance of rain), valid at 2026-08-30T17:00Z. … Storm risk is low (0.132); across 51 ensemble runs it ranges 0.08 to 0.14, 0% of them over the trigger.",
+  "temp_c": 27.8, "wind_kmh": 4.4, "gust_kmh": 11.9, "precip_mm": 0,
+  "wave_cm": 0, "cyclone_name": null, "cyclone_km": 0,
+  "risk": 0.132, "breach": false, "valid_at": "2026-08-30T17:00Z", "source": "open-meteo",
+  "risk_band": { "model": "ecmwf_ifs025", "members": 51, "p10": 0.076, "p50": 0.104, "p90": 0.14, "max": 0.164, "breach_probability": 0 },
+  "attestation": { "algorithm": "ed25519", "sha256": "9e991dc5…", "signature": "B3dtTlG1…", "public_key": "MCowBQYDK2VwAyEAJf1zypC6…", "key_persistent": true }
 }
 ```
+
+Abridged: a live response carries 36 fields. The rest are the ones a report
+carries and a contract ignores — humidity, dew point, wind direction, cloud
+cover, chance of rain, a two-day high and low, sea level, the named cyclone and
+its distance — plus the signed `canonical` payload and Open-Meteo's attribution.
+`curl -s -X POST https://amanat-miner.vercel.app/forecast -H 'content-type:
+application/json' -d '{"lat":-6.2,"lon":106.85,"hours":0}'` for the whole thing.
 
 The sentence is what a text-comparing scorer can grade. The scalars are what
 [`Amanat.sol`](onchain/src/Amanat.sol) acts on, mapped through `on_chain.fields` in
@@ -111,7 +128,7 @@ retried.
 ## Track 2 — the scoring module
 
 `scorer/` is a `no_std` Rust module compiled to `wasm32-unknown-unknown`:
-**14.4 KB, zero imports**, exporting `alloc`, `dealloc`, `rank_answer` and
+*15.5 KB, zero imports**, exporting `alloc`, `dealloc`, `rank_answer` and
 `breakdown_answer`.
 
 It reads the *quantities* out of an answer and grades them as measurements:
@@ -134,24 +151,36 @@ exactly, so two validators on different hosts return identical bits.
 npm run build:scorer
 npm run bench      # against the real champion binaries
 npm run attacks
-cd scorer && cargo test    # 24 tests, native
+d scorer && cargo test    # 27 tests, native
 ```
 
-Measured on `scorer/bench.json` (38 good/bad cases across 25 intents, 14
-attacks) against champion binaries downloaded from their published `wasm_url`:
+easured on `scorer/bench.json` (38 good/bad cases across 31 intents, 14
+attacks) against champion binaries downloaded from their published `wasm_url`,
+re-run 31 August:
 
 | module | margin | wins | worst self-match | stddev |
 |---|---|---|---|---|
-| **amanat_scorer** | **0.5650** | **37/38** | 1.0000 | 0.3816 |
-| champion-urlscan (reg 28) | 0.5015 | 34/38 | 1.0000 | 0.3320 |
-| champion-weathercheck (reg 134) | 0.4688 | 34/38 | 1.0000 | 0.3228 |
-| champion-financial (reg 122) | 0.3886 | 29/38 | 1.0000 | 0.4191 |
+| **amanat_scorer** | **0.5977** | **37/38** | 1.0000 | 0.4343 |
+| urlscan reg 28 — champion until 23 August | 0.5015 | 34/38 | 1.0000 | 0.3320 |
+| weather_check reg 134 — superseded | 0.4688 | 34/38 | 1.0000 | 0.3228 |
+| weather_forecast reg 636 — **reigning** | 0.4438 | 33/38 | 1.0000 | 0.4277 |
+| financial reg 122 — superseded | 0.3886 | 29/38 | 1.0000 | 0.4191 |
+| weather_check reg 510 — **reigning** | 0.3827 | 33/38 | 0.9952 | 0.3900 |
+| storm_alert reg 453 — **reigning** | 0.3071 | 35/38 | 0.9830 | 0.3586 |
 
 Stage 2 needs both bars — margin **and** ordering wins at least matching the
 champion — so the wins column matters as much as the margin.
 
+**Reproducing this table needs one step the repo cannot do for you.**
+`scorer/champions/*.wasm` is gitignored — they are other people's binaries, some
+of them 25 MB — so a clean clone has nothing to compare against and `npm run
+bench` will report only our own. Fetch them first from the `wasm_url` each
+registration publishes at `https://devnode.telegraphprotocol.com/api/wasm` and
+drop them in `scorer/champions/`. `npm run attacks` reads
+`scorer/target/…/amanat_scorer.wasm`, so it wants `npm run build:scorer` first.
+
 Read the rest honestly: this corpus is ours, and it says the approach works on
-the cases we can see, not that it wins the protocol's 32 hidden fixtures.
+the cases we can see, not that it wins the protocol's own hidden fixtures.
 
 Widening the corpus from 20 cases to 38 is what found the real bugs. It exposed
 that "812.4 million" parsed as 812.4 while "812.4M" parsed correctly, that a
@@ -171,9 +200,11 @@ node scorer/harness.mjs --agreement <ours.wasm> <champion.wasm>
 node scorer/harness.mjs --diff      <ours.wasm> <champion.wasm>   # where we lose
 ```
 
-Against the reigning champion we sit at **0.92** mean rank agreement, and the
-cases where we diverge most are `WEATHER_CHECK` and `WEATHER_FORECAST` — exactly
-where we mean to.
+gainst the then-reigning `URL_SCAN` champion, registration 28, we sat at
+**0.92** mean rank agreement when this was measured on 21 August, and the cases
+where we diverged most were `WEATHER_CHECK` and `WEATHER_FORECAST` — exactly
+where we meant to. That binary was superseded on 23 August; the figure has not
+been re-measured against the modules seated now.
 
 **Anti-gaming: 14/14 attacks held.** The last one to fall needed a third
 signal — a verdict. A negator flips the next verdict word inside its own clause,
@@ -186,9 +217,9 @@ same time, which is the shape of a real signal rather than a patch. A second
 rule follows from it: an answer that asserts both poles — "valid ... however it
 is invalid" — has hedged rather than answered, and is charged for it.
 
-The champion binary leaks the case this module was built to catch —
-`wrong dimension, same number`, where it scores "12 °C" at 0.80 against an
-honest "12 millimetres" at 0.66.
+he reg-28 binary, champion until 23 August, leaks the case this module was
+built to catch — `wrong dimension, same number`, where it scores "12 °C" at
+0.80 against an honest "12 millimetres" at 0.66.
 
 ## Track 3 — the application
 
@@ -220,6 +251,8 @@ the cheap rails say a policy is worth settling.
 npm run agent:dry    # read-only: no wallet, no funds, no spend
 npm run agent        # opens jobs for policies that pass screening
 ```
+
+## Why we only use name-hashed intents
 
 `agent/run.mjs` deliberately targets **name-hashed intents only**
 (`keccak256("STORM_ALERT")`), so the protocol picks the miner. Using a
@@ -280,8 +313,8 @@ claim. A contract that paid a dollar for a signal acted on a reading of
 somewhere else. Written up in [`docs/bug-report.md`](docs/bug-report.md).
 
 **Previous deployment.** `0x1649ce04B8b9D56285a62Afb2b442602EE0bBc6e` ran the
-same contract before it adopted SafeERC20, and its eleven policies and four
-settled jobs are still readable on Base Sepolia. It was replaced rather than
+ame contract before it adopted SafeERC20, and its eleven policies and five
+settled jobs — 7 through 11 — are still readable on Base Sepolia. It was replaced rather than
 left in place because the tests only prove the code in this repo, and a
 deployment running different code from the one under test is the sort of gap
 this project keeps finding in other people's systems.
@@ -299,10 +332,11 @@ the same call returned `jobId 7` when simulated directly one command later.
 
 ## Miner and scoring modules
 
-**Miner: registration 179, `amanat-weather-risk`, active.** Serving
-`WEATHER_FORECAST`, `WEATHER_CHECK` and `STORM_ALERT` from
-https://amanat-miner.vercel.app, floor 0.01 USDC. Grace period runs seven days
-from 24 August.
+*Miner: first registered as 179 on 24 August; the live registration is 280.**
+`amanat-weather-risk`, serving `WEATHER_FORECAST`, `WEATHER_CHECK` and
+`STORM_ALERT` from https://amanat-miner.vercel.app, floor 0.01 USDC. Every
+`updateMiner` supersedes the id before it, so 179 and 256 read `deregistered`
+now and 280 is the one the node routes to.
 
 Getting there cost one terminal rejection worth writing down: **every
 `on_chain.fields` entry requires a `description`**. The schema enforces it, the
@@ -330,7 +364,7 @@ On 23 August the protocol shipped a fix so each module is evaluated against its
 own registered intent rather than one shared fixture set. Registrations across
 the network went from 187 to 574 as everyone re-registered, and all four of our
 slots were superseded. The fixture sets are visibly per-intent now:
-`WEATHER_CHECK` reports 12 cases and `WEATHER_FORECAST` 14, where everything
+WEATHER_CHECK` reports 12 cases and `WEATHER_FORECAST` 15, where everything
 used to report 32.
 
 That is the right change, and it invalidates the finding this repo previously
@@ -351,7 +385,7 @@ we had already used reverts with `duplicate wasm hash` even after that entry is
 superseded or rejected. A new slot needs a new build.
 
 **203 was rejected on `WEATHER_FORECAST` for being right.** It beat the champion
-on the fixtures — 0.8349 against 0.7859 — and was refused for ranking 90 real
+n the fixtures — 0.8349 against 0.7859 — and was refused for ranking 91 real
 miner answers differently:
 
 ```
@@ -379,11 +413,12 @@ knowledge has to live in the build.
 | `forecast` | a prediction carries honest uncertainty: 2 °C out three hours ahead is a good forecast | 0.5828 | 37/38 |
 | `verdict` | the answer is the call, so contradicting it costs 95% and the figure decides less | 0.5782 | 37/38 |
 | `prose` | nothing to measure; wording carries the answer | 0.5512 | 37/38 |
-| `authenticity` | a verdict on text with no figure at all | 0.5066 | 37/38 |
+ `authenticity` | a verdict on text with no figure at all | 0.4950 | 38/38 |
 
-Every profile: 37 of 38 ordering wins, worst self-match 1.0, and **14 of 14
-attacks held**. For comparison the reigning champion binary scores 0.5015 at
-34/38 on the same corpus.
+Six of the seven take 37 of 38 ordering wins and `authenticity` takes all 38,
+every one at worst self-match 1.0 with **14 of 14 attacks held**. For comparison
+the three champions seated on the weather intents score 0.4438, 0.3827 and
+0.3071 on the same corpus, at 33, 33 and 35 wins.
 
 ### The contrast trick has a ceiling
 
@@ -427,29 +462,34 @@ Known miss, kept in the corpus rather than dropped: the `AGENT_TASK` ordering
 case is still lost by the default profile. The champion loses it too.
 
 ```bash
-npm run build:profiles   # builds all six, fails if any two produce identical bytes
+pm run build:profiles   # builds all seven, fails if any two produce identical bytes
 ```
 
-Still blocked: `registerMiner`, because `base_url` returns 302 behind Vercel
-Authentication. `agent/register-miner.mjs` refuses to spend the registration
-until it answers 200.
+hat block is cleared. `registerMiner` was stuck for a while because `base_url`
+returned 302 behind Vercel Authentication and `agent/register-miner.mjs` refuses
+to spend a registration until it answers 200; deployment protection is off and
+`/health` has answered 200 since 24 August.
 
 ## Status
 
-Read from the chain and the node on 27 August; every figure below is checkable
+ead from the chain and the node on 31 August; every figure below is checkable
 at the addresses given.
 
 **Track 1 — miner.** Registration 280, `amanat-weather-risk`, id `20260821`,
 active on `WEATHER_FORECAST`, `WEATHER_CHECK` and `STORM_ALERT`, served from
-https://amanat-miner.vercel.app. **359 requests served**, the most of any miner
-on this network. At epoch 285 it ranked **3 of 4** on `STORM_ALERT` at 0.005034
-and **9 of 11** on `WEATHER_FORECAST` at 0.005182.
+https://amanat-miner.vercel.app. **389 requests served**, the most of any miner
+on this network — the next busiest, `onlookout-weather`, has served 304. At
+epoch 294 it ranked **4 of 7** on `STORM_ALERT` at 0.007951, **6 of 10** on
+`WEATHER_CHECK` at 0.014199 and **11 of 14** on `WEATHER_FORECAST` at 0.005860.
+Where it started, at epoch 285: **3 of 4** on `STORM_ALERT` at 0.005034 and
+**9 of 11** on `WEATHER_FORECAST` at 0.005182. The field on every weather intent
+roughly doubled over that week, and the rank moved with it.
 
 Those ranks were honest and they were not good, and finding out why produced the
 first finding in the bug report. Running the real champion binary locally —
 `scorer/harness.mjs --case`, the same way a validator runs it — our answer scores
 **0.9934** against a weather ground truth and **0.0086** when the ground truth is
-the question itself. The live band for every weather miner is 0.0050 to 0.0089.
+he question itself. Every weather miner then sat in a band of 0.0050 to 0.0089.
 Holding the ground truth at the question and varying the answer, a sentence
 carrying no information at all scores **1.0000**.
 
@@ -478,8 +518,18 @@ came at epoch 286:
 rank 5. Real, and an order of magnitude short of what the local run predicted —
 so the node is not grading against the bare question, and the bug report says
 so in place rather than quietly. No figure was added or removed and every
-scalar a contract settles on is untouched. Both halves are written up in
-[finding 1](docs/bug-report.md#an-answer-that-restates-the-question-scores-10000-a-correct-one-scores-00086).
+calar a contract settles on is untouched. Both halves are written up in
+["An answer that restates the question scores 1.0000; a correct one scores
+0.0086"](docs/bug-report.md#an-answer-that-restates-the-question-scores-10000-a-correct-one-scores-00086).
+
+**Then the band broke, and not by us.** At epoch 294 on 30 August
+`isobar-weather` scored **0.9728** on `WEATHER_CHECK` while every other miner on
+that intent — ours at 0.014199, the two commercial weather APIs at 0.0157 and
+0.0156 — stayed inside the old band. Somebody has worked out what the node
+actually holds as ground truth, and it is neither the bare question nor the
+weather report this miner answers with. So the ceiling is real and reachable,
+we have not reached it, and everything in the two paragraphs above is what we
+knew on 27 August rather than the last word.
 
 **What an answer carries now, beyond the reading.** Three things a parametric
 cover needs and the network's own answers do not have:
@@ -504,19 +554,23 @@ cover needs and the network's own answers do not have:
 And for agents that read before they call: `/openapi.json` (OpenAPI 3.1,
 every route and schema) and `/llms.txt`.
 
-**Track 2 — scoring modules.** We took the `GAME_RESULT` champion slot on
-27 August and **held it for about forty minutes.**
+*Track 2 — scoring modules. We hold no champion slot.** We took the
+`GAME_RESULT` slot on 27 August and **held it for about forty minutes.** Of our
+23 registrations, 5 read `superseded` and 18 `rejected` on 31 August, and none
+is active. That is the honest headline; the interesting part is how it went.
 
 Registration 1253 went active at 0.7008 against a bar of 0.4175, ordering 15 of
 15, agreement 0.6868. At 04:21 the incumbent author tried to take it back and
 was rejected at 0.4175. At 04:40:17 they registered **two modules in the same
-second**, 0.7089 and 0.7150, and the higher one took the slot. Concentration
-went from 44 of 45 to 43, and back to 44.
+second**, 0.7089 and 0.7150, and the higher one took the slot as registration
+1265, which still holds it. That author's share of the board went from 44 of 45
+intents to 43, and back to 44; by 31 August it had fallen to 33 of 45 as other
+authors registered.
 
 That is not a complaint — bracketing above a new champion is a legitimate move,
 and theirs scored higher. It is a measurement of how long a newcomer's slot
-lasts, and the answer is under an hour. `npm run impact` was written to watch
-for exactly this and reported it on its first run.
+lasts against an attentive incumbent, and the answer is under an hour. `npm run
+impact` was written to watch for exactly this and reported it on its first run.
 
 The five sent that morning are the more useful result, because only one was
 decided by the module:
@@ -534,17 +588,19 @@ the one it was held to, which had doubled in between. `GAS_PRICE` beat the
 incumbent on separation and matched it on ordering, and was refused for ranking
 real answers differently — on an intent whose best live miner scores 0.0054.
 
-Four earlier slots were held before the 23 August evaluator change superseded
-them. Eight profiles, every one at 37 of 38 ordering wins with 14 of 14 attacks
-held. `npm run survey` ranks targets and cannot predict verdicts, and says so:
+our earlier slots were held before the 23 August evaluator change superseded
+them. Seven profiles, six at 37 of 38 ordering wins and `authenticity` at 38 of
+38, with 14 of 14 attacks held. `npm run survey` ranks targets and cannot
+predict verdicts, and says so:
 the published `eval_score` is a frozen number, and `WEATHER_FORECAST` displays
 0.5302 while measuring 0.9898.
 
 **Track 3 — application.** Fourteen ERC-8183 jobs have ever been created on this
 network. **Eight of them are ours** — jobs 7 through 14, across two contracts.
 Jobs 7–11 settled through the callback and reached `Terminal`. Jobs 12, 13 and
-14 have sat in `Funded` since, the last of them opened against a freshly
-deployed contract on the intent this miner ranks first on. Nothing routed. The
+4 have sat in `Funded` since, the last of them opened against a freshly
+deployed contract on `STORM_ALERT` — the intent this miner then ranked 2 of 4
+on, and ranks 4 of 7 on at epoch 294. Nothing routed. The
 contract's Diamond escrow is zero and the Diamond has no withdrawal path, so
 there will be no ninth job. 70-plus paid Engine calls.
 
@@ -570,8 +626,9 @@ The site is one Beaufort plate on a night sea: the risk scale down the left with
 what reaches each band, the five lanes pinned against it, the band from 0.75 in
 the only red on the page. Its visual system is recorded in [`DESIGN.md`](DESIGN.md)
 and the product truth it serves in [`PRODUCT.md`](PRODUCT.md); the direction was
-chosen through Impeccable's roll (seed `5db15dc1`) and the page passes its
-59-rule detector with no findings.
+hosen through Impeccable's roll (seed `5db15dc1`) and the page passes its
+detector with no findings, bar one value deliberately waived — the needle's
+overshoot easing, recorded with its reason in `.impeccable/config.json`.
 
 ## Reproducing any of it
 
@@ -580,7 +637,7 @@ npm install
 cp .env.example .env            # fill in a funded Base Sepolia key
 npm run miner                   # the miner, locally
 npm test                        # miner self-check + 27 scorer tests
-npm run build:profiles          # eight binaries, fails if any two match
+pm run build:profiles          # seven binaries, fails if any two match
 npm run bench && npm run attacks # against the real champion binaries
 npm run agent:dry               # the loop, read-only, spends nothing
 npm run survey                  # the scoring board: measured bar vs displayed score, free

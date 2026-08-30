@@ -81,25 +81,25 @@ unsafe fn read_bytes<'a>(ptr: i32, len: i32) -> &'a [u8] {
 //   prose     no figure to check; wording carries the whole answer
 
 /// What contradicting the ground truth's verdict costs.
-#[cfg(any(feature = "verdict", feature = "authenticity"))]
+#[cfg(any(feature = "verdict", any(feature = "authenticity", feature = "authenticity2")))]
 const VERDICT_PENALTY: f32 = 0.05;
-#[cfg(not(any(feature = "verdict", feature = "authenticity")))]
+#[cfg(not(any(feature = "verdict", any(feature = "authenticity", feature = "authenticity2"))))]
 const VERDICT_PENALTY: f32 = 0.15;
 
 /// What asserting both poles costs.
-#[cfg(any(feature = "verdict", feature = "authenticity"))]
+#[cfg(any(feature = "verdict", any(feature = "authenticity", feature = "authenticity2")))]
 const HEDGE_PENALTY: f32 = 0.25;
-#[cfg(not(any(feature = "verdict", feature = "authenticity")))]
+#[cfg(not(any(feature = "verdict", any(feature = "authenticity", feature = "authenticity2"))))]
 const HEDGE_PENALTY: f32 = 0.4;
 
 /// How much of the score the reading decides, when there is a reading.
-#[cfg(feature = "authenticity")]
+#[cfg(any(feature = "authenticity", feature = "authenticity2"))]
 const W_NUMERIC: f32 = 0.25; // "is this AI-written?" has no figure to check
-#[cfg(all(feature = "prose", not(feature = "authenticity")))]
+#[cfg(all(feature = "prose", not(any(feature = "authenticity", feature = "authenticity2"))))]
 const W_NUMERIC: f32 = 0.40;
-#[cfg(all(feature = "verdict", not(feature = "authenticity")))]
+#[cfg(all(feature = "verdict", not(any(feature = "authenticity", feature = "authenticity2"))))]
 const W_NUMERIC: f32 = 0.50;
-#[cfg(not(any(feature = "prose", feature = "verdict", feature = "authenticity")))]
+#[cfg(not(any(feature = "prose", feature = "verdict", any(feature = "authenticity", feature = "authenticity2"))))]
 const W_NUMERIC: f32 = 0.75;
 
 /// How many times the contrast curve is applied. More passes widen the gap
@@ -111,16 +111,18 @@ const W_NUMERIC: f32 = 0.75;
 // answers that differed become equal, and an equal pair is a lost pair. That is
 // what cost the meteo experiment three ordering wins, and TEXT_AUTHENTICITY_CHECK
 // has lost the same three fixtures to this profile across three separate builds.
-#[cfg(feature = "authenticity")]
+#[cfg(feature = "authenticity2")]
+const CONTRAST_PASSES: u8 = 2;
+#[cfg(all(feature = "authenticity", not(feature = "authenticity2")))]
 const CONTRAST_PASSES: u8 = 3;
-#[cfg(not(feature = "authenticity"))]
+#[cfg(not(any(feature = "authenticity", feature = "authenticity2")))]
 const CONTRAST_PASSES: u8 = 3;
 
 /// Trigram shape is discounted against exact word evidence — except where
 /// wording is all there is.
-#[cfg(any(feature = "prose", feature = "authenticity"))]
+#[cfg(any(feature = "prose", any(feature = "authenticity", feature = "authenticity2")))]
 const SHAPE_WEIGHT: f32 = 1.0;
-#[cfg(not(any(feature = "prose", feature = "authenticity")))]
+#[cfg(not(any(feature = "prose", any(feature = "authenticity", feature = "authenticity2"))))]
 const SHAPE_WEIGHT: f32 = 0.9;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -632,7 +634,7 @@ pub fn precision(ground_truth: &[u8], answer: &[u8]) -> f32 {
 /// by a model" and reading it as a negative verdict inverts the whole intent.
 /// On TEXT_AUTHENTICITY_CHECK it is the axis itself, which is what a profile is
 /// for: the same word, opposite roles, decided at build time.
-#[cfg(feature = "authenticity")]
+#[cfg(any(feature = "authenticity", feature = "authenticity2"))]
 fn authenticity_axis(w: &[u8]) -> i32 {
     const HUMAN: &[&[u8]] = &[
         b"human", b"authentic", b"original", b"genuine", b"handwritten", b"person",
@@ -651,7 +653,7 @@ fn authenticity_axis(w: &[u8]) -> i32 {
     }
 }
 
-#[cfg(not(feature = "authenticity"))]
+#[cfg(not(any(feature = "authenticity", feature = "authenticity2")))]
 fn authenticity_axis(_w: &[u8]) -> i32 {
     0
 }
