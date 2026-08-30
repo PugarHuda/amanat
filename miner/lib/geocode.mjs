@@ -171,9 +171,19 @@ export async function locate(text) {
     };
   }
 
+  // "The geocoder says no such place" and "the geocoder could not be reached"
+  // are different answers, and swallowing the second into the first is how a
+  // miner tells the network that Manila does not exist. That is a confidently
+  // wrong answer on the scored path, and it is the failure the whole module was
+  // written to avoid. So the reason is kept: a lookup that threw is an upstream
+  // fault, and only an empty result is a genuine miss.
+  let upstreamFailed = null;
   for (const candidate of placeCandidates(text).slice(0, 4)) {
-    const hit = await lookup(candidate).catch(() => null);
+    const hit = await lookup(candidate).catch((e) => { upstreamFailed = e; return null; });
     if (hit) return { ...hit, source: "geocoded" };
+  }
+  if (upstreamFailed) {
+    throw new Error(`the geocoding service could not be reached, so this place could not be resolved (${upstreamFailed.message})`);
   }
   return null;
 }

@@ -2,7 +2,7 @@
 //   node miner/test.mjs
 import assert from "node:assert/strict";
 import { riskScore, summarise, forecast, hoursIn, windowIn, condition, restate } from "./lib/forecast.mjs";
-import { placeCandidates, coordinatesIn } from "./lib/geocode.mjs";
+import { placeCandidates, coordinatesIn, locate } from "./lib/geocode.mjs";
 import { greatCircleKm, waypoints, assessRoute } from "./lib/route.mjs";
 import { ttlCache, bucket } from "./lib/cache.mjs";
 import { drawCard, textWidth } from "./lib/card.mjs";
@@ -566,6 +566,21 @@ console.log("a malformed body or leg count is refused, not answered");
   assert.deepEqual(coordinatesIn("10.32;123.89"), { lat: 10.32, lon: 123.89 });
 }
 console.log("a place name beats two decimals that only look like a position");
+
+// ── a geocoder that is down is not a place that does not exist ──────────────
+{
+  // Telling the network "no place found in ...Manila..." because the geocoding
+  // API blinked is a confidently wrong answer, and it is scored as one.
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, ...rest) =>
+    String(url).includes("geocoding-api") ? Promise.reject(new Error("geocoding 503")) : realFetch(url, ...rest);
+  try {
+    await assert.rejects(() => locate("Is there a severe weather warning for Zzqqxville today?"), /could not be reached/);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+}
+console.log("a geocoder that is down says so, instead of denying the place exists");
 
 // ── risk is always a number, because it is an on-chain integer field ────────
 {
