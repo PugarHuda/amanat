@@ -645,6 +645,14 @@ console.log("an upstream blink is not a scored failure, but stale weather is not
     /timed out/,
   );
   assert.equal(slow, 1, "a timeout is answered once, not waited for twice");
+
+  // Except where the answer cannot be given without it. Geocoding opts in.
+  let geo = 0;
+  await assert.rejects(
+    () => watched("test-geo", async () => { geo++; throw timedOut; }, { pauseMs: 1, retryTimeouts: true }),
+    /timed out/,
+  );
+  assert.equal(geo, 2, "a load-bearing upstream is worth waiting for twice");
 }
 console.log("a transient upstream failure is retried once, a real outage still fails");
 

@@ -131,6 +131,11 @@ export function placeCandidates(text) {
 
 /** Resolve one name. Returns null when the API knows no such place. */
 async function lookup(name) {
+  // retryTimeouts: this is the one upstream the answer cannot do without. The
+  // weather, marine, ensemble and cyclone calls all degrade to null and the
+  // forecast still goes out; a question naming a place that never resolves is a
+  // question we refuse. Eight seconds is also the cheapest timeout of the six,
+  // so trying twice costs less than any of the others would.
   return PLACES.through(name.toLowerCase(), () => watched("open-meteo-geocoding", async () => {
     const url = `${GEOCODING}?name=${encodeURIComponent(name)}&count=1&language=en&format=json`;
     const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
@@ -146,7 +151,7 @@ async function lookup(name) {
       lon: hit.longitude,
       place: [hit.name, hit.admin1, hit.country].filter(Boolean).join(", "),
     };
-  }));
+  }, { retryTimeouts: true }));
 }
 
 /**

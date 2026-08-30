@@ -53,7 +53,7 @@ export function note(name, ok, ms, error) {
  * hammering a service that just asked us to slow down earns a longer block. The
  * pause is short enough to stay inside the caller's own timeout budget.
  */
-export async function watched(name, task, { retries = 1, pauseMs = 500 } = {}) {
+export async function watched(name, task, { retries = 1, pauseMs = 500, retryTimeouts = false } = {}) {
   const t0 = performance.now();
   let last;
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -74,7 +74,13 @@ export async function watched(name, task, { retries = 1, pauseMs = 500 } = {}) {
       // the marine and ensemble calls at the boundary coordinates pushed that
       // end-to-end test past its limit. A quick refusal (429, 5xx) is the case
       // worth repeating; a service too slow to answer is not.
-      if (e?.name === "TimeoutError" || e?.name === "AbortError") break;
+      // ... unless the caller says this one is worth waiting for twice. That is
+      // a judgement about what the failure costs, not about the error. The
+      // secondary upstreams each have a `.catch()` and the answer degrades
+      // without them, so a second 15- or 20-second wait buys a nicety. Geocoding
+      // is load-bearing: without it a question naming a place cannot be answered
+      // at all, and its timeout is 8 seconds, so the retry is affordable.
+      if (!retryTimeouts && (e?.name === "TimeoutError" || e?.name === "AbortError")) break;
     }
   }
   note(name, false, performance.now() - t0, last);
