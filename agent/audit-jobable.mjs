@@ -105,7 +105,13 @@ async function main() {
     }
   });
   await Promise.all(workers);
-  await saveCache(cache);
+  // Resolve before writing. The cache holds promises so that concurrent workers
+  // share one fetch, and JSON.stringify turns a promise into `{}` — so the run
+  // that populated the cache also poisoned it, and every later run read `{}`
+  // back and died in topLevelBlock with "text.split is not a function".
+  await saveCache(Object.fromEntries(
+    await Promise.all(Object.entries(cache).map(async ([url, v]) => [url, await v])),
+  ));
   rows.sort((a, b) => Number(a.id) - Number(b.id));
 
   if (process.argv.includes("--json")) {

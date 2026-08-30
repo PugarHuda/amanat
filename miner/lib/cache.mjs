@@ -21,7 +21,10 @@
  * requests, and an unbounded cache keyed on user-supplied coordinates is a
  * memory leak with a nice name.
  */
-export function ttlCache({ ttlMs, max = 500 }) {
+export function ttlCache({ ttlMs, max = 500, staleMs = ttlMs * 6 }) {
+  // Last known-good value per key, kept past its TTL purely so a failed
+  // refresh can be answered from it instead of thrown.
+  const good = new Map();
   const entries = new Map(); // insertion-ordered, which is the eviction order
 
   const live = (e) => e && e.expires > Date.now();
@@ -66,8 +69,24 @@ export function ttlCache({ ttlMs, max = 500 }) {
       const hit = this.get(key);
       if (hit !== undefined) return hit;
 
-      const pending = produce().catch((err) => {
-        entries.delete(key);
+      const pending = produce().then((v) => {
+        good.set(key, { value: v, at: Date.now() });
+        // The stale shelf is bounded the same way the cache is; without this it
+        // is a second copy of every key that never expires.
+        if (good.size > max) good.delete(good.keys().next().value);
+        return v;
+      }).catch((err) => {
+        // Only evict our own entry. A slow produce that fails after a later
+        // caller already stored a good value would otherwise delete that value.
+        const e = entries.get(key);
+        if (e && e.value === pending) entries.delete(key);
+        // A ten-minute-old reading is a better answer than a 502. The network
+        // scores what this endpoint returns, and one upstream hiccup should not
+        // be recorded as a miner that could not answer. Bounded: past the stale
+        // window the error is the honest answer, because old weather is wrong
+        // weather.
+        const held = good.get(key);
+        if (held && Date.now() - held.at <= staleMs) return held.value;
         throw err;
       });
       this.set(key, pending);
@@ -101,6 +120,10 @@ export function ttlCache({ ttlMs, max = 500 }) {
  * caller who waits is served rather than punished for arriving at :59.
  */
 export function bucket({ perMinute }) {
+  // `Number("twenty")` is NaN, and `NaN < 1` is false — so a mistyped env var
+  // would make every take() succeed and quietly delete the only control
+  // protecting the scored endpoint. Fail closed to the default, not open.
+  if (!Number.isFinite(perMinute) || perMinute <= 0) perMinute = 20;
   let tokens = perMinute;
   let refilled = Date.now();
 

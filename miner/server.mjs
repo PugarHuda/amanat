@@ -115,8 +115,24 @@ async function readJson(req, limit = 64 * 1024) {
     if (size > limit) throw new RangeError("body too large");
     chunks.push(c);
   }
-  return chunks.length ? JSON.parse(Buffer.concat(chunks).toString("utf8")) : {};
+  const parsed = chunks.length ? JSON.parse(Buffer.concat(chunks).toString("utf8")) : {};
+  // `JSON.parse("null")` is null, and a bare scalar is not a body. Every caller
+  // reads named fields off this, so anything else is a TypeError deep inside a
+  // handler — which `send` maps to 502, a server fault, on the endpoint the
+  // network scores. Four bytes should not do that. Arrays are left alone: they
+  // carry no named fields and already fail as a missing-argument 400.
+  return parsed !== null && typeof parsed === "object" ? parsed : {};
 }
+
+// A miner that stops answering is deregistered, so an unhandled rejection must
+// not be allowed to end the process. Node's default is to exit; for a service
+// whose whole job is to still be there when the node calls, staying up and
+// reporting the fault is the right trade. The /api/survey path proved this was
+// reachable: a header written before an await, and one bad upstream body took
+// the whole miner down instead of one request.
+process.on("unhandledRejection", (err) => {
+  console.error("unhandled rejection (request dropped, miner stays up):", err);
+});
 
 export const server = createServer(async (req, res) => {
   try {
@@ -345,8 +361,13 @@ export const server = createServer(async (req, res) => {
         return send(res, 503, { error: "the survey has not been published yet — the schedule writes it every 12 hours" });
       }
       if (!upstream.ok) throw new Error(`survey ${upstream.status}`);
+      // Read the body before the headers go out. `await upstream.json()` after
+      // `writeHead` throws ERR_HTTP_HEADERS_SENT from inside the catch when the
+      // branch serves an HTML error page or a truncated file — an unhandled
+      // rejection, which takes the whole process down rather than one request.
+      const survey = await upstream.json();
       res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "public, max-age=1800" });
-      return res.end(JSON.stringify(await upstream.json()));
+      return res.end(JSON.stringify(survey));
     }
 
     if (pathname === "/api/board") {
@@ -374,6 +395,25 @@ export const server = createServer(async (req, res) => {
       // only one that can exhaust the day's quota. When that goes, /forecast
       // goes with it, and /forecast is what the network scores. A convenience
       // endpoint must never be able to take the miner off the network.
+      const body = req.method === "POST" ? await readJson(req) : {};
+
+      // `speed` and `legs` are what a person types; `speed_kmh` and `max_legs`
+      // are what the page sends. Both are accepted, and the spec names both.
+      const speedKmh = Number(body.speed_kmh ?? body.speed ?? searchParams.get("speed_kmh") ?? searchParams.get("speed") ?? 37);
+      // Each leg costs an upstream call, and Open-Meteo's free tier is what
+      // pays for it. The ceiling is a real limit, not a round number.
+      // `Number("abc")` is NaN, and NaN through Math.min/max stays NaN: the leg
+      // loop then never runs and the route comes back 200 with no legs, no
+      // worst point, and `unread: 0` actively claiming nothing was missed. A
+      // wrong answer under a success code is worse than a refusal.
+      const legsRaw = body.max_legs ?? body.legs ?? searchParams.get("max_legs") ?? searchParams.get("legs") ?? 8;
+      if (!Number.isFinite(Number(legsRaw))) throw new RangeError("legs must be a number between 2 and 12");
+      const max = Math.min(12, Math.max(2, Number(legsRaw)));
+
+      // Only now spend a token. Everything above is free: it reads the request
+      // and refuses what is malformed. Taking the token first let a stream of
+      // junk requests drain the budget that protects the scored endpoint,
+      // without a single upstream call being made on their behalf.
       if (!routeBudget.take()) {
         res.writeHead(429, { "Content-Type": "application/json", "Retry-After": "60" });
         return res.end(JSON.stringify({
@@ -382,16 +422,10 @@ export const server = createServer(async (req, res) => {
         }));
       }
 
-      const body = req.method === "POST" ? await readJson(req) : {};
+      // Geocoding is the first thing that costs an upstream call, so it sits
+      // below the budget, not above it.
       const from = await endpointOf(body.from ?? searchParams.get("from"), "from");
       const to = await endpointOf(body.to ?? searchParams.get("to"), "to");
-
-      // `speed` and `legs` are what a person types; `speed_kmh` and `max_legs`
-      // are what the page sends. Both are accepted, and the spec names both.
-      const speedKmh = Number(body.speed_kmh ?? body.speed ?? searchParams.get("speed_kmh") ?? searchParams.get("speed") ?? 37);
-      // Each leg costs an upstream call, and Open-Meteo's free tier is what
-      // pays for it. The ceiling is a real limit, not a round number.
-      const max = Math.min(12, Math.max(2, Number(body.max_legs ?? body.legs ?? searchParams.get("max_legs") ?? searchParams.get("legs") ?? 8)));
 
       return send(res, 200, await assessRoute({
         from, to, speedKmh, max,

@@ -537,6 +537,67 @@ console.log("backtest, band and attestation hold their shape");
 }
 console.log("the upstream ledger records who failed, and degrades only on the scored path");
 
+
+// ── malformed input is refused, not answered wrongly and not fatal ──────────
+{
+  // A four-byte body used to reach `body.lat` on null and come back 502 — a
+  // server fault on the endpoint the network scores.
+  const r = await fetch(`http://127.0.0.1:${port2}/forecast`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: "null",
+  });
+  assert.equal(r.status, 400, "a null body is the caller's mistake, not the server's");
+
+  // A non-numeric leg count used to produce NaN, an empty leg list and a
+  // cheerful 200 claiming `unread: 0` — a wrong answer under a success code.
+  const bad = await fetch(`http://127.0.0.1:${port2}/api/route?from=Cebu&to=Manila&legs=abc`);
+  assert.equal(bad.status, 400, "a leg count that is not a number is refused");
+}
+console.log("a malformed body or leg count is refused, not answered");
+
+// ── two loose decimals in a sentence are not a coordinate pair ──────────────
+{
+  assert.equal(coordinatesIn("Will it exceed 30.5 40.5 today?"), null, "prose is not a coordinate");
+  assert.deepEqual(coordinatesIn("storm risk at 10.32, 123.89"), { lat: 10.32, lon: 123.89 });
+  assert.deepEqual(coordinatesIn("10.32;123.89"), { lat: 10.32, lon: 123.89 });
+}
+console.log("a place name beats two decimals that only look like a position");
+
+// ── risk is always a number, because it is an on-chain integer field ────────
+{
+  // NaN would serialise to null, print as "low (NaN)", and be signed.
+  const r = riskScore({ wind_kmh: undefined, gust_kmh: null, precip_mm: undefined });
+  assert.ok(Number.isFinite(r), `risk must be numeric, got ${r}`);
+  assert.equal(r, 0);
+  assert.ok(Number.isFinite(riskScore({ wind_kmh: 62, gust_kmh: NaN, precip_mm: null })));
+}
+console.log("risk stays numeric when a reading is missing");
+
+// ── a mistyped budget must not delete the limiter ───────────────────────────
+{
+  const b = bucket({ perMinute: Number("twenty") });
+  let granted = 0;
+  for (let i = 0; i < 200; i++) if (b.take()) granted++;
+  assert.ok(granted < 200, "a NaN budget must fail closed, not grant everything");
+  assert.ok(Number.isFinite(b.available), "available must be a number for /health");
+}
+console.log("a mistyped budget falls back instead of failing open");
+
+// ── an upstream blink is answered from the last good reading, not a 502 ─────
+{
+  const c = ttlCache({ ttlMs: 20, max: 4, staleMs: 60_000 });
+  assert.equal(await c.through("k", async () => "good"), "good");
+  await new Promise((r) => setTimeout(r, 30));           // let it expire
+  assert.equal(await c.through("k", async () => { throw new Error("open-meteo 503"); }), "good",
+    "a failed refresh serves the last good reading rather than failing the scored call");
+
+  // Past the stale window the error is the honest answer: old weather is wrong.
+  const s = ttlCache({ ttlMs: 5, max: 4, staleMs: 10 });
+  await s.through("k", async () => "old");
+  await new Promise((r) => setTimeout(r, 40));
+  await assert.rejects(() => s.through("k", async () => { throw new Error("still down"); }), /still down/);
+}
+console.log("an upstream blink is not a scored failure, but stale weather is not served forever");
+
 server.close();
 
 // ── the answer opens with the question that was actually asked ──────────────

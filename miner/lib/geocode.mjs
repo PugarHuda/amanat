@@ -46,7 +46,13 @@ const NOT_A_PLACE = new Set([
 
 /** A pair of decimals in the text is already an answer — no lookup needed. */
 export function coordinatesIn(text) {
-  const pairs = [...String(text).matchAll(/(-?\d{1,3}\.\d+)\s*[,;]?\s*(-?\d{1,3}\.\d+)/g)];
+  // The separator is required, not optional. With `[,;]?` any two loose
+  // decimals in a sentence became a coordinate pair and beat every place name,
+  // so "Will it exceed 30.5 40.5 today?" was answered for the Saudi desert —
+  // with the question restated, so it read as a confident correct answer. This
+  // module exists to prevent exactly that. The registered schema documents the
+  // form as "lat,lon", so a comma or semicolon is what a caller sends.
+  const pairs = [...String(text).matchAll(/(-?\d{1,3}\.\d+)\s*[,;]\s*(-?\d{1,3}\.\d+)/g)];
   for (const [, a, b] of pairs) {
     const lat = Number(a);
     const lon = Number(b);

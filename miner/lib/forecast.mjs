@@ -108,11 +108,18 @@ export function riskScore({ wind_kmh, gust_kmh, precip_mm, wave_m, cyclone = 0 }
   // 4 m significant wave height is Douglas 6 "very rough", where coastal cargo
   // operations suspend). Deliberately not a model — the point is a number a
   // contract can compare.
-  const w = Math.min(wind_kmh / 62, 1);
-  const g = Math.min(gust_kmh / 90, 1);
-  const p = Math.min(precip_mm / 30, 1);
-  const sea = Number.isFinite(wave_m) ? Math.min(wave_m / 4, 1) : 0;
-  return Math.round(Math.max(w, g, p, sea, cyclone) * 1000) / 1000;
+  // Every driver is floored to 0 when it cannot be read. `undefined / 62` is
+  // NaN, and Math.max propagates it, so one missing hourly variable would make
+  // `risk` NaN — which JSON.stringify writes as null, summarise prints as
+  // "low (NaN)", and sign.mjs signs, because NaN is not nullish. `risk` maps to
+  // an on-chain integer field, and those must always be numeric.
+  const num = (v, d) => (Number.isFinite(v) ? Math.min(v / d, 1) : 0);
+  const w = num(wind_kmh, 62);
+  const g = num(gust_kmh, 90);
+  const p = num(precip_mm, 30);
+  const sea = num(wave_m, 4);
+  const c = Number.isFinite(cyclone) ? cyclone : 0;
+  return Math.round(Math.max(w, g, p, sea, c) * 1000) / 1000;
 }
 
 /**
@@ -210,17 +217,23 @@ export function summarise({ lat, lon, place, hours, question, temp_c, wind_kmh, 
   const prob = Number.isFinite(precip_prob_pct) ? ` (${Math.round(precip_prob_pct)}% chance of rain)` : "";
   const from = wind_dir ? ` from the ${wind_dir}` : "";
   const daily = (days ?? []).slice(0, 2).map((d) =>
-    `${d.label} high ${d.high_c.toFixed(0)}C low ${d.low_c.toFixed(0)}C` +
+    `${d.label}` +
+    (Number.isFinite(d.high_c) ? ` high ${d.high_c.toFixed(0)}C` : "") +
+    (Number.isFinite(d.low_c) ? ` low ${d.low_c.toFixed(0)}C` : "") +
     (d.condition ? ` ${d.condition.toLowerCase()}` : "") +
     (Number.isFinite(d.precip_prob_pct) ? `, ${Math.round(d.precip_prob_pct)}% chance of rain` : ""),
   ).join("; ");
 
   return (
     lead +
-    `the temperature${scope} is ${temp_c.toFixed(1)} °C (${fahrenheit(temp_c)} °F)${feels}${humid}, ` +
+    (Number.isFinite(temp_c)
+      ? `the temperature${scope} is ${temp_c.toFixed(1)} °C (${fahrenheit(temp_c)} °F)${feels}${humid}, `
+      : `the temperature${scope} could not be read${humid}, `) +
     `${cond ?? "conditions unknown"}${cloud}, ` +
-    `wind ${wind_kmh.toFixed(1)} km/h (${(wind_kmh / 3.6).toFixed(1)} m/s)${from}, gusts ${gust_kmh.toFixed(1)} km/h, ` +
-    `precipitation ${precip_mm.toFixed(1)} mm${prob}, valid at ${valid_at}${peakNote}. ` +
+    (Number.isFinite(wind_kmh) ? `wind ${wind_kmh.toFixed(1)} km/h (${(wind_kmh / 3.6).toFixed(1)} m/s)${from}, ` : "") +
+    (Number.isFinite(gust_kmh) ? `gusts ${gust_kmh.toFixed(1)} km/h, ` : "") +
+    (Number.isFinite(precip_mm) ? `precipitation ${precip_mm.toFixed(1)} mm${prob}, ` : "") +
+    `valid at ${valid_at}${peakNote}. ` +
     (daily ? `${day} forecast: ${daily}. ` : (cond ? `${day}: ${cond}${range}. ` : "")) +
     (Number.isFinite(wave_m) ? `Waves ${wave_m.toFixed(1)} m${Number.isFinite(sea_level_m) ? `, sea level ${sea_level_m >= 0 ? "+" : ""}${sea_level_m.toFixed(1)} m against mean` : ""}. ` : "") +
     (cyclone
