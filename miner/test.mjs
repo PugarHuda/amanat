@@ -620,6 +620,16 @@ console.log("an upstream blink is not a scored failure, but stale weather is not
     /down/,
   );
   assert.equal(tries, 2, "one retry, then the honest error");
+
+  // A timeout is never retried: the caller's own budget is already spent, and
+  // a second attempt just doubles the wait to reach the same answer.
+  let slow = 0;
+  const timedOut = Object.assign(new Error("timed out"), { name: "TimeoutError" });
+  await assert.rejects(
+    () => watched("test-slow", async () => { slow++; throw timedOut; }, { pauseMs: 1 }),
+    /timed out/,
+  );
+  assert.equal(slow, 1, "a timeout is answered once, not waited for twice");
 }
 console.log("a transient upstream failure is retried once, a real outage still fails");
 

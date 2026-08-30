@@ -67,6 +67,14 @@ export async function watched(name, task, { retries = 1, pauseMs = 500 } = {}) {
       return out;
     } catch (e) {
       last = e;
+      // Never retry a timeout. The caller's own AbortSignal.timeout has already
+      // spent its whole budget waiting, so a second attempt doubles the delay
+      // to reach the same answer — and the retry is meant to cost a few hundred
+      // milliseconds, not another fifteen seconds. This was measured: retrying
+      // the marine and ensemble calls at the boundary coordinates pushed that
+      // end-to-end test past its limit. A quick refusal (429, 5xx) is the case
+      // worth repeating; a service too slow to answer is not.
+      if (e?.name === "TimeoutError" || e?.name === "AbortError") break;
     }
   }
   note(name, false, performance.now() - t0, last);
