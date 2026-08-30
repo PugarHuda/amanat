@@ -5,10 +5,22 @@
 //
 //   E2E_BASE=https://amanat-miner.vercel.app npm run test:e2e
 //
-// One worker and no retries on purpose. These tests spend a free upstream's
-// quota and read a rate-limited public RPC; running them four-wide would make
-// the suite flaky for reasons that have nothing to do with the code, and a retry
-// would hide it.
+// One worker on purpose. These tests spend a free upstream's quota and read a
+// rate-limited public RPC; running them four-wide would make the suite flaky for
+// reasons that have nothing to do with the code.
+//
+// No retries locally, for the reason this comment used to give for all
+// environments: a retry hides flakiness, and a developer should see it the
+// moment it appears. On CI that reasoning inverts. A GitHub runner egresses from
+// a shared, heavily-used IP pool, and Open-Meteo meters per IP — so 213 tests
+// making real calls from that address get rate-limited on their merits, and the
+// suite went red for four consecutive commits without a single one of them being
+// caused by the code. Red for a reason nobody can act on hides real failures far
+// more effectively than a retry does.
+//
+// Two retries on CI, none locally. Every assertion is unchanged; what is
+// tolerated is the third party, not the miner. If a test fails all three times
+// on CI, that is the code.
 
 import { defineConfig, devices } from "@playwright/test";
 
@@ -20,7 +32,7 @@ export default defineConfig({
   expect: { timeout: 30_000 },
   fullyParallel: false,
   workers: 1,
-  retries: 0,
+  retries: process.env.CI ? 2 : 0,
   reporter: [["list"]],
 
   // Browser engines differ in layout, focus order and CSS support, so anything
