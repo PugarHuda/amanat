@@ -111,6 +111,17 @@ const W_NUMERIC: f32 = 0.75;
 // answers that differed become equal, and an equal pair is a lost pair. That is
 // what cost the meteo experiment three ordering wins, and TEXT_AUTHENTICITY_CHECK
 // has lost the same three fixtures to this profile across three separate builds.
+//
+// FALSIFIED for TEXT_AUTHENTICITY_CHECK, registration 2072, 30 Aug 2026.
+// If saturation were creating those ties, dropping to two passes would break at
+// least one. It broke none: 13 of 15 again, the same count as registrations 650,
+// 675, 679 and 950, while the margin fell 0.3808 -> 0.3455 against a bar of
+// 0.6667. So the three lost fixtures are not ties made by the contrast curve —
+// this scorer genuinely ranks those three the wrong way round, and the gap to
+// the champion is 0.32 of margin as well as one win. That intent needs a
+// different reading of authorship evidence, not another knob on this one. The
+// `authenticity2` profile is kept because its binary is spent and the number is
+// worth having, not because it is better.
 #[cfg(feature = "authenticity2")]
 const CONTRAST_PASSES: u8 = 2;
 #[cfg(all(feature = "authenticity", not(feature = "authenticity2")))]

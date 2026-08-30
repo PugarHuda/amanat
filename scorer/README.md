@@ -82,10 +82,18 @@ guess: TEXT_AUTHENTICITY_CHECK rejected three of our attempts on the *ordering*
 gate at 12-13 of 14, never on separation, and the same three fixtures were lost
 across three builds. A tie is a lost pair, and contrast passes are what create
 ties by saturating mid-quality answers toward 0 and 1 — so this profile drops
-the third pass. On our own corpus that trades a little margin (0.4950 → 0.4782)
+the third pass. On our own corpus that traded a little margin (0.4950 → 0.4782)
 for a tighter spread (stddev 0.3588 → 0.3300), which is the shape of less
-saturation. Our corpus is not the node fixture set, so this is a reasoned bet,
-not a prediction.
+saturation.
+
+**It was refused, and the bet is worth reading.** Registration 2072, 30 August:
+13 of 15 — the same count as every earlier attempt — with the margin down to
+0.3455 against a bar of 0.6667. Dropping a contrast pass broke none of the three
+fixtures it was aimed at, so saturation was not making those ties. This scorer
+simply ranks those three the wrong way round, and it is 0.32 of margin short as
+well as one win. TEXT_AUTHENTICITY_CHECK needs a different reading of authorship
+evidence, not another constant. Recorded here because the next person to look at
+this intent should not spend a ninth binary re-testing it.
 
 ## The gates, in the order they bite
 
