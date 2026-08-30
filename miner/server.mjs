@@ -6,7 +6,8 @@ import { pathToFileURL, fileURLToPath } from "node:url";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { forecast, hoursIn, windowIn, seriesCacheSize, seaCacheSize } from "./lib/forecast.mjs";
-import { backtest } from "./lib/backtest.mjs";
+import { backtest, isCached as backtestCached } from "./lib/backtest.mjs";
+import { report as upstreamReport } from "./lib/upstream.mjs";
 import { publicKey, keyIsPersistent, SIGNED_FIELDS } from "./lib/sign.mjs";
 import { locate, placeCacheSize } from "./lib/geocode.mjs";
 import { assessRoute } from "./lib/route.mjs";
@@ -27,6 +28,11 @@ const CARDS = ttlCache({ ttlMs: 30 * 60_000, max: 4 });
  * takes to burn 10 000 upstream calls in a day.
  */
 const routeBudget = bucket({ perMinute: Number(process.env.AMANAT_ROUTE_PER_MINUTE ?? 20) });
+// The archive shares Open-Meteo's per-IP quota with the forecast the network
+// scores, and a backtest is one archive call per point and date range. Cached
+// a day once read; the budget bounds what a stranger can make this instance
+// fetch fresh in a minute.
+const backtestBudget = bucket({ perMinute: Number(process.env.AMANAT_BACKTEST_PER_MINUTE ?? 30) });
 
 // Where the scheduled agent publishes. An orphan branch, so a data refresh
 // carries no source changes and triggers no build.
@@ -134,8 +140,15 @@ export const server = createServer(async (req, res) => {
         .catch(() => null);
 
       const ageHours = board ? (Date.now() - Date.parse(board.generated_at)) / 3600e3 : null;
+      // The ledger of every upstream this instance has called: last success,
+      // last failure and why. "degraded" means the weather model — the one
+      // route the network scores — failed more recently than it succeeded.
+      // Still HTTP 200: the node's liveness check reads the status word, and a
+      // miner that answers 503 while its upstream hiccups is a miner that gets
+      // deregistered for someone else's outage.
+      const { upstreams, degraded } = upstreamReport();
       return send(res, 200, {
-        status: "ok",
+        status: degraded ? "degraded" : "ok",
         miner: "amanat",
         time: new Date().toISOString(),
         board: board
@@ -153,6 +166,8 @@ export const server = createServer(async (req, res) => {
           // The forecast endpoint the network scores is never rate limited; this
           // is the budget that keeps it that way.
           route_requests_available: Math.floor(routeBudget.available),
+          backtest_requests_available: Math.floor(backtestBudget.available),
+          calls: upstreams,
           cached_points: seriesCacheSize(),
           cached_sea_points: seaCacheSize(),
           // An ephemeral key means each serverless instance signs with its
@@ -278,6 +293,14 @@ export const server = createServer(async (req, res) => {
 
     // Would the trigger have fired? The live thresholds over the archive.
     if (pathname === "/api/backtest") {
+      const wanted = { lat: Number(searchParams.get("lat")), lon: Number(searchParams.get("lon")), start: searchParams.get("start"), end: searchParams.get("end") };
+      // Only a fresh archive read costs budget; a cached run costs nothing and
+      // is never refused. The board's five ports are cached after the first
+      // visitor of the day.
+      if (!backtestCached(wanted) && !backtestBudget.take()) {
+        res.writeHead(429, { "Content-Type": "application/json", "Retry-After": "60" });
+        return res.end(JSON.stringify({ error: "too many backtests this minute — the archive shares its quota with /forecast. Try again shortly." }));
+      }
       const num = (k) => { const v = searchParams.get(k); return v === null || v === "" ? NaN : Number(v); };
       const lat = num("lat"), lon = num("lon");
       if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new RangeError("lat and lon are required");

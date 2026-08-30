@@ -245,7 +245,9 @@ built-in WebAssembly, so comparing against a champion needs no extra toolchain.
 
 **The loop closes.** `Amanat.sol` is deployed at
 [`0x0700c930…590c`](https://sepolia.basescan.org/address/0x0700c9300D5cfD8A4b2C7fBbaB2703087AB0590c)
-and settles claims with nobody in the loop:
+— source [verified on Sourcify](https://sourcify.dev/server/v2/contract/84532/0x0700c9300D5cfD8A4b2C7fBbaB2703087AB0590c),
+creation and runtime bytecode both a full match, so what the chain runs is
+what this repo shows — and settles claims with nobody in the loop:
 
 ```
 openPolicy -> requestCheck -> createJob(keccak256("STORM_ALERT"))

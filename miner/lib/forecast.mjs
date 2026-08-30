@@ -9,6 +9,7 @@
 import { ttlCache } from "./cache.mjs";
 import { activeCyclones, nearest, cycloneRisk } from "./cyclone.mjs";
 import { ensembleSeries, band } from "./ensemble.mjs";
+import { watched } from "./upstream.mjs";
 import { attest } from "./sign.mjs";
 
 const OPEN_METEO = "https://api.open-meteo.com/v1/forecast";
@@ -292,7 +293,7 @@ export async function forecast({ lat, lon, hours = 0, place, question, window = 
   // place to more precision than that are asking the same question, and giving
   // each of them their own cache entry is how a cache becomes a memory leak.
   const key = `${lat.toFixed(4)},${lon.toFixed(4)}`;
-  const d = await SERIES.through(key, async () => {
+  const d = await SERIES.through(key, () => watched("open-meteo", async () => {
     const url = `${OPEN_METEO}?latitude=${lat}&longitude=${lon}` +
       `&hourly=temperature_2m,wind_speed_10m,wind_gusts_10m,precipitation,weather_code` +
       `,relative_humidity_2m,apparent_temperature,wind_direction_10m,cloud_cover,precipitation_probability,dew_point_2m` +
@@ -301,7 +302,7 @@ export async function forecast({ lat, lon, hours = 0, place, question, window = 
     const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
     if (!res.ok) throw new Error(`open-meteo ${res.status}`);
     return res.json();
-  });
+  }));
 
   // Open-Meteo indexes hourly from 00:00 UTC today, so `hours` has to be
   // measured from the current hour, not from the start of the array.
@@ -343,13 +344,13 @@ export async function forecast({ lat, lon, hours = 0, place, question, window = 
   // They are fetched together, not in turn — a cold point took 5.7 s when
   // each waited for the last, and the three do not depend on each other.
   const [seaState, cyclone, ens] = await Promise.all([
-    SEA.through(key, async () => {
+    SEA.through(key, () => watched("open-meteo-marine", async () => {
     const url = `${MARINE}?latitude=${lat}&longitude=${lon}&hourly=wave_height,sea_level_height_msl&forecast_days=8&timezone=UTC`;
     const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
     if (!res.ok) throw new Error(`open-meteo marine ${res.status}`);
     const m = await res.json();
     return { time: m.hourly?.time ?? [], wave: m.hourly?.wave_height ?? [], level: m.hourly?.sea_level_height_msl ?? [] };
-    }).then((sea) => {
+    })).then((sea) => {
       const j = sea.time.indexOf(at);
       const w = j >= 0 ? sea.wave[j] : null;
       const l = j >= 0 ? sea.level[j] : null;

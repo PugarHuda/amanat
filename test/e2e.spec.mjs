@@ -212,6 +212,22 @@ test.describe("miner API — happy paths", () => {
     expect(inland.summary).not.toContain("sea level");
   });
 
+  test("health names every upstream it has called, with the last outcome", async ({ request }) => {
+    await request.post(`${BASE}/forecast`, { data: { ...CEBU, hours: 1 } });
+    const h = await (await request.get(`${BASE}/health`)).json();
+    expect(["ok", "degraded"]).toContain(h.status);
+    expect(h.upstream.backtest_requests_available).toBeGreaterThanOrEqual(0);
+    const calls = h.upstream.calls;
+    for (const name of ["open-meteo", "open-meteo-marine", "open-meteo-ensemble", "gdacs"]) {
+      expect(calls, `ledger must carry ${name}`).toHaveProperty(name);
+      expect(calls[name].calls).toBeGreaterThan(0);
+      expect(typeof calls[name].last_ms).toBe("number");
+    }
+    // When the weather model last succeeded, the miner is ok; the two agree.
+    const w = calls["open-meteo"];
+    if (w.last_ok_at && (!w.last_fail_at || w.last_ok_at > w.last_fail_at)) expect(h.status).toBe("ok");
+  });
+
   test("reports health as itself", async ({ request }) => {
     const res = await request.get(`${BASE}/health`);
     expect(res.status()).toBe(200);

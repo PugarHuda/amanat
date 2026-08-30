@@ -10,6 +10,7 @@ import { parse, nearest, cycloneRisk, NEAR_KM } from "./lib/cyclone.mjs";
 import { assess, range } from "./lib/backtest.mjs";
 import { band } from "./lib/ensemble.mjs";
 import { attest, verify, canonical, SIGNED_FIELDS } from "./lib/sign.mjs";
+import { note, watched, report } from "./lib/upstream.mjs";
 import { server } from "./server.mjs";
 
 // risk: each driver alone can reach the ceiling, and the worst one wins.
@@ -508,6 +509,33 @@ console.log("a window is answered at its worst hour, an exact hour at that hour"
   assert.equal(canonical({ ...answer, extra: 1 }), canonical(answer), "an extra field changes nothing");
 }
 console.log("backtest, band and attestation hold their shape");
+
+
+// ── the upstream ledger says which service last failed, and degrades honestly
+{
+  // A service that never fails has a success and no error; one that fails
+  // keeps the message. The scored path decides the status word: the weather
+  // model failing more recently than it succeeded is "degraded"; anything
+  // else failing is a fact in the ledger, not a change of status.
+  note("test-marine", true, 120);
+  note("test-marine", false, 900, new Error("marine 503"));
+  const r1 = report();
+  assert.equal(r1.upstreams["test-marine"].calls, 2);
+  assert.equal(r1.upstreams["test-marine"].failures, 1);
+  assert.equal(r1.upstreams["test-marine"].last_error, "marine 503");
+  assert.ok(r1.upstreams["test-marine"].last_ok_at && r1.upstreams["test-marine"].last_fail_at);
+
+  // watched() records and re-throws; a caller's fallback still runs.
+  await assert.rejects(() => watched("test-thrower", async () => { throw new Error("boom"); }), /boom/);
+  assert.equal(report().upstreams["test-thrower"].last_error, "boom");
+  assert.equal(await watched("test-thrower", async () => 42), 42);
+  assert.equal(report().upstreams["test-thrower"].failures, 1);
+
+  // Degraded is about open-meteo only. This instance has already made real
+  // forecast calls above, so the weather entry exists and succeeded last.
+  assert.equal(report().degraded, false, "a marine failure does not degrade the miner");
+}
+console.log("the upstream ledger records who failed, and degrades only on the scored path");
 
 server.close();
 

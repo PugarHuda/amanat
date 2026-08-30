@@ -73,7 +73,7 @@
     "/api/board": { "get": { "operationId": "board", "summary": "The published storm board: five shipping lanes screened through Telegraph", "responses": { "200": { "description": "Lanes with their worst-leg risk" }, "503": { "description": "Not published yet" } } } },
     "/api/survey": { "get": { "operationId": "survey", "summary": "What the network scores: the measured bar per intent beside the displayed champion score", "responses": { "200": { "description": "Per-intent rows" } } } },
     "/api/asked": { "get": { "operationId": "asked", "summary": "The last fifty questions this miner was sent, with the field each arrived in", "responses": { "200": { "description": "Newest first" } } } },
-    "/health": { "get": { "operationId": "health", "summary": "Upstream reachability, quota, cache fill, board age, signing key", "responses": { "200": { "description": "ok" }, "503": { "description": "degraded" } } } },
+    "/health": { "get": { "operationId": "health", "summary": "Per-upstream ledger (last success, last failure and why), budgets, cache fill, board age, signing key", "responses": { "200": { "description": "status is \"ok\", or \"degraded\" when the weather model failed more recently than it succeeded; always 200 so the node's liveness check is not failed by someone else's outage" } } } },
     "/.well-known/amanat.json": { "get": { "operationId": "wellKnown", "summary": "The public key answers are signed with, and where the spec is", "responses": { "200": { "description": "Key and links" } } } }
   },
   "components": {

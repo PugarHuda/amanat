@@ -39,6 +39,11 @@ export function ttlCache({ ttlMs, max = 500 }) {
       return e.value;
     },
 
+    /** Whether a live entry exists, without touching its position. */
+    has(key) {
+      return live(entries.get(key));
+    },
+
     set(key, value) {
       entries.delete(key);
       entries.set(key, { value, expires: Date.now() + ttlMs });

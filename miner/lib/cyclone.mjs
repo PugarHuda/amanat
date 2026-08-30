@@ -12,6 +12,7 @@
 
 import { ttlCache } from "./cache.mjs";
 import { greatCircleKm } from "./route.mjs";
+import { watched } from "./upstream.mjs";
 
 const GDACS = "https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH?eventtypes=TC&alertlevel=Green;Orange;Red";
 
@@ -63,11 +64,11 @@ export function parse(featureCollection) {
 
 /** Every active cyclone, from the cache or from GDACS. */
 export async function activeCyclones() {
-  return ACTIVE.through("tc", async () => {
+  return ACTIVE.through("tc", () => watched("gdacs", async () => {
     const res = await fetch(GDACS, { signal: AbortSignal.timeout(10000) });
     if (!res.ok) throw new Error(`gdacs ${res.status}`);
     return parse(await res.json());
-  });
+  }));
 }
 
 /**

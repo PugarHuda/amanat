@@ -11,6 +11,7 @@
 
 import { ttlCache } from "./cache.mjs";
 import { riskScore } from "./forecast.mjs";
+import { watched } from "./upstream.mjs";
 
 const ARCHIVE = "https://archive-api.open-meteo.com/v1/archive";
 
@@ -64,19 +65,38 @@ export function assess(hourly) {
   return { hours: series.length, peak, breach: peak !== null && peak.risk >= 0.75, hours_above_trigger: above, series };
 }
 
+/** The cache key for a run; the same shape the archive read is stored under. */
+function keyOf(lat, lon, r) {
+  return `${lat.toFixed(4)},${lon.toFixed(4)},${r.start},${r.end}`;
+}
+
+/**
+ * Whether a run is already held, so a caller can spend its archive budget on
+ * fresh reads only. The five board ports are asked for by every visitor and
+ * read from the archive once a day; charging each visitor for them would let
+ * six people a minute exhaust a budget that no archive call was made against.
+ */
+export function isCached({ lat, lon, start, end }) {
+  try {
+    return RUNS.has(keyOf(lat, lon, range(start, end)));
+  } catch {
+    return false;
+  }
+}
+
 export async function backtest({ lat, lon, start, end }) {
   if (!Number.isFinite(lat) || lat < -90 || lat > 90) throw new RangeError("lat must be between -90 and 90");
   if (!Number.isFinite(lon) || lon < -180 || lon > 180) throw new RangeError("lon must be between -180 and 180");
   const r = range(start, end);
 
-  const key = `${lat.toFixed(4)},${lon.toFixed(4)},${r.start},${r.end}`;
-  const hourly = await RUNS.through(key, async () => {
+  const key = keyOf(lat, lon, r);
+  const hourly = await RUNS.through(key, () => watched("open-meteo-archive", async () => {
     const url = `${ARCHIVE}?latitude=${lat}&longitude=${lon}&start_date=${r.start}&end_date=${r.end}` +
       `&hourly=wind_speed_10m,wind_gusts_10m,precipitation&timezone=UTC`;
     const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
     if (!res.ok) throw new Error(`open-meteo archive ${res.status}`);
     return (await res.json()).hourly ?? {};
-  });
+  }));
 
   return { lat, lon, start: r.start, end: r.end, trigger: 0.75, ...assess(hourly), source: "open-meteo archive (ERA5)" };
 }

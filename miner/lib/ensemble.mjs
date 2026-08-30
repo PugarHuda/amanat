@@ -10,6 +10,7 @@
 
 import { ttlCache } from "./cache.mjs";
 import { riskScore } from "./forecast.mjs";
+import { watched } from "./upstream.mjs";
 
 const ENSEMBLE = "https://ensemble-api.open-meteo.com/v1/ensemble";
 const MODEL = "ecmwf_ifs025";
@@ -66,13 +67,13 @@ export function band(hourly, i, { wave_m = null, cyclone = 0 } = {}) {
 /** The member series for a point, from the cache or from the ensemble API. */
 export async function ensembleSeries({ lat, lon }) {
   const key = `${lat.toFixed(4)},${lon.toFixed(4)}`;
-  return RUNS.through(key, async () => {
+  return RUNS.through(key, () => watched("open-meteo-ensemble", async () => {
     const url = `${ENSEMBLE}?latitude=${lat}&longitude=${lon}&models=${MODEL}` +
       `&hourly=wind_speed_10m,wind_gusts_10m,precipitation&forecast_days=8&timezone=UTC`;
     const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
     if (!res.ok) throw new Error(`open-meteo ensemble ${res.status}`);
     return (await res.json()).hourly ?? {};
-  });
+  }));
 }
 
 /** The band for a point at an hour ("YYYY-MM-DDTHH:00"), or null when it cannot be read. */

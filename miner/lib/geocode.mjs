@@ -12,6 +12,7 @@
 // they are.
 
 import { ttlCache } from "./cache.mjs";
+import { watched } from "./upstream.mjs";
 
 const GEOCODING = "https://geocoding-api.open-meteo.com/v1/search";
 
@@ -124,7 +125,7 @@ export function placeCandidates(text) {
 
 /** Resolve one name. Returns null when the API knows no such place. */
 async function lookup(name) {
-  return PLACES.through(name.toLowerCase(), async () => {
+  return PLACES.through(name.toLowerCase(), () => watched("open-meteo-geocoding", async () => {
     const url = `${GEOCODING}?name=${encodeURIComponent(name)}&count=1&language=en&format=json`;
     const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
     if (!res.ok) throw new Error(`geocoding ${res.status}`);
@@ -139,7 +140,7 @@ async function lookup(name) {
       lon: hit.longitude,
       place: [hit.name, hit.admin1, hit.country].filter(Boolean).join(", "),
     };
-  });
+  }));
 }
 
 /**
