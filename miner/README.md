@@ -42,7 +42,10 @@ curl -X POST https://amanat-miner.vercel.app/forecast \
 | `question` | string | A sentence naming a place. Used when `lat`/`lon` are absent. |
 | `hours` | integer | 0–168, from the current hour. Read from the question when absent. |
 
-`GET /forecast?lat=…&lon=…` works too. `GET /health` reports liveness.
+`GET /forecast?lat=…&lon=…` works too. `GET /health` reports liveness and a
+ledger of every upstream this instance has called — last success, last failure
+and why. It answers 200 either way; the `status` word turns `degraded` when the
+weather model failed more recently than it succeeded.
 
 ## What the numbers mean
 
