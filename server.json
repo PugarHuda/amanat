@@ -1,0 +1,28 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
+  "name": "io.github.pugarhuda/amanat",
+  "description": "Storm risk, route risk and reanalysis backtests for any point on earth, plus an audit of which Telegraph intents an on-chain job can actually reach. No API key, no wallet.",
+  "repository": {
+    "url": "https://github.com/PugarHuda/amanat",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "websiteUrl": "https://amanat-miner.vercel.app",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "amanat-mcp",
+      "version": "0.1.0",
+      "transport": { "type": "stdio" },
+      "environmentVariables": [
+        {
+          "name": "AMANAT_MINER",
+          "description": "Base URL of the miner to read from. Defaults to https://amanat-miner.vercel.app; point it at your own instance to use one.",
+          "isRequired": false,
+          "isSecret": false
+        }
+      ]
+    }
+  ]
+}
