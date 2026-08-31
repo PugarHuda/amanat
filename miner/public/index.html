@@ -389,7 +389,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
       <div class="side">
       <div class="pins" aria-label="Storm risk on the watched shipping lanes, against the payout trigger">
         <div class="pins-head">
-          <h2>Five lanes, read now</h2>
+          <h2 id="planehead">Lanes, read now</h2>
           <span class="note">worst hour on each lane, screened through Telegraph</span>
         </div>
         <div id="plot"></div>
@@ -687,6 +687,13 @@ async function loadPlot() {
     name: lane.name.replace(" → ", "→​"),
     risk: lane.worst ? lane.worst.risk : null,
   })));
+  // The heading counts what was published, not what was true when it was
+  // written. It said "Five lanes" for a day after the board went to ten — a
+  // number contradicting the five rows under it, on a page whose argument is
+  // that its figures are read rather than typed.
+  const WORDS = ["no", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"];
+  const n = board.lanes.length;
+  $("planehead").textContent = `${WORDS[n] ?? n} lane${n === 1 ? "" : "s"}, read now`;
   // A timestamp alone does not tell a reader whether they are looking at
   // current weather. The board refreshes every twelve hours, so anything much
   // older than that means the schedule has stopped, and a stale storm reading

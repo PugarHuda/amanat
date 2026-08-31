@@ -1,0 +1,25 @@
+{
+  "recorded_at": "2026-08-31T12:12:02.796Z",
+  "clips": [
+    {
+      "name": "reading",
+      "seconds": 17.56
+    },
+    {
+      "name": "route",
+      "seconds": 18.84
+    },
+    {
+      "name": "ledger",
+      "seconds": 6.52
+    },
+    {
+      "name": "jobable",
+      "seconds": 5.6
+    },
+    {
+      "name": "slides",
+      "seconds": 26.24
+    }
+  ]
+}
