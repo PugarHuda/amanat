@@ -625,21 +625,37 @@ reason:No hostname was supplied with this request, so the TLS/SSL certificate
        could not be analyzed. … Supply a domain such as example.com.
 ```
 
-Two contracts, two coordinate pairs, two windows, one answer. **An on-chain job
-is handed to a miner from another domain regardless of the intent it declares.**
-That is why nothing has ever settled, it is not specific to this contract, and it
-means the on-chain half of the protocol does not work for anyone today. The
-parameters were almost certainly arriving all along — a TLS miner has no use for
-a latitude, so it reported the field it *did* need as missing, which from outside
-reads exactly like the mapping failure the earlier sections of
-[`docs/bug-report.md`](docs/bug-report.md) went looking for.
+Two contracts, two coordinate pairs, two windows, one answer. **The routing is
+right and the endpoint is wrong.** That text is `livecert`'s, and `livecert` is
+registered on `STORM_ALERT` — legitimately, alongside nine other intents
+including `SSL_VERIFICATION`. It publishes one endpoint per intent. The job
+declared `STORM_ALERT`, reached the miner that serves it, and then called
+`/ssl-check`.
 
-The contract declined both rather than guessing: `Declined(policyId, "unreadable
-answer shape")`. Acting on intelligence it did not ask for is the one thing a
-parametric cover must never do, and that is the property these two jobs actually
-demonstrate. Decoding it took reading the callback calldata by hand — ERC-8183
-traffic does not appear in `daemon/api/questions`, so the on-chain rail is
-invisible in the only public feed the network has.
+Both halves are one command each, and the second is the cost of the first:
+
+```bash
+curl -s https://miner-wine.vercel.app/ssl-check
+#  … "error":"invalid_domain"        <- byte for byte what job 15 delivered
+curl -s "https://miner-wine.vercel.app/storm-alert?location=14.60,120.98"
+#  … "risk_score":0.79, "max_wind_gust_kmh":71.3, "thunderstorm":true
+```
+
+0.79 is over the 0.75 trigger this contract pays at. **The miner the protocol
+chose had the answer, on an endpoint it publishes for exactly this intent, and
+policy 1 would have been paid.** Instead the contract received a certificate
+error and declined — correctly, because acting on intelligence it did not ask
+for is the one thing a parametric cover must never do: `Declined(policyId,
+"unreadable answer shape")`. That is the property these two jobs demonstrate, and
+it is worth more than a payout would have been.
+
+The parameters were arriving all along, at an endpoint with no use for them:
+`/ssl-check` needs a hostname, was handed a latitude, and said so. From outside
+that reads exactly like the mapping failure the earlier sections of
+[`docs/bug-report.md`](docs/bug-report.md) went looking for. Finding it took
+decoding the callback calldata by hand — ERC-8183 traffic does not appear in
+`daemon/api/questions`, so the on-chain rail is invisible in the only public feed
+the network has.
 
 80-plus paid Engine calls.
 

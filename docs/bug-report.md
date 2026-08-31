@@ -812,7 +812,7 @@ none), and it is worth saying plainly that we cannot tell whether that raises
 our score or lowers it. The ground truth these are graded against is not
 published anywhere.
 
-## The answer: an on-chain job asking for STORM_ALERT is answered by an SSL certificate miner
+## An on-chain job reaches the right miner and the wrong endpoint
 
 Everything above about the `on_chain.request` mapping was chasing the wrong
 thing. On 31 August the payload the protocol delivers was finally decoded, and
@@ -836,21 +836,46 @@ Job 16, a different policy at 10.32, 123.89 with a different window, came back
 **byte for byte the same**. Two jobs, two coordinate pairs, both declaring
 `STORM_ALERT`, both answered by a TLS certificate miner asking for a hostname.
 
-`isCanonicalIntent("STORM_ALERT")` returns `true` on the Diamond, so the intent
-the contract sends is a real one. The miner that answered is not registered on
-it. Nothing about the request is malformed; the job is simply handed to a miner
-from another domain, which then correctly reports that it was given no domain.
+**The routing is right. The endpoint is wrong.** That text is `livecert`'s, and
+`livecert` is registered on `STORM_ALERT` — legitimately, alongside nine other
+intents including `SSL_VERIFICATION`. It publishes eleven endpoints, one per
+intent: `/ssl-check`, `/storm-alert`, `/papers`, `/translate` and so on. The job
+declared `STORM_ALERT`, reached the miner that serves it, and then called
+`/ssl-check`.
 
-That is why jobs 7 through 16 have never settled, and it is not specific to this
-contract. **Any ERC-8183 job on this network is being answered by whatever miner
-the router reaches for, regardless of the intent it declares** — which makes the
-on-chain half of the protocol unusable for everyone, not just for us. A contract
-cannot act on intelligence it did not ask for, and ours declines rather than
-guessing: `Declined(policyId, "unreadable answer shape")`.
+Both halves are checkable in one command each:
 
-The parameters almost certainly *were* arriving all along. A TLS miner has no
-use for a latitude, so it reported the field it did need as missing, and that
-reads exactly like a mapping failure from the outside.
+```bash
+curl -s https://miner-wine.vercel.app/ssl-check
+# {"domain":null,"verdict":"unknown","confidence":0,
+#  "reason":"No hostname was supplied with this request, so the TLS/SSL
+#   certificate could not be analyzed. … Supply a domain such as example.com.",
+#  "error":"invalid_domain"}          <- byte for byte what job 15 delivered
+
+curl -s "https://miner-wine.vercel.app/storm-alert?location=14.60,120.98"
+# {"location":"Manila…","verdict":"high","risk_score":0.79,
+#  "max_wind_gust_kmh":71.3,"thunderstorm":true,…}
+```
+
+**The second call is the cost of the first.** 0.79 is over the 0.75 trigger this
+contract pays at. The miner the protocol chose had the answer, on an endpoint it
+publishes for exactly this intent, and policy 1 would have been paid. Instead the
+contract received a certificate error and declined — correctly, because acting on
+intelligence it did not ask for is the one thing a parametric cover must never
+do: `Declined(policyId, "unreadable answer shape")`.
+
+So the parameters were arriving all along, at an endpoint that had no use for
+them. `/ssl-check` needs a hostname, was handed a latitude and a longitude, and
+said so. From outside that reads exactly like the `on_chain.request` mapping
+failure the earlier sections of this report went looking for.
+
+**A hypothesis, offered as one:** `/ssl-check` is the *first* entry in
+`livecert`'s published `endpoints` array. If the on-chain path takes
+`endpoints[0]` rather than the one bound to the job's intent, that would produce
+this exactly, and it would mean every multi-intent miner answers every on-chain
+job from whichever endpoint it happens to have listed first. One job routed to a
+multi-intent miner whose first endpoint is *not* its SSL one would confirm or
+kill that in a single test.
 
 ### Reproducing
 
@@ -871,8 +896,16 @@ anyone who is not decoding their own callback calldata.
 
 ### What is not yet known
 
-Whether the misrouting is specific to `STORM_ALERT` or affects every intent sent
-on-chain. `CHECK_RETRY_AFTER` is an hour, so the same policy cannot be re-checked
-against `WEATHER_FORECAST` immediately; that test is the one that would settle
-it, and it is worth running before anyone concludes the router ignores the
-intent field entirely rather than mapping one intent wrongly.
+Whether it is specific to `STORM_ALERT` or affects every intent sent on-chain.
+`livecert` serves `WEATHER_FORECAST` at `/weather-forecast`, so re-checking the
+same policy against that intent tests the endpoint selection directly.
+`CHECK_RETRY_AFTER` is an hour, so it has to wait.
+
+### Correction
+
+The first version of this section said the job was handed to a miner from
+another domain and concluded that the router ignores the intent field. That was
+wrong, and it was wrong in the direction that flatters the report: the payload
+was checked and the miner registry was not. `livecert` is registered on
+`STORM_ALERT`. The routing worked. What follows it did not, and the corrected
+version is narrower, checkable in two curl commands, and names a testable cause.
