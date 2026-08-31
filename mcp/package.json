@@ -1,6 +1,6 @@
 {
   "name": "amanat-mcp",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Storm risk, route risk and reanalysis backtests for any point on earth, plus an audit of which Telegraph intents an on-chain job can actually reach. Four tools, no dependencies, no API key, no wallet.",
   "keywords": [
     "mcp",

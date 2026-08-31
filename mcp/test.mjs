@@ -90,8 +90,14 @@ console.log("mcp: handshake, tool list, and a notification answered with silence
   assert.ok(legs.worst, "a route reports its worst leg");
 
   const jobable = JSON.parse(audit.result.content[0].text);
-  assert.ok(jobable.closed_intents > 0, "the audit reports closed intents");
-  assert.ok(Array.isArray(jobable.dead), "dead[] is a list");
+  assert.ok(Array.isArray(jobable.closed), "closed[] is a list");
+  assert.ok(Array.isArray(jobable.unauditable), "unauditable[] is a list");
+  assert.equal(jobable.confirmed_closed, jobable.closed.length, "the count must match the list");
+  assert.ok(jobable.scored_intents > 0, "the audit reports how many intents it looked at");
+  // The shape changed under this tool once already: `dead` was split into
+  // confirmed and unknown, and the tool went on reading the old field and
+  // returning undefined. Assert the fields it actually claims to return.
+  assert.ok(jobable.jobable_by_intent, "who can receive a job, per intent");
 
   // A miner refusal has to arrive as a tool error the model can read and act
   // on, not as a dead session.

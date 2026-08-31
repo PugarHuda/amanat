@@ -20,10 +20,14 @@
 // Swap in the SDK if this ever needs sampling, resources or prompts.
 
 import { createInterface } from "node:readline";
+import { readFileSync } from "node:fs";
 
 const BASE = (process.env.AMANAT_MINER ?? "https://amanat-miner.vercel.app").replace(/\/+$/, "");
 const NAME = "amanat";
-const VERSION = "0.1.0";
+// From the manifest, not a second copy of it. Hardcoded, this said 0.1.0 while
+// the package said 0.1.1 — a server misreporting its own version is a bad thing
+// to hand a client that may be deciding whether to trust a capability.
+const VERSION = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8")).version;
 
 // The revision this speaks. A client asking for a different one still gets a
 // working session — every method here has been stable across them — so the
@@ -171,11 +175,19 @@ const CALLS = {
 
   async telegraph_onchain_jobable() {
     const j = await get("/api/jobable");
+    // `dead` was split into `closed` (the leader's registration was read and
+    // declares no on_chain.request) and `unknown` (the registration is published
+    // at 127.0.0.1 and cannot be read at all). The fallback is for a board
+    // branch still serving the older shape, which is a real state during a
+    // publish — this tool went out reading a field that no longer existed.
+    const closed = j.closed ?? j.dead ?? [];
     return {
       read_at: j.read_at,
-      closed_intents: j.dead?.length,
       scored_intents: j.scored_name_hashed_intents,
-      dead: j.dead,
+      confirmed_closed: closed.length,
+      unknown: (j.unknown ?? []).length,
+      closed,
+      unauditable: j.unknown ?? [],
       jobable_by_intent: j.jobable_by_intent,
     };
   },
@@ -240,11 +252,31 @@ createInterface({ input: process.stdin }).on("line", (line) => {
   } catch {
     return fail(null, -32700, "parse error");
   }
-  handle(msg).catch((e) => {
-    if (msg.id !== undefined && msg.id !== null) fail(msg.id, -32603, e.message);
-  });
+  pending++;
+  handle(msg)
+    .catch((e) => {
+      if (msg.id !== undefined && msg.id !== null) fail(msg.id, -32603, e.message);
+    })
+    .finally(() => {
+      pending--;
+      leaveIfIdle();
+    });
 });
 
-// stdin closing is the client leaving. Exit quietly; an MCP server that logs to
-// stdout on the way out corrupts the last frame the client is still reading.
-process.stdin.on("close", () => process.exit(0));
+// stdin closing is the client leaving — but not before the work it already asked
+// for is answered. Exiting on `close` alone dropped in-flight calls: piping two
+// frames returned the handshake and nothing else, because the tool's fetch was
+// still open when the process died. A long-lived client never sees that; one
+// that writes and closes loses its answer every time.
+//
+// Exit quietly when nothing is pending. An MCP server that logs to stdout on the
+// way out corrupts the last frame the client is still reading.
+let pending = 0;
+let leaving = false;
+const leaveIfIdle = () => {
+  if (leaving && pending === 0) process.exit(0);
+};
+process.stdin.on("close", () => {
+  leaving = true;
+  leaveIfIdle();
+});
