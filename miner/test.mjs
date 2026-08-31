@@ -779,6 +779,18 @@ console.log("places are read in the alphabet they are written in");
   // honest answer. Guessing one is how the wrong continent gets reported.
   assert.ok(!placeCandidates("Will El Niño cause global food shortages?").includes("El Niño"));
 
+  // And with the phenomenon gone, the sentence must not fall through to the
+  // next English word that happens to name a village. "Will El Niño cause
+  // global food shortages?" resolved to Cause-de-Clérans, New Aquitaine — the
+  // same failure one word along.
+  assert.deepEqual(placeCandidates("Will El Niño cause global food shortages?"), []);
+  assert.deepEqual(placeCandidates("Will it see heavy rain this evening?"), []);
+
+  // An uncased question still names its place, after a preposition.
+  assert.equal(placeCandidates("weather in cebu tomorrow")[0], "cebu");
+  assert.equal(placeCandidates("bagaimana cuaca di surabaya besok?")[0], "surabaya");
+  assert.equal(placeCandidates("quel temps à montréal?")[0], "montréal");
+
   // Only the whole phrase. Two of the most-asked-about places on earth begin
   // with the same word.
   assert.equal(placeCandidates("El Paso heat warning?")[0], "El Paso");

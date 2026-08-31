@@ -125,12 +125,20 @@ export function placeCandidates(text) {
     for (const w of kept) if (!NOT_A_PLACE.has(w.toLowerCase())) add(w);
   }
 
-  // Lower-case names are a last resort and only when nothing capitalised
-  // resolved, because "see" in "see heavy rain" is a town in Germany and
-  // "evening" is a town in Arkansas. Anything the sentence capitalised is more
-  // likely to be the place than anything it did not.
-  for (const word of s.split(/[^\p{L}]+/u)) {
-    if (/^\p{Lu}/u.test(word)) continue;
+  // Lower-case names are a last resort, and only after a locative preposition.
+  //
+  // Offering every uncapitalised word was a standing invitation to answer the
+  // wrong question confidently: "see" in "see heavy rain" is a town in Germany,
+  // "evening" is a town in Arkansas, and "Will El Nino cause global food
+  // shortages?" — with the phenomenon no longer taken as a place — resolved to
+  // Cause-de-Clerans in New Aquitaine. There is no list of English words long
+  // enough to win that race; somewhere on earth is named after almost all of
+  // them.
+  //
+  // "in cebu", "di surabaya" is how an uncased question names a place, and it
+  // is the only shape worth guessing from. A sentence with no preposition and
+  // no capitalised name has no place in it, and saying so is the answer.
+  for (const [, word] of s.matchAll(/(?<!\p{L})(?:in|at|for|near|around|over|en|em|di|à)\s+(\p{Ll}[\p{L}]*)/gu)) {
     if (!NOT_A_PLACE.has(word.toLowerCase())) add(word);
   }
 
