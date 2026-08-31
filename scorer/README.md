@@ -144,12 +144,36 @@ figures without reading the direction of the verb.
 
 Separation was never the problem: both cleared the bar by about a tenth, and
 `game2` improved the margin without changing the win count. `historical_rows_
-evaluated: 0` both times, so the agreement gate never ran. One fixture out of
-fifteen decides this slot, and after sixteen probed shapes we still cannot say
-which one it is — none of the sixteen is a case the champion wins and we lose.
-That is where this stops. A third blind binary is the mistake registration 1112
-already paid for once, and the useful result is the one above rather than the
-slot.
+evaluated: 0` both times, so the agreement gate never ran.
+
+**And then the ordering column, read against our own earlier registration on the
+same intent, said something worth more than either rejection:**
+
+| Reg | Attribution | Margin | Ordering |
+|---|---|---|---|
+| 1253 | no | 0.7007 | **15/15** |
+| 2650 | verb rule | 0.6221 | 14/15 |
+| 2652 | verb rule + scoreline | 0.6451 | 14/15 |
+
+All three were measured over fifteen comparable cases. **The module without
+attribution ordered all fifteen correctly; both modules with it lose one.** On
+our own corpus attribution is worth seven ordering wins and a margin of 0.0969
+to 0.3617 against the champion; on the node's it costs one.
+
+Only two readings fit. Either the node's fifteen contain a case where crediting
+the winner is the wrong call — a draw, an aggregate, a forfeit, a result stated
+about a side that lost — or the rule fires on an answer that is actually right.
+The loose verbs are where that would happen: `took` is a result in "took it 3-2"
+and not one in "took a beating", and `won` picks the nearest name before it, so
+"Boston, who won last week, lost to New York 108-112" credits Boston. Both are
+reachable in ordinary sportswriting and neither is in our fifteen.
+
+That is a hypothesis with a cost attached, and the cost is a binary. It is not
+being spent. Sixteen further shapes were probed and none is a case the champion
+wins and we lose, so a third attempt would be guessing at a fixture nobody
+outside the node can see — which is the mistake registration 1112 paid for once
+already. What is worth keeping is the measurement: **a mechanism can be plainly
+right on every case you can construct and still cost you a case you cannot.**
 
 ## The gates, in the order they bite
 
