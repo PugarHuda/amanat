@@ -33,7 +33,7 @@ click once.
 >
 > On STORM_ALERT the rank-1 miner has ten endpoints and no `on_chain` block, so every job for that intent lands there. The same miner answers the same question correctly through the Engine minutes apart, from its `/storm-alert` endpoint, at a risk over our payout trigger. That policy would have paid.
 >
-> And it isn't one intent. Crossing the public YAMLs against the live scoreboard: **14 of 15 scored name-hashed intents have a rank-1 miner that can't receive a job.** Rank is what causes it — rank is earned off-chain, where a generalist serving fifteen intents does well, and that same rank then routes on-chain jobs to a miner that can't serve one.
+> And it isn't one intent. Crossing the public YAMLs against the live scoreboard: **every intent whose rank-1 miner I can actually audit has one that can't receive a job.** For ten more I can't check at all — 32 of the 128 registered miners publish their YAML at http://127.0.0.1:8099/, so nobody outside the node can read it.
 >
 > One call, no wallet:
 > `curl -s https://amanat-miner.vercel.app/api/jobable`

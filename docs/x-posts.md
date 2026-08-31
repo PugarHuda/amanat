@@ -37,8 +37,8 @@ video up to 2:20 and this is 1:04):
 
 > 84 seconds, cut from five real sessions against the live miner. No mockups.
 >
-> A reading, a route, the on-chain ledger, and the audit that says 14 of 15
-> @Telegraphprotoc intents can't be reached by an on-chain job at all.
+> A reading, a route, the on-chain ledger, and the audit that says every
+> @Telegraphprotoc intent it can check is closed to on-chain jobs.
 >
 > Try it yourself: amanat-miner.vercel.app
 

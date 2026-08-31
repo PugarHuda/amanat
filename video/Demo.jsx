@@ -52,8 +52,8 @@ export const CAPTIONS = {
     body: "Two policies, both answered by the protocol, both declined. The reason is the interesting part.",
   },
   jobable: {
-    title: "14 of 15 intents cannot be reached on-chain",
-    body: "An ERC-8183 job is routed by rank, and nothing checks whether that miner can receive one. Measured live.",
+    title: "Every auditable intent is closed to on-chain jobs",
+    body: "A job is routed by rank, and nothing checks whether that miner can receive one. Where the leader's registration can be read, all of them are shut.",
   },
   slides: {
     title: "Three tracks, one codebase",
@@ -138,7 +138,7 @@ function Clip({ name, durationInFrames }) {
 function OutroCard({ durationInFrames }) {
   const frame = useCurrentFrame();
   const rows = [
-    ["curl amanat-miner.vercel.app/api/jobable", "14 of 15, live"],
+    ["curl amanat-miner.vercel.app/api/jobable", "the on-chain rail, audited live"],
     ["curl amanat-miner.vercel.app/api/survey", "measured bar vs displayed score"],
     ["curl amanat-miner.vercel.app/api/board", "ten lanes, screened through Telegraph"],
     ['node app/storm.mjs "Cebu" --telegraph', "ask the network, not us"],

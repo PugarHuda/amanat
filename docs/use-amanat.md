@@ -48,8 +48,9 @@ rank-1 miner has none, every job is answered from that miner's first endpoint
 with no parameters — which is how four of ours came back as a TLS certificate
 error to a contract asking for a storm risk.
 
-`dead[]` is the intents that closes; `jobable_by_intent` is who on each one can
-actually receive a job. It cost us four jobs to find. It costs you a GET.
+`closed[]` is what is confirmed shut, `unknown[]` is where the leader's YAML
+cannot be fetched to check, and `jobable_by_intent` is who on each intent can
+actually receive a job. It cost us five jobs to find. It costs you a GET.
 | ERC-8183 job | $1.00 | yes, delivered on-chain | yes |
 
 ---

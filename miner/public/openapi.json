@@ -292,7 +292,7 @@
       "get": {
         "operationId": "jobable",
         "summary": "Which intents an ERC-8183 job cannot survive, and who on each one can receive one",
-        "description": "A job is routed by rank, and nothing in that path checks whether the miner it lands on declares an on_chain.request mapping. On an intent whose rank-1 miner has none, every job is answered from that miner's first endpoint with no parameters. Measured on jobs 15-18: 14 of 15 scored name-hashed intents are closed this way.",
+        "description": "A job is routed by rank, and nothing in that path checks whether the miner it lands on declares an on_chain.request mapping. On an intent whose rank-1 miner has none, every job is answered from that miner's first endpoint with no parameters. Measured on jobs 15-19. `closed` is confirmed from the miner's own registration; `unknown` is where that registration is published at 127.0.0.1 and cannot be fetched from outside the node.",
         "responses": {
           "200": {
             "description": "dead[] per intent, jobable_by_intent, and the per-miner rows it was computed from"

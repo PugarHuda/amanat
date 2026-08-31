@@ -18,7 +18,8 @@ makes before it spends anything.
 **In three minutes:** [the deck](https://amanat-miner.vercel.app/slides) ·
 [the film](media/amanat-demo.mp4) (84 s, cut from live sessions — no mockups) ·
 [`/api/jobable`](https://amanat-miner.vercel.app/api/jobable), which measures why
-14 of 15 intents on this network cannot be reached by an on-chain job at all.
+every intent whose leader can be audited is closed to on-chain jobs — and most
+of the rest cannot be audited at all.
 
 | Track | What | Where |
 |---|---|---|
@@ -669,13 +670,21 @@ Intents whose rank-1 miner cannot receive an ERC-8183 job:
   STORM_ALERT       rank 1 is livecert   (10 endpoints, no on_chain.request)
   WEATHER_FORECAST  rank 1 is txlens     (15 endpoints, no on_chain.request)
   WEATHER_CHECK     rank 1 is weatherapi ( 2 endpoints, no on_chain.request)
-  … 14 of 15 scored name-hashed intents
+  … 4 confirmed closed, 10 unknown, of 15 scored name-hashed intents
 ```
 
-**Fourteen of fifteen.** And rank is what causes it: rank is earned on the
-off-chain rail, where a generalist serving fifteen intents does well, and that
-same rank then routes on-chain jobs to a miner that cannot serve one. The
-flywheel the hackathon exists to demonstrate is what closes the on-chain rail.
+**On every intent where the leader's registration can be read, the rail is
+closed.** On ten more, nobody outside the node can check: **32 of the 128
+registered miners publish their YAML at `http://127.0.0.1:8099/`**, so their
+on-chain capability is not auditable by anyone, including their own authors.
+
+An earlier version of this said *fourteen of fifteen*, counting "YAML
+unreachable" as "cannot receive a job". Those are different facts and the tool
+now reports them separately.
+
+Rank is what causes the closures it can see: rank is earned on the off-chain
+rail, where a generalist serving fifteen intents does well, and that same rank
+then routes on-chain jobs to a miner that cannot serve one.
 The fix is a filter — route on-chain jobs only among miners declaring
 `on_chain.request`, a set already computable from the public YAMLs. Instead the contract received a certificate
 error and declined — correctly, because acting on intelligence it did not ask

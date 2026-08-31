@@ -11,7 +11,7 @@
 <meta property="og:site_name" content="Amanat">
 <meta property="og:url" content="https://amanat-miner.vercel.app/slides">
 <meta property="og:title" content="Amanat — three tracks, one codebase">
-<meta property="og:description" content="A weather miner, a 16 KB scoring module, and a contract that settles its own claims — plus the reason 14 of 15 intents cannot be reached on-chain at all.">
+<meta property="og:description" content="A weather miner, a 16 KB scoring module, and a contract that settles its own claims — plus the reason an on-chain job on this network reaches the wrong endpoint.">
 <meta property="og:image" content="https://amanat-miner.vercel.app/card.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/logo.svg" type="image/svg+xml">
@@ -417,9 +417,10 @@ champion       1.0000        ← same two teams, same two numbers</pre>
 <section class="slide ">
   <p class="eyebrow">How much of the network that closes</p>
   <div class="body">
-    <h2>Fourteen of fifteen.</h2>
+    <h2>Every intent we can audit is closed.</h2>
     <dl class="figs">
-      <div class="fig hot"><dt>Scored intents whose rank-1 miner cannot receive a job</dt><dd>14 / 15<small>measured live, not inferred</small></dd></div>
+      <div class="fig hot"><dt>Intents whose leader is confirmed unable to receive a job</dt><dd>all of them<small>of those whose registration can be read</small></dd></div>
+      <div class="fig"><dt>Miners publishing a YAML nobody outside the node can fetch</dt><dd>32 / 128<small>at http://127.0.0.1:8099/</small></dd></div>
       <div class="fig"><dt>Miners that can receive one on STORM_ALERT</dt><dd>2 of 7<small>skywire-storm-alert, and us</small></dd></div>
     </dl>
     <p class="lede">And rank is what causes it. Rank is earned on the off-chain rail,
@@ -435,7 +436,7 @@ champion       1.0000        ← same two teams, same two numbers</pre>
   <p class="eyebrow">Check any of it</p>
   <div class="body">
     <h2>Nothing here is a claim you have to take.</h2>
-    <pre>curl amanat-miner.vercel.app/api/jobable   # 14 of 15, live
+    <pre>curl amanat-miner.vercel.app/api/jobable   # the on-chain rail, live
 curl amanat-miner.vercel.app/api/survey    # measured bar vs displayed score
 curl amanat-miner.vercel.app/api/board     # ten lanes, screened through Telegraph
 node app/storm.mjs "Cebu" --telegraph      # ask the network, not us</pre>

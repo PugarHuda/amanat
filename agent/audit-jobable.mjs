@@ -122,7 +122,7 @@ async function main() {
   if (process.argv.includes("--json")) {
     const summary = await deadIntents(rows, { quiet: true });
     await writeFile(OUT, JSON.stringify({ ...summary, miners: rows }, null, 2) + "\n");
-    console.log(`wrote      jobable.json — ${summary.dead.length} of ${summary.scored_name_hashed_intents} intents closed`);
+    console.log(`wrote      jobable.json — ${summary.closed.length} confirmed closed, ${summary.unknown.length} unknown, of ${summary.scored_name_hashed_intents}`);
     return;
   }
 
@@ -194,15 +194,35 @@ async function deadIntents(rows, { quiet = false } = {}) {
     }
   }
 
-  const dead = Object.entries(top).filter(([, t]) => !jobable.has(t.slug)).sort();
+  // Three states, not two. A YAML we cannot fetch is not evidence of anything,
+  // and counting it as closed was an overclaim this tool published: 31 of the
+  // active miners register at http://127.0.0.1:8099/, reachable only from the
+  // node's own host, so their on-chain capability cannot be audited from
+  // outside by anyone — including their own authors.
+  const reachable = new Map(rows.map((r) => [r.slug, r.yaml_reachable]));
+  const closed = Object.entries(top)
+    .filter(([, t]) => !jobable.has(t.slug) && reachable.get(t.slug))
+    .sort();
+  const unknown = Object.entries(top)
+    .filter(([, t]) => !jobable.has(t.slug) && !reachable.get(t.slug))
+    .sort();
+
   const summary = {
     read_at: new Date().toISOString(),
     scored_name_hashed_intents: Object.keys(top).length,
-    dead: dead.map(([intent, t]) => ({
+    closed: closed.map(([intent, t]) => ({
       intent,
       rank1: t.slug,
       endpoints: t.endpoints,
       declares_on_chain_request: false,
+      evidence: "registration YAML fetched; it declares no on_chain.request block",
+    })),
+    unknown: unknown.map(([intent, t]) => ({
+      intent,
+      rank1: t.slug,
+      endpoints: t.endpoints,
+      declares_on_chain_request: null,
+      evidence: "registration YAML could not be fetched from outside the node host",
     })),
     jobable_by_intent: Object.fromEntries(
       Object.keys(top).sort().map((i) => [
@@ -213,17 +233,26 @@ async function deadIntents(rows, { quiet = false } = {}) {
   };
 
   if (quiet) return summary;
-  console.log(`\nIntents whose rank-1 miner cannot receive an ERC-8183 job:`);
-  if (!dead.length) {
-    console.log("  none — every leader on a name-hashed intent declares on_chain.request");
-    return summary;
-  }
-  for (const [intent, t] of dead) {
+  console.log(`\nIntents whose rank-1 miner cannot receive an ERC-8183 job — confirmed:`);
+  if (!closed.length) console.log("  none — every readable leader declares on_chain.request");
+  for (const [intent, t] of closed) {
     console.log(`  ${String(intent).padEnd(26)} rank 1 is ${t.slug} (${t.endpoints} endpoint${t.endpoints === 1 ? "" : "s"}, no on_chain.request)`);
   }
-  console.log(`\n  ${dead.length} of ${Object.keys(top).length} scored name-hashed intents. A job on one of these`);
-  console.log(`  is answered from the leader's first endpoint with no parameters, whatever`);
-  console.log(`  it asked for. Measured on jobs 15–18 — see docs/bug-report.md.`);
+
+  if (unknown.length) {
+    console.log(`\nUnknown — the rank-1 miner's registration YAML cannot be fetched:`);
+    for (const [intent, t] of unknown) {
+      console.log(`  ${String(intent).padEnd(26)} rank 1 is ${t.slug}`);
+    }
+    const hidden = rows.filter((r) => !r.yaml_reachable).length;
+    console.log(`\n  ${hidden} of ${rows.length} registered miners publish a YAML nobody outside`);
+    console.log(`  the node can read. Their on-chain capability is not auditable.`);
+  }
+
+  console.log(`\n  ${closed.length} confirmed closed, ${unknown.length} unknown, of ${Object.keys(top).length} scored`);
+  console.log(`  name-hashed intents. A job on a confirmed one is answered from the`);
+  console.log(`  leader's first endpoint with no parameters, whatever it asked for —`);
+  console.log(`  measured on jobs 15–19, see docs/bug-report.md.`);
   return summary;
 }
 

@@ -933,12 +933,22 @@ Intents whose rank-1 miner cannot receive an ERC-8183 job:
   WEATHER_CHECK     rank 1 is weatherapi ( 2 endpoints, no on_chain.request)
   FACT_CHECK        rank 1 is tavily     ( 2 endpoints, no on_chain.request)
   …
-  14 of 15 scored name-hashed intents
+  4 confirmed closed, 10 unknown, of 15 scored name-hashed intents
 ```
 
-**Fourteen of fifteen.** On all but one, an ERC-8183 job is routed to a miner
-that cannot receive one, and comes back as whatever that miner's first endpoint
-says when handed nothing.
+**Correction, and it matters.** This section first said *fourteen of fifteen*.
+That was an overclaim, and the tool was making it: an intent counted as closed
+whenever the leader's YAML declared no `on_chain.request` block **or could not
+be fetched at all** — and those are not the same fact. Split properly it is
+**4 confirmed closed and 10 unknown**.
+
+The reason so many are unknown is its own finding. **32 of the 128 registered
+miners publish their registration YAML at `http://127.0.0.1:8099/`**, reachable
+only from the node's own host. Whether those miners can receive an on-chain job
+cannot be established by anyone outside it, including their own authors.
+
+So: on every intent where the leader's registration can actually be read, the
+rail is closed. On ten more, nobody can check.
 
 The uncomfortable part is that **rank causes it.** Rank is earned on the
 off-chain rail, where a generalist serving ten or fifteen intents does well.

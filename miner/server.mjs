@@ -408,7 +408,9 @@ export const server = createServer(async (req, res) => {
     // nothing in that path checks whether the miner it lands on declares an
     // `on_chain.request` mapping — so on an intent whose rank-1 miner has none,
     // every job comes back as whatever that miner's first endpoint says when
-    // handed no parameters. Measured on jobs 15–18; 14 of 15 scored intents.
+    // handed no parameters. Measured on jobs 15–19. `closed` is confirmed,
+    // `unknown` is where the leader's YAML is published at 127.0.0.1 and
+    // nobody outside the node can check — they are different facts.
     // Published because a builder deciding whether to put a contract on this
     // rail should not have to find it the way we did.
     if (pathname === "/api/jobable") {
