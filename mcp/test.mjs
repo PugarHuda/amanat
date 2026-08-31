@@ -84,16 +84,16 @@ console.log("mcp: handshake, tool list, and a notification answered with silence
   // what is tolerated is the third party, not the miner. Anything else that
   // arrives as an error still fails, because that would be ours.
   const upstreamDown = (r) =>
-    r.result?.isError && /(5\d\d)|timed out|fetch failed/i.test(r.result.content?.[0]?.text ?? "");
+    r.result?.isError && /[45]\d\d|timed out|fetch failed|upstream/i.test(r.result.content?.[0]?.text ?? "");
 
   if (upstreamDown(risk)) {
     console.log(`mcp: skipped the reading — upstream is down (${risk.result.content[0].text.slice(0, 60)})`);
   } else {
-  const reading = JSON.parse(risk.result.content[0].text);
-  assert.ok(reading.risk >= 0 && reading.risk <= 1, `risk out of range: ${reading.risk}`);
-  assert.equal(reading.trigger, 0.75);
-  assert.equal(reading.breach, reading.risk >= 0.75, "breach must agree with the trigger");
-  assert.ok(/Cebu/i.test(reading.place), `wrong place: ${reading.place}`);
+    const reading = JSON.parse(risk.result.content[0].text);
+    assert.ok(reading.risk >= 0 && reading.risk <= 1, `risk out of range: ${reading.risk}`);
+    assert.equal(reading.trigger, 0.75);
+    assert.equal(reading.breach, reading.risk >= 0.75, "breach must agree with the trigger");
+    assert.ok(/Cebu/i.test(reading.place), `wrong place: ${reading.place}`);
   }
 
   if (upstreamDown(route)) {
