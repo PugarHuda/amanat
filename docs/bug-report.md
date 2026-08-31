@@ -995,3 +995,52 @@ wrong, and it was wrong in the direction that flatters the report: the payload
 was checked and the miner registry was not. `livecert` is registered on
 `STORM_ALERT`. The routing worked. What follows it did not, and the corrected
 version is narrower, checkable in two curl commands, and names a testable cause.
+
+## The ground truth is not any mainstream weather API, and the node proved it
+
+Every weather miner sits between 0.005 and 0.016. The champion scoring module is
+near-binary — run it locally and it returns ~0.99 when the answer covers the
+ground truth and ~0.016 when it does not — so that band is not a quality
+ranking. It is the whole field missing the same target.
+
+The obvious explanation is that the target comes from some reference weather
+source and everyone is on the wrong one. **It does not.** The node operator
+registers **OpenWeatherMap and WeatherAPI as miners of their own** — both carry
+`yaml_url: http://127.0.0.1:8099/`, reachable only from the node's host — and on
+31 August they scored:
+
+| Miner | `WEATHER_CHECK` | `WEATHER_FORECAST` |
+|---|---|---|
+| `weatherapi` | 0.0144 | 0.0046 |
+| `openweathermap` | 0.0140 | 0.0049 |
+| `amanat-weather-risk` | 0.0120 | 0.0051 |
+
+Two of the largest commercial weather APIs on earth, wrapped by the people who
+run the scoring, sitting in the same band as everyone else — and *below* this
+miner on `WEATHER_FORECAST`.
+
+So swapping in a bigger or different data source cannot move a weather score on
+this network. That experiment has already been run, twice, by the party best
+placed to run it. Whatever the canonical script grades against, it is not the
+output of a mainstream weather API, and no amount of data-quality work reaches
+it from outside.
+
+Recorded because it is the single most expensive thing a miner author on this
+network could go and do, and it is already known not to work.
+
+## 32 of 128 miners publish a registration nobody can read
+
+`yaml_url` for 32 active miners is `http://127.0.0.1:8099/<slug>.yaml`. Seven
+also carry a `base_url` on `127.0.0.1`. These are the node operator's own
+wrappers, and they are reachable only from the machine running the node.
+
+That is not a cosmetic issue. A registration YAML declares which endpoints serve
+which intents and whether the miner accepts on-chain jobs at all — so for a
+quarter of the network, **no one outside the node can establish what those
+miners can do**, including their own authors. It is why the on-chain audit above
+reports 4 intents confirmed closed and 10 unknown rather than 14 closed: the
+difference between those two numbers is entirely miners whose registration
+cannot be fetched.
+
+`node agent/audit-jobable.mjs` reports the split, and refuses to call an
+unreadable registration evidence of anything.

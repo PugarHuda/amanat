@@ -268,6 +268,25 @@ npm run agent:dry    # read-only: no wallet, no funds, no spend
 npm run agent        # opens jobs for policies that pass screening
 ```
 
+**Three other consumers of the same miner, so the contract is not the only
+thing that can act on a reading.**
+
+- [`app/storm.mjs`](app/storm.mjs) — a zero-dependency CLI. `storm "Cebu"` reads
+  a risk; `storm route "Cebu" "Manila"` reads a voyage; `--telegraph` asks the
+  *network* instead of this miner and prints which one answered.
+- [`mcp/server.mjs`](mcp/server.mjs) — an MCP server, published to npm and
+  listed in the official registry as `io.github.PugarHuda/amanat`. Four tools,
+  no key, no wallet:
+
+  ```json
+  { "mcpServers": { "amanat": { "command": "npx", "args": ["-y", "amanat-mcp"] } } }
+  ```
+
+- The storm board — ten shipping lanes screened through the Telegraph Engine
+  twice a day, about 30 paid calls, published to a branch and served at
+  `/api/board`. Most of those calls are routed by the node to whichever miner it
+  ranks best, which is usually not this one.
+
 ### Why we only use name-hashed intents
 
 `agent/run.mjs` deliberately targets **name-hashed intents only**
@@ -496,13 +515,27 @@ at the addresses given.
 
 **Track 1 — miner.** Registration 280, `amanat-weather-risk`, id `20260821`,
 active on `WEATHER_FORECAST`, `WEATHER_CHECK` and `STORM_ALERT`, served from
-https://amanat-miner.vercel.app. **389 requests served**, the most of any miner
-on this network — the next busiest, `onlookout-weather`, has served 304. At
-epoch 294 it ranked **4 of 7** on `STORM_ALERT` at 0.007951, **6 of 10** on
-`WEATHER_CHECK` at 0.014199 and **11 of 14** on `WEATHER_FORECAST` at 0.005860.
-Where it started, at epoch 285: **3 of 4** on `STORM_ALERT` at 0.005034 and
-**9 of 11** on `WEATHER_FORECAST` at 0.005182. The field on every weather intent
-roughly doubled over that week, and the rank moved with it.
+https://amanat-miner.vercel.app. **398 requests served, the most of any miner on
+this network** — the next busiest, `onlookout-weather`, has served 304, out of
+129 registered. At epoch 297: **8 of 10** on `WEATHER_CHECK` at 0.012022,
+**7 of 14** on `WEATHER_FORECAST` at 0.005138, **7 of 7** on `STORM_ALERT` at
+0.005261. Normalized, that is 0.769, 0.584 and 0.476 — a total of **1.829,
+15th of 128**, or 0.610 as an average, **8th of 27** among miners on three or
+more intents.
+
+Where it started, at epoch 285: 3 of 4 on `STORM_ALERT` and 9 of 11 on
+`WEATHER_FORECAST`. The field on every weather intent has roughly tripled since,
+and the rank moved with it.
+
+**The ceiling is arithmetic, and it is worth stating plainly.** A normalized
+score per intent maxes at 1.0, so a miner on three intents can never exceed
+**3.0** under the sum reading. On 31 August third place needed **3.863** and the
+leader held **9.048** across fourteen intents. Top three under that reading is
+therefore closed to a three-intent miner *however well it scores* — the only
+lever that moves a sum is more intents, and there is no fourth intent on the
+board of 45 that a weather miner can answer honestly. Under the average reading
+the same three intents at 1.000 would tie for first. Which reading applies is
+the ambiguity `npm run standing` prints rather than resolves.
 
 Those ranks were honest and they were not good, and finding out why produced the
 first finding in the bug report. Running the real champion binary locally —

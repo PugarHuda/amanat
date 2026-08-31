@@ -9,6 +9,7 @@ trust the answer.
 | Route assessment | free | no | no |
 | The published board | free | yes — it was already bought | no |
 | The on-chain audit | free | n/a — it is about the network | no |
+| MCP, from any agent | free | no | no |
 | Telegraph MCP | $0.01 | yes | yes |
 | Engine over x402 | $0.01 | yes | yes |
 
