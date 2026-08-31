@@ -12,6 +12,30 @@ trust the answer.
 | Telegraph MCP | $0.01 | yes | yes |
 | Engine over x402 | $0.01 | yes | yes |
 
+### From an agent, over MCP
+
+Four tools, no dependencies, no wallet, no key. It talks to the public miner over
+HTTPS, so there is nothing to run but the file:
+
+```json
+{
+  "mcpServers": {
+    "amanat": { "command": "node", "args": ["/path/to/amanat/mcp/server.mjs"] }
+  }
+}
+```
+
+| Tool | What it answers |
+|---|---|
+| `storm_risk` | Risk 0–1 for a place or a question naming one, with the reading and the 51-member band behind it |
+| `route_risk` | Risk per leg, each read at the hour a vehicle actually reaches it |
+| `backtest` | Would the 0.75 trigger have fired here, from the reanalysis archive |
+| `telegraph_onchain_jobable` | Which Telegraph intents an on-chain job cannot survive, and who on each can receive one |
+
+`AMANAT_MINER` points it at another instance. A refusal from the miner comes back
+as an `isError` tool result rather than a dead session, so a model can read "no
+place found in …" and try a different place.
+
 ### Before you put a contract on the on-chain rail, read this one
 
 ```bash

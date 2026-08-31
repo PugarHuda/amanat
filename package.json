@@ -5,7 +5,8 @@
   "type": "module",
   "main": "miner/server.mjs",
   "bin": {
-    "storm": "app/storm.mjs"
+    "storm": "app/storm.mjs",
+    "amanat-mcp": "mcp/server.mjs"
   },
   "description": "Verified weather intelligence that a contract acts on: a Telegraph miner, a scoring module, and an on-chain agent.",
   "engines": {
@@ -13,7 +14,7 @@
   },
   "scripts": {
     "miner": "node miner/server.mjs",
-    "test": "node miner/test.mjs && node agent/test.mjs && node app/test.mjs && node scripts/check-sources.mjs && cd scorer && cargo test --features game3",
+    "test": "node miner/test.mjs && node agent/test.mjs && node app/test.mjs && node mcp/test.mjs && node scripts/check-sources.mjs && cd scorer && cargo test --features game3",
     "lint": "eslint . && solhint \"onchain/src/**/*.sol\"",
     "typecheck": "tsc -p jsconfig.json",
     "audit": "node agent/audit-jobable.mjs",

@@ -24,7 +24,7 @@ makes before it spends anything.
 |---|---|---|
 | **1 — Miner** | Weather and storm-risk miner, answers legible to *both* a text scorer and a smart contract | [`miner/`](miner/) |
 | **2 — Script Author** | Measurement-grounded WASM scoring module for Tier A intents | [`scorer/`](scorer/) |
-| **3 — Application** | Parametric cover settled through ERC-8183 on-chain jobs | [`onchain/`](onchain/), [`agent/`](agent/) |
+| **3 — Application** | Parametric cover settled through ERC-8183 on-chain jobs, a CLI, and an MCP server | [`onchain/`](onchain/), [`agent/`](agent/), [`app/`](app/), [`mcp/`](mcp/) |
 
 ---
 
@@ -742,6 +742,7 @@ npm run miner                   # the miner, locally
 npm test                        # miner self-check + 34 scorer tests
 npm run build:profiles          # ten binaries, fails if any two match
 npm run bench && npm run attacks # champions are gitignored — fetch them first, see Track 2
+node mcp/server.mjs             # the MCP server: four tools, no wallet
 npm run agent:dry               # the loop, read-only, spends nothing
 npm run survey                  # the scoring board: measured bar vs displayed score, free
 npm run audit                   # which intents an on-chain job cannot survive, free

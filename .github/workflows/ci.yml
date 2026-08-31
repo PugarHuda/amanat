@@ -44,6 +44,7 @@ jobs:
       - run: node agent/test.mjs
       - run: node miner/test.mjs
       - run: node app/test.mjs
+      - run: node mcp/test.mjs
       # Firefox and WebKit too: the page tests run on all three, and layout,
       # focus order and CSS support are exactly where engines disagree.
       - run: npx playwright install --with-deps chromium firefox webkit
