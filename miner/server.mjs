@@ -44,13 +44,23 @@ const BOARD_URL = process.env.AMANAT_BOARD_URL
 const SURVEY_URL = process.env.AMANAT_SURVEY_URL
   ?? "https://raw.githubusercontent.com/PugarHuda/amanat/board/survey.json";
 
-// `cache: "no-store"` on every fetch of these three, because the freshness that
-// matters is decided here and not upstream. The board published ten lanes at
-// 12:25 and this endpoint was still serving the five-lane copy from 05:12 eight
-// minutes later, while a curl of the same raw URL from a laptop returned the new
-// one — so something between the function and the branch was holding a copy
-// longer than its own max-age=300. Downstream callers still get the
-// Cache-Control this route sets; that is the layer where caching belongs.
+// Freshness for the three branch files is decided here, not upstream.
+//
+// `cache: "no-store"` alone did not do it. It went in when the board looked
+// fixed, but that deploy also replaced the instance — which is what actually
+// cleared the copy, and the fix took credit for it. The audit published at
+// 14:38 and this endpoint went on serving the 12:26 copy for twenty minutes
+// afterwards, past the upstream max-age=300, with a cache-buster on our own
+// query string making no difference.
+//
+// So the buster goes on the *upstream* URL, in five-minute buckets: a fresh
+// key every bucket, and a shared one inside it so a busy page still collapses
+// onto one fetch. GitHub raw ignores the parameter; its CDN keys on it.
+// Not `bucket` — that name is already a rate-limit bucket imported from
+// lib/cache.mjs, and shadowing it here is a parse error rather than a subtle
+// bug, which is the good kind of collision.
+const fiveMinuteKey = () => Math.floor(Date.now() / 300_000);
+const fresh = (url) => `${url}${url.includes("?") ? "&" : "?"}t=${fiveMinuteKey()}`;
 //
 // And the on-chain audit: which intents an ERC-8183 job cannot survive, and who
 // on each one can actually receive one. Same branch, same schedule, same reason
@@ -235,7 +245,7 @@ export const server = createServer(async (req, res) => {
     // than committed because the interesting version is the real one: today's
     // lanes, at today's risk, against the line that pays.
     if (pathname === "/card.png") {
-      const board = await fetch(BOARD_URL, { cache: "no-store", signal: AbortSignal.timeout(8000) })
+      const board = await fetch(fresh(BOARD_URL), { cache: "no-store", signal: AbortSignal.timeout(8000) })
         .then((r) => (r.ok ? r.json() : null))
         .catch(() => null);
 
@@ -390,7 +400,7 @@ export const server = createServer(async (req, res) => {
     // the branch rather than computed per request: the two upstream catalogues
     // are large, and a page refresh must not turn into two megabytes of fetch.
     if (pathname === "/api/survey") {
-      const upstream = await fetch(SURVEY_URL, { cache: "no-store", signal: AbortSignal.timeout(8000) });
+      const upstream = await fetch(fresh(SURVEY_URL), { cache: "no-store", signal: AbortSignal.timeout(8000) });
       if (upstream.status === 404) {
         return send(res, 503, { error: "the survey has not been published yet — the schedule writes it every 12 hours" });
       }
@@ -414,7 +424,7 @@ export const server = createServer(async (req, res) => {
     // Published because a builder deciding whether to put a contract on this
     // rail should not have to find it the way we did.
     if (pathname === "/api/jobable") {
-      const upstream = await fetch(JOBABLE_URL, { cache: "no-store", signal: AbortSignal.timeout(8000) });
+      const upstream = await fetch(fresh(JOBABLE_URL), { cache: "no-store", signal: AbortSignal.timeout(8000) });
       if (upstream.status === 404) {
         return send(res, 503, { error: "the audit has not been published yet — the schedule writes it every 12 hours" });
       }
@@ -425,7 +435,7 @@ export const server = createServer(async (req, res) => {
     }
 
     if (pathname === "/api/board") {
-      const upstream = await fetch(BOARD_URL, { cache: "no-store", signal: AbortSignal.timeout(8000) });
+      const upstream = await fetch(fresh(BOARD_URL), { cache: "no-store", signal: AbortSignal.timeout(8000) });
       if (upstream.status === 404) {
         return send(res, 503, { error: "the board has not been published yet — the schedule writes it every 12 hours" });
       }
