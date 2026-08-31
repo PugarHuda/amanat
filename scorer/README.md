@@ -95,6 +95,62 @@ well as one win. TEXT_AUTHENTICITY_CHECK needs a different reading of authorship
 evidence, not another constant. Recorded here because the next person to look at
 this intent should not spend a ninth binary re-testing it.
 
+## GAME_RESULT: what the champion cannot see, and what it cost to prove
+
+31 August 2026. `npm run survey` put `GAME_RESULT` at the lowest measured bar on
+the board (0.5172), so it got looked at properly, and the first thing measured
+was not a bar at all.
+
+**Both modules are blind to who won.** Fifteen cases built from what the three
+live `GAME_RESULT` miners actually return — sportwire's "X beat Y 5-1 (final)",
+scorewire's home/away object, fourcast's canonical score string — and this
+module and the reigning champion lost the same four. Every one was the same
+shape: the right two teams, the right two figures, credited the wrong way round.
+"Boston Celtics beat the New York Knicks 112-108" scores **1.0000** on the
+champion against a ground truth where the Knicks won. It is not a near miss in
+its reading; it cannot see the difference at all.
+
+So `game` added attribution: the words before a result verb name the winner,
+`lost to` and `fell to` reverse it, names compared word by word because a truth
+says "New York Knicks" and an honest answer says "New York". `game2` added the
+answer that names a winner with no verb — "Arsenal, 3-0. A clean sheet against
+Chelsea" — by pairing each name with the figure after it and crediting the
+largest, which reads "Boston 108, New York 112" correctly where taking the first
+name does not.
+
+On 31 cases (the fifteen live shapes plus sixteen harder ones probed afterwards
+— a one-word answer, passive voice, a draw, an aggregate, a paraphrase sharing
+no vocabulary, a correct answer carrying more figures than the truth):
+
+| module | margin | wins | self-match |
+|---|---|---|---|
+| `amanat_scorer_game2` | **0.3617** | **24/31** | 1.0000 |
+| `amanat_scorer_game` | 0.1412 | 17/31 | 1.0000 |
+| `amanat_scorer` (default) | −0.0597 | 13/31 | 1.0000 |
+| champion reg 1265 | −0.0490 | 15/31 | 1.0000 |
+
+A negative margin is the number to read twice. Averaged over these shapes the
+seated champion **scores wrong answers above right ones**, and so does our own
+general profile — this is not a claim about their module against ours, it is
+what happens to any scorer that grades a result question on vocabulary and
+figures without reading the direction of the verb.
+
+**Two registrations, both refused, and the refusals agree with each other.**
+
+| Reg | Profile | Our margin | Bar | Wins | Verdict |
+|---|---|---|---|---|---|
+| 2650 | `game` | 0.6222 | 0.5573 | 14/15 | rejected — ordering |
+| 2652 | `game2` | 0.6452 | 0.5573 | 14/15 | rejected — ordering |
+
+Separation was never the problem: both cleared the bar by about a tenth, and
+`game2` improved the margin without changing the win count. `historical_rows_
+evaluated: 0` both times, so the agreement gate never ran. One fixture out of
+fifteen decides this slot, and after sixteen probed shapes we still cannot say
+which one it is — none of the sixteen is a case the champion wins and we lose.
+That is where this stops. A third blind binary is the mistake registration 1112
+already paid for once, and the useful result is the one above rather than the
+slot.
+
 ## The gates, in the order they bite
 
 1. **Structural** — no host imports, `alloc`/`dealloc`/`rank_answer` exported,
