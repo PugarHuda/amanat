@@ -25,7 +25,8 @@ Amanat is verified weather intelligence that a contract acts on by itself. One c
 
 ## Operating Context
 
-- Live site: https://amanat-miner.vercel.app (Vercel, manual deploy + alias; free tier caps 100 deploys a day).
+- Live site: https://amanat-miner.vercel.app (Vercel, manual deploy + alias; free tier caps 100 deploys a day). Two further surfaces on the same host: `/use` for a builder, `/slides` for a judge with three minutes.
+- An 84-second film at `media/amanat-demo.mp4`, cut by Remotion from five Playwright sessions recorded against the live deployment. Re-recording is expected; footage of last week's numbers is not a demo of this project.
 - Telegraph devnode at devnode.telegraphprotocol.com; Diamond and USDC on Base Sepolia; ~hourly epochs score miners per intent.
 - The page is read from a link on X or the hackathon submission, on desktop and phone, often in the dark.
 - Data: Open-Meteo weather, marine, ensemble and archive models (CC BY 4.0, attribution required on every answer); GDACS cyclone feed.

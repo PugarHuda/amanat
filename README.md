@@ -15,6 +15,11 @@ Built for Telegraph Hackathon Season I. One codebase, three entries:
 storm risk for any point, no wallet, no sign-up. It is the same call the contract
 makes before it spends anything.
 
+**In three minutes:** [the deck](https://amanat-miner.vercel.app/slides) ·
+[the film](media/amanat-demo.mp4) (84 s, cut from live sessions — no mockups) ·
+[`/api/jobable`](https://amanat-miner.vercel.app/api/jobable), which measures why
+14 of 15 intents on this network cannot be reached by an on-chain job at all.
+
 | Track | What | Where |
 |---|---|---|
 | **1 — Miner** | Weather and storm-risk miner, answers legible to *both* a text scorer and a smart contract | [`miner/`](miner/) |
@@ -699,15 +704,34 @@ settled five jobs and then stopped, and from outside a job record says only
 `Funded` and never why — until you decode the callback yourself, which is how the
 misrouting above was found on the sixteenth job rather than the seventh.
 
-## The page
+## The page, the deck and the film
 
 The site is one Beaufort plate on a night sea: the risk scale down the left with
-what reaches each band, the five lanes pinned against it, the band from 0.75 in
+what reaches each band, the lanes pinned against it, the band from 0.75 in
 the only red on the page. Its visual system is recorded in [`DESIGN.md`](DESIGN.md)
 and the product truth it serves in [`PRODUCT.md`](PRODUCT.md); the direction was
 chosen through Impeccable's roll (seed `5db15dc1`) and the page passes its
 detector with no findings, bar one value deliberately waived — the needle's
 overshoot easing, recorded with its reason in `.impeccable/config.json`.
+
+**[`/slides`](https://amanat-miner.vercel.app/slides)** is the same world in nine
+slides, for a judge with three minutes rather than thirty. No framework: nine
+sections, scroll-snap, arrow keys, and a print rule that turns it into a handout.
+A test holds all three pages to the same style block byte for byte.
+
+**[`media/amanat-demo.mp4`](media/amanat-demo.mp4)** is 84 seconds cut from five
+real sessions against the live miner — a reading, a route, the on-chain ledger,
+the audit, and the deck. Nothing is mocked and nothing is re-timed:
+
+```bash
+node scripts/record-demo.mjs     # drives a real browser, one clip per scene
+node scripts/probe-clips.mjs     # measures what it recorded
+npx remotion render video/index.jsx demo media/amanat-demo.mp4 --public-dir=media/raw
+```
+
+The durations are read out of the files rather than written down, because a clip
+is as long as the page took to answer and we do not get to choose which. Only the
+film is tracked; re-record it and you get today's numbers, which is the point.
 
 ## Reproducing any of it
 
@@ -715,11 +739,12 @@ overshoot easing, recorded with its reason in `.impeccable/config.json`.
 npm install
 cp .env.example .env            # fill in a funded Base Sepolia key
 npm run miner                   # the miner, locally
-npm test                        # miner self-check + 27 scorer tests
-npm run build:profiles          # eight binaries, fails if any two match
+npm test                        # miner self-check + 34 scorer tests
+npm run build:profiles          # ten binaries, fails if any two match
 npm run bench && npm run attacks # champions are gitignored — fetch them first, see Track 2
 npm run agent:dry               # the loop, read-only, spends nothing
 npm run survey                  # the scoring board: measured bar vs displayed score, free
+npm run audit                   # which intents an on-chain job cannot survive, free
 npm run impact                  # what changed on any intent our module scores, free
 npm run expire                  # release policies the network never answered, gas only
 ```

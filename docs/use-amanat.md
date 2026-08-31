@@ -8,8 +8,24 @@ trust the answer.
 | Direct HTTP | free | no | no |
 | Route assessment | free | no | no |
 | The published board | free | yes — it was already bought | no |
+| The on-chain audit | free | n/a — it is about the network | no |
 | Telegraph MCP | $0.01 | yes | yes |
 | Engine over x402 | $0.01 | yes | yes |
+
+### Before you put a contract on the on-chain rail, read this one
+
+```bash
+curl -s https://amanat-miner.vercel.app/api/jobable
+```
+
+An ERC-8183 job is routed by rank, and nothing in that path checks whether the
+miner it lands on declares an `on_chain.request` mapping. On an intent whose
+rank-1 miner has none, every job is answered from that miner's first endpoint
+with no parameters — which is how four of ours came back as a TLS certificate
+error to a contract asking for a storm risk.
+
+`dead[]` is the intents that closes; `jobable_by_intent` is who on each one can
+actually receive a job. It cost us four jobs to find. It costs you a GET.
 | ERC-8183 job | $1.00 | yes, delivered on-chain | yes |
 
 ---
