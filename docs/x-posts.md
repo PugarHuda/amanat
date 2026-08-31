@@ -8,6 +8,33 @@ Each post stands alone: someone landing on post 7 should understand it without
 having read post 1. Every claim is checkable — a registration id, a
 transaction, a number from `/api/wasm`, or a page that loads.
 
+A claim that was true in August and is not true today is worse than no post.
+Anything below that quotes a rank, a score or a slot is anchored to the epoch or
+the date it was read, because all three move.
+
+## What to post next
+
+Re-checked against the live node on 31 August. In this order:
+
+1. **31 — busiest miner on the network.** 389 requests against the runner-up's
+   304, out of 127 live miners. Requests served is an official Track 1 criterion
+   and this is the only number where we are unambiguously first.
+2. **32 — the champion scorer is near-binary.** Explains every weather score on
+   the board at once, and anyone can reproduce it from the published `wasm_url`.
+3. **33 — the hypothesis I falsified myself.** A negative result nobody had to
+   publish. Rare, and it costs nothing to check: registration 2072 is on the API.
+4. **35 — an outage wearing a 400.** One concrete bug with a general lesson for
+   every miner on the network, which is what makes it worth other people's time.
+5. **30 — the contract paid on a field it could not name.** Still true, and it is
+   the Track 3 argument in three lines.
+6. **12 — something you can click.** The only post that asks for a visit rather
+   than a read. Worth spacing between the technical ones.
+7. **9 — the escrow has no exit.** Still true on 31 August, still unanswered, and
+   it is a protocol finding rather than a project one.
+8. **34 — a shared stylesheet turns the design gate off.** Off the Telegraph
+   topic, so last — but it is a reproducible finding about a tool other people
+   run.
+
 ---
 
 **1 — the start**
@@ -27,8 +54,8 @@ transaction, a number from `/api/wasm`, or a page that loads.
 > Before building on @Telegraphprotoc I read the live network instead of the
 > docs.
 >
-> 139 miner registrations. Six ERC-8183 jobs created in the chain's entire
-> lifetime.
+> On 21 August: 139 miner registrations, and six ERC-8183 jobs created in the
+> chain's entire lifetime.
 >
 > Everyone is building on the HTTP rail. The on-chain rail — the thing the
 > protocol is actually for — is empty.
@@ -64,9 +91,11 @@ transaction, a number from `/api/wasm`, or a page that loads.
 > good answer and a bad one and cannot reorder them, so ordering is safe by
 > construction.
 >
-> 0.7415 → 0.8355. Champion on STORM_ALERT.
+> 0.7415 → 0.8355, and registration 188 took the STORM_ALERT slot on 22 August.
+> It lasted a day: the 23 August evaluator change superseded every slot on the
+> board, mine included.
 >
-> The rejection taught more than a pass would have.
+> The rejection taught more than the pass did.
 
 ---
 
@@ -77,7 +106,8 @@ transaction, a number from `/api/wasm`, or a page that loads.
 > The contract opened an ERC-8183 job, the protocol picked the miner, validators
 > finalised it, and the callback declined the claim on what came back.
 >
-> Before this the chain had seen 6 jobs ever. I've now run 5.
+> Six ERC-8183 jobs existed on this chain before mine. Of the fourteen that
+> exist now, eight are mine and five settled through the callback.
 
 ---
 
@@ -118,8 +148,8 @@ transaction, a number from `/api/wasm`, or a page that loads.
 
 **10 — why your miner might be scoring zero**
 
-> My @Telegraphprotoc miner served 289 requests in one epoch — more than any
-> other recently registered miner but one — and scored 0.
+> My @Telegraphprotoc miner had served 289 requests without an error and scored
+> 0 on every intent it was registered for.
 >
 > `signal_mapping.label_field` is the field a validator reads as your answer.
 > Mine pointed at a boolean.
@@ -175,15 +205,16 @@ transaction, a number from `/api/wasm`, or a page that loads.
 
 ---
 
-**19 — first place**
+**19 — first place, and what it was worth**
 
 > Epoch 276: 0.000, rank 6.
-> Epoch 277: 0.009192, rank 1.
->
-> Amanat is now #1 in STORM_ALERT on @Telegraphprotoc.
+> Epoch 277: 0.009192, rank 1 on STORM_ALERT.
 >
 > The fix was not a better forecast. It was answering the question in the form
 > it was asked.
+>
+> At epoch 295 that intent scores six miners and I am 4th. A rank on
+> @Telegraphprotoc is a reading, not a standing.
 
 ---
 
@@ -291,19 +322,20 @@ transaction, a number from `/api/wasm`, or a page that loads.
 >
 > All 20 weather pairs came back 0.000000. Not near zero. Exactly zero.
 >
-> The leaderboard still ranks them 1 to 9 on top of that.
+> The leaderboard still ranked them 1 to 9 on top of that. They score above zero
+> again now — what a rank means when they do not is the part worth keeping.
 
 ---
 
 **29 — a rank is not a result**
 
-> I am #1 in two weather intents today. It means nothing: everyone scored zero,
-> so the rank is a tie-break.
+> Epoch 295 on @Telegraphprotoc, WEATHER_CHECK. Rank 7 scored 0.013939 and
+> rank 8 — mine — scored 0.013936. Three millionths of a point decided a place.
 >
-> Three epochs ago I was #1 in STORM_ALERT at 0.009192, against 0.008503 and
-> 0.006845. That one was real.
+> On WEATHER_FORECAST the same epoch, five of the thirteen miners scored exactly
+> 0.000000, so being 2nd there is mostly being non-zero.
 >
-> Worth knowing which is which. @Telegraphprotoc
+> The rank is real. It is just not measuring what it looks like it measures.
 
 ---
 
@@ -320,9 +352,75 @@ transaction, a number from `/api/wasm`, or a page that loads.
 
 ---
 
+**31 — the busiest miner on the network**
+
+> `/api/miners` on @Telegraphprotoc lists 127 live miners, each with a
+> `total_requests_served`.
+>
+> Amanat is first at 389. The next busiest, onlookout-weather, has served 304.
+>
+> One curl, no wallet, no login:
+> devnode.telegraphprotocol.com/api/miners
+
+---
+
+**32 — the scoring module is a hit or a miss, not a grade**
+
+> Loaded the three seated weather champions on @Telegraphprotoc locally, the way
+> a validator loads them, and scored one answer against several ground truths.
+>
+> Covers it: 0.996 to 0.999. Misses it: 0.003 to 0.013. Almost nothing lands
+> in between.
+>
+> Live, the whole weather board sits between 0.005 and 0.017 — the miss end. So
+> nobody is hitting it, and the ranking is of near-misses.
+
+---
+
+**33 — a hypothesis I published, then killed**
+
+> My scoring module's source said `TEXT_AUTHENTICITY_CHECK` lost three fixtures
+> because repeated contrast passes saturate mid-quality answers into ties.
+>
+> Registration 2072 tested it with one pass fewer. It broke none of the three —
+> 13 of 15, the same as every build before it — and the margin fell 0.3808 to
+> 0.3455 against a bar of 0.6667.
+>
+> The comment says FALSIFIED now. The scorer just ranks those three wrong.
+> @Telegraphprotoc
+
+---
+
+**34 — a shared stylesheet turns the design gate off**
+
+> The detector I gate this page with scans the file you hand it.
+>
+> `background-clip: text` over a gradient, inside a `<style>` block: caught.
+> The same declaration moved to a linked stylesheet, scanning the HTML: zero
+> findings. It does not follow the `<link>`.
+>
+> Same page my @Telegraphprotoc miner serves. Point it at the CSS too.
+
+---
+
+**35 — an outage wearing a 400**
+
+> My miner answered "no place found" for Manila.
+>
+> Manila resolves fine. The geocoder had timed out, a catch turned the throw into
+> an empty result, and the miner told @Telegraphprotoc that the city does not
+> exist — confidently, on the scored path.
+>
+> "No such place" and "could not reach the geocoder" are different answers. It
+> says which one now.
+
+---
+
 ## Hold these until the numbers land
 
 - The board of live shipping lanes, once the schedule has run long enough to show a storm move across it.
-- Any registration that comes back champion.
+- Any registration that comes back champion. As of 31 August we hold none: the
+  `GAME_RESULT` slot lasted about forty minutes before registration 1265 took it
+  back, and there is nothing to claim until a new one lands.
 - Total Telegraph calls by the end of Track 3, as a count with the contract
   address beside it — that is the number being weighed.

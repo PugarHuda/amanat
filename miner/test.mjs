@@ -584,11 +584,21 @@ console.log("a geocoder that is down says so, instead of denying the place exist
 
 // ── the two pages are one design system, not two ───────────────────────────
 {
-  // DESIGN.md is law, and the Impeccable detector reads inline styles only — it
-  // returns [] for an external stylesheet even when that file carries a
-  // box-shadow, a radius and a gradient, which was measured before this split.
-  // So the style block has to stay inline on both pages, and the only thing
-  // stopping the two copies drifting apart is this check.
+  // Two pages, one design system. The style block is duplicated rather than
+  // shared, and this is the only thing stopping the copies drifting apart.
+  //
+  // The original reason given for duplicating was wrong and is corrected here:
+  // the detector appeared blind to an external stylesheet, but that was a
+  // broken toolchain — htmlparser2, css-select, css-tree and domutils were
+  // absent, so nothing outside the HTML was parsed at all. With them installed
+  // the same rule is caught inline and external alike, measured both ways. The
+  // duplication is now a cleanup waiting to happen, not a requirement; it stays
+  // only because this check makes it safe and the deadline is close.
+  //
+  // Note also that the detector does NOT enforce DESIGN.md's own bans on
+  // shadows, radii and gradients — four deliberate violations inline produced
+  // one finding. Its rule set and our design law are different things, and a
+  // green detector is not a design review.
   const { readFileSync } = await import("node:fs");
   const cut = (f) => {
     const html = readFileSync(new URL(f, import.meta.url), "utf8");
