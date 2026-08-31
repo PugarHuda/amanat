@@ -30,3 +30,4 @@ pw-full.log
 # this project. The frame-*.png stills are render checks, not artefacts.
 media/raw/
 media/frame-*.png
+media/check.png
