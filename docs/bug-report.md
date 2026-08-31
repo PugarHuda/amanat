@@ -894,7 +894,32 @@ hostname is exactly what that produces.
 
 **Nothing in the routing path checks for it.** The job is routed by rank, and
 `livecert` is **rank 1 on STORM_ALERT**. Job 18, a fourth attempt an hour later,
-went to it again. Four for four is not a lottery.
+went to it again.
+
+**Job 19 proved the mechanism by going somewhere else.** A fifth attempt landed
+on a different miner and came back with a different complaint:
+
+```
+status: invalid_input
+summary: I cannot look up this transaction because no transaction hash was
+         supplied. A transaction hash is 66 characters long … Pass one as the
+         tx_hash parameter
+```
+
+That is `txlens` — registered on STORM_ALERT, **15 endpoints, the first of them
+`/check-tx`, and no `on_chain` block**. So:
+
+| Job | Miner | Its first endpoint | What came back |
+|---|---|---|---|
+| 15, 16, 18 | `livecert` | `/ssl-check` | "no hostname was supplied" |
+| 17 | `livecert` | `/ssl-check` | "no hostname was supplied" |
+| 19 | `txlens` | `/check-tx` | "no transaction hash was supplied" |
+
+Two miners, two different first endpoints, two different complaints, one rule:
+**a miner that declares no `on_chain.request` mapping is called at
+`endpoints[0]` with no parameters.** Both are legitimately registered on
+STORM_ALERT and both answer weather correctly through the Engine. Neither is at
+fault; the routing is.
 
 ### How much of the network this closes
 

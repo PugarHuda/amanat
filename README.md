@@ -656,6 +656,12 @@ to map a latitude onto and falls back to its first endpoint, `/ssl-check`, with
 no parameters. Nothing in the routing path checks for that, and `livecert` is
 **rank 1 on STORM_ALERT**.
 
+**Job 19 proved it by landing somewhere else.** A fifth attempt went to `txlens`
+— also registered on STORM_ALERT, also with no `on_chain` block, 15 endpoints,
+the first being `/check-tx` — and came back "I cannot look up this transaction
+because no transaction hash was supplied." Two miners, two different first
+endpoints, two different complaints, one rule.
+
 `npm run audit` now measures how much of the network this closes:
 
 ```
