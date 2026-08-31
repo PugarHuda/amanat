@@ -103,6 +103,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 // One file, read once. The page is static and the server has no build step.
 const PAGE = readFileSync(join(HERE, "public/index.html"));
 const USE = readFileSync(join(HERE, "public/use.html"));
+const SLIDES = readFileSync(join(HERE, "public/slides.html"));
 const LOGO = readFileSync(join(HERE, "public/logo.svg"));
 const OPENAPI = readFileSync(join(HERE, "public/openapi.json"));
 const LLMS = readFileSync(join(HERE, "public/llms.txt"));
@@ -157,6 +158,14 @@ export const server = createServer(async (req, res) => {
     if (pathname === "/use" || pathname === "/use.html") {
       res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Content-Length": USE.length });
       return res.end(USE);
+    }
+
+    // The deck. Nine slides, the same design system, no framework — a judge with
+    // three minutes reads this, a judge with thirty reads the front page. It is
+    // static like the other two, so it costs a file read and nothing else.
+    if (pathname === "/slides" || pathname === "/slides.html") {
+      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Content-Length": SLIDES.length });
+      return res.end(SLIDES);
     }
 
     // Health, with enough in it to act on.

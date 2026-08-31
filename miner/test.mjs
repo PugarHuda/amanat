@@ -610,8 +610,13 @@ console.log("a geocoder that is down says so, instead of denying the place exist
   };
   assert.equal(cut("public/use.html"), cut("public/index.html"),
     "index.html and use.html must carry the same style block byte for byte — edit both, or neither");
+  // The deck is a third surface in the same world. Its own rules live in a
+  // second <style> block after this one, which is why only the first is
+  // compared — shared system first, page-specific after.
+  assert.equal(cut("public/slides.html"), cut("public/index.html"),
+    "slides.html must carry the same design system as the site it is about");
 }
-console.log("both pages carry the same design system, byte for byte");
+console.log("all three pages carry the same design system, byte for byte");
 
 // ── risk is always a number, because it is an on-chain integer field ────────
 {
