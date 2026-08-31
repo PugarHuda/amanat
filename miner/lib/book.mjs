@@ -78,7 +78,7 @@ function readString(hex, i) {
 }
 
 /** One policy, decoded from the tuple the contract returns. */
-function decodePolicy(id, hex) {
+export function decodePolicy(id, hex) {
   return {
     id,
     holder: address(hex, 0),
@@ -88,7 +88,12 @@ function decodePolicy(id, hex) {
     status: STATUS[uint32(hex, 4)] ?? `unknown(${uint32(hex, 4)})`,
     openedAt: uint32(hex, 5),
     jobId: uint32(hex, 6),
-    risk: uint32(hex, 7) / 10_000,
+    // Word 7 is checkedAt and word 8 is riskReported. Reading the risk out of
+    // word 7 put a Unix timestamp through `/ 10_000` and printed 178776.515 in
+    // the risk column of the public ledger — a number that is not a risk, on a
+    // page whose whole argument is that every figure on it is checkable.
+    checkedAt: uint32(hex, 7),
+    risk: uint32(hex, 8) / 10_000,
   };
 }
 

@@ -3,6 +3,7 @@
 import assert from "node:assert/strict";
 import { riskScore, summarise, forecast, hoursIn, windowIn, condition, restate } from "./lib/forecast.mjs";
 import { placeCandidates, coordinatesIn, locate } from "./lib/geocode.mjs";
+import { decodePolicy } from "./lib/book.mjs";
 import { greatCircleKm, waypoints, assessRoute } from "./lib/route.mjs";
 import { ttlCache, bucket } from "./lib/cache.mjs";
 import { drawCard, textWidth } from "./lib/card.mjs";
@@ -797,6 +798,36 @@ console.log("places are read in the alphabet they are written in");
   assert.equal(placeCandidates("Is it raining in El Salvador?")[0], "El Salvador");
 }
 console.log("a climate phenomenon is not the place the question is about");
+
+// ── the risk column on the public ledger is a risk ──────────────────────────
+{
+  // The Policy struct has nine fields and the risk is the ninth. Reading it as
+  // the eighth reads `checkedAt`, so the page printed 178776.515 where a number
+  // between 0 and 1 belongs — for a month, on the one table that is supposed to
+  // prove the loop closes on chain.
+  const w = (n) => BigInt(n).toString(16).padStart(64, "0");
+  const str = (t) => {
+    const bytes = Buffer.from(t, "utf8");
+    return w(bytes.length) + bytes.toString("hex").padEnd(64, "0");
+  };
+  // head: holder, lat*, lon*, payout, status, openedAt, jobId, checkedAt, risk
+  const head =
+    "000000000000000000000000" + "3aaa5b87bd13be841e824e62cc4c66004420b7c3" +
+    w(9 * 32) + w(9 * 32 + 64) + w(1_000_000) + w(3) + w(1_787_755_898) +
+    w(14) + w(1_787_765_148) + w(6_912);
+  const blob = head + str("10.32") + str("123.89");
+
+  const p = decodePolicy(1, blob);
+  assert.equal(p.holder, "0x3aaa5b87bd13be841e824e62cc4c66004420b7c3");
+  assert.equal(p.lat, "10.32");
+  assert.equal(p.lon, "123.89");
+  assert.equal(p.payout, "1.00");
+  assert.equal(p.jobId, 14);
+  assert.equal(p.checkedAt, 1_787_765_148);
+  assert.equal(p.risk, 0.6912, "the risk is the ninth field, not the eighth");
+  assert.ok(p.risk >= 0 && p.risk <= 1, "a risk outside 0..1 is a decoding error");
+}
+console.log("a policy decodes its risk from the field that holds the risk");
 
 // ── the sea and the storm are drivers of risk, not decoration ───────────────
 {
