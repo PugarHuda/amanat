@@ -9,6 +9,7 @@ Every answer is a weather report plus the scalars behind it: temperature, wind, 
 - POST https://amanat-miner.vercel.app/forecast with `{"question": "Storm risk for Cebu in the next 6 hours?"}` or `{"lat": 10.32, "lon": 123.89, "hours": 6}`
 - GET  https://amanat-miner.vercel.app/api/route?from=Cebu&to=Manila&speed=37 — risk along a route, each leg at the hour the vehicle reaches it
 - GET  https://amanat-miner.vercel.app/api/backtest?lat=10.32&lon=123.89&start=2021-12-15&end=2021-12-18 — would the trigger have fired? Typhoon Rai, Cebu: yes, 1.000 at 13:00 UTC on 16 December
+- GET  https://amanat-miner.vercel.app/api/jobable — which intents an on-chain ERC-8183 job cannot survive, and who on each one can receive one. 14 of 15 scored intents are routed to a rank-1 miner that declares no on_chain.request mapping.
 - Paid, routed by the network: ask the Telegraph Engine for WEATHER_FORECAST, WEATHER_CHECK or STORM_ALERT over x402, $0.01
 
 ## Read it

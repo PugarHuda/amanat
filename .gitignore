@@ -15,6 +15,7 @@ onchain/cache/
 !.env.example
 board.json
 survey.json
+jobable.json
 pw-full.log
 
 # Impeccable working files: screenshots and live-mode state are per-machine

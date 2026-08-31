@@ -11,10 +11,12 @@
 // ponytail: hand-rolled indent scan instead of a YAML parser — we need three
 // keys, not a document model. Swap in `yaml` if we ever need real parsing.
 
+import { writeFile } from "node:fs/promises";
 import { miners, NAME_HASHED_INTENTS } from "./telegraph.mjs";
 import { reject } from "./args.mjs";
 
 const NAME_HASHED = new Set(NAME_HASHED_INTENTS);
+const OUT = new URL("../jobable.json", import.meta.url);
 const IPFS_GATEWAYS = [
   "https://gateway.pinata.cloud/ipfs/",
   "https://ipfs.io/ipfs/",
@@ -114,8 +116,13 @@ async function main() {
   ));
   rows.sort((a, b) => Number(a.id) - Number(b.id));
 
+  // --json publishes the finding rather than the working data. The rows are a
+  // hundred YAML reads; what a reader needs is which intents an on-chain job
+  // cannot survive, and who on each one can actually receive it.
   if (process.argv.includes("--json")) {
-    console.log(JSON.stringify(rows, null, 2));
+    const summary = await deadIntents(rows, { quiet: true });
+    await writeFile(OUT, JSON.stringify({ ...summary, miners: rows }, null, 2) + "\n");
+    console.log(`wrote      jobable.json — ${summary.dead.length} of ${summary.scored_name_hashed_intents} intents closed`);
     return;
   }
 
@@ -171,7 +178,7 @@ async function main() {
  * rank then routes on-chain jobs to a miner that cannot serve one. The better a
  * generalist ranks, the more completely the on-chain rail closes behind it.
  */
-async function deadIntents(rows) {
+async function deadIntents(rows, { quiet = false } = {}) {
   const jobable = new Set(rows.filter((r) => r.has_request && r.routable_by_name).map((r) => r.slug));
   const all = await miners();
 
@@ -188,19 +195,36 @@ async function deadIntents(rows) {
   }
 
   const dead = Object.entries(top).filter(([, t]) => !jobable.has(t.slug)).sort();
-  console.log(`
-Intents whose rank-1 miner cannot receive an ERC-8183 job:`);
+  const summary = {
+    read_at: new Date().toISOString(),
+    scored_name_hashed_intents: Object.keys(top).length,
+    dead: dead.map(([intent, t]) => ({
+      intent,
+      rank1: t.slug,
+      endpoints: t.endpoints,
+      declares_on_chain_request: false,
+    })),
+    jobable_by_intent: Object.fromEntries(
+      Object.keys(top).sort().map((i) => [
+        i,
+        rows.filter((r) => r.has_request && r.routable_by_name && r.intents.includes(i)).map((r) => r.slug),
+      ]),
+    ),
+  };
+
+  if (quiet) return summary;
+  console.log(`\nIntents whose rank-1 miner cannot receive an ERC-8183 job:`);
   if (!dead.length) {
     console.log("  none — every leader on a name-hashed intent declares on_chain.request");
-    return;
+    return summary;
   }
   for (const [intent, t] of dead) {
     console.log(`  ${String(intent).padEnd(26)} rank 1 is ${t.slug} (${t.endpoints} endpoint${t.endpoints === 1 ? "" : "s"}, no on_chain.request)`);
   }
-  console.log(`
-  ${dead.length} of ${Object.keys(top).length} scored name-hashed intents. A job on one of these`);
+  console.log(`\n  ${dead.length} of ${Object.keys(top).length} scored name-hashed intents. A job on one of these`);
   console.log(`  is answered from the leader's first endpoint with no parameters, whatever`);
   console.log(`  it asked for. Measured on jobs 15–18 — see docs/bug-report.md.`);
+  return summary;
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

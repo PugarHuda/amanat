@@ -44,6 +44,13 @@ const BOARD_URL = process.env.AMANAT_BOARD_URL
 const SURVEY_URL = process.env.AMANAT_SURVEY_URL
   ?? "https://raw.githubusercontent.com/PugarHuda/amanat/board/survey.json";
 
+// And the on-chain audit: which intents an ERC-8183 job cannot survive, and who
+// on each one can actually receive one. Same branch, same schedule, same reason
+// — it reads every registered YAML on the network, which is not a thing to do
+// per request.
+const JOBABLE_URL = process.env.AMANAT_JOBABLE_URL
+  ?? "https://raw.githubusercontent.com/PugarHuda/amanat/board/jobable.json";
+
 // Callers name the question field differently and the protocol does not fix
 // one. Accepting the whole set costs a lookup and turns "unsupported request"
 // into an answer.
@@ -380,6 +387,24 @@ export const server = createServer(async (req, res) => {
       return res.end(JSON.stringify(survey));
     }
 
+    // Which intents an on-chain job cannot survive. A job is routed by rank and
+    // nothing in that path checks whether the miner it lands on declares an
+    // `on_chain.request` mapping — so on an intent whose rank-1 miner has none,
+    // every job comes back as whatever that miner's first endpoint says when
+    // handed no parameters. Measured on jobs 15–18; 14 of 15 scored intents.
+    // Published because a builder deciding whether to put a contract on this
+    // rail should not have to find it the way we did.
+    if (pathname === "/api/jobable") {
+      const upstream = await fetch(JOBABLE_URL, { signal: AbortSignal.timeout(8000) });
+      if (upstream.status === 404) {
+        return send(res, 503, { error: "the audit has not been published yet — the schedule writes it every 12 hours" });
+      }
+      if (!upstream.ok) throw new Error(`jobable ${upstream.status}`);
+      const audit = await upstream.json();
+      res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "public, max-age=1800" });
+      return res.end(JSON.stringify(audit));
+    }
+
     if (pathname === "/api/board") {
       const upstream = await fetch(BOARD_URL, { signal: AbortSignal.timeout(8000) });
       if (upstream.status === 404) {
@@ -443,7 +468,7 @@ export const server = createServer(async (req, res) => {
       }));
     }
 
-    send(res, 404, { error: "not found", endpoints: ["/forecast", "/api/route", "/api/backtest", "/api/board", "/api/survey", "/api/asked", "/openapi.json", "/llms.txt", "/health"] });
+    send(res, 404, { error: "not found", endpoints: ["/forecast", "/api/route", "/api/backtest", "/api/board", "/api/survey", "/api/jobable", "/api/asked", "/openapi.json", "/llms.txt", "/health"] });
   } catch (e) {
     // A validation mistake is the caller's; anything else is ours. Both are
     // real HTTP errors so Telegraph does not charge for them or store a signal.

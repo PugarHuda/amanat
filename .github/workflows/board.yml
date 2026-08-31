@@ -93,6 +93,16 @@ jobs:
           TELEGRAPH_NODE: https://devnode.telegraphprotocol.com
         run: node agent/survey.mjs --json
 
+      # Which intents an on-chain job cannot survive. Public reads only — every
+      # registered YAML plus the scoreboard — so it rides the board's schedule
+      # like the survey rather than earning one of its own.
+      - name: Audit the on-chain rail
+        if: always()
+        continue-on-error: true
+        env:
+          TELEGRAPH_NODE: https://devnode.telegraphprotocol.com
+        run: node agent/audit-jobable.mjs --json
+
       - name: Publish to the board branch
         if: always()
         run: |
@@ -105,5 +115,6 @@ jobs:
           git rm -rf --cached . >/dev/null
           [ -f board.json ] && git add -f board.json
           [ -f survey.json ] && git add -f survey.json
+          [ -f jobable.json ] && git add -f jobable.json
           git commit -m "board $(date -u +%Y-%m-%dT%H:%MZ)"
           git push --force origin board-tmp:board

@@ -5,10 +5,17 @@
     "version": "1.0.0",
     "summary": "Verified weather and storm-risk readings a contract can act on.",
     "description": "Every answer carries a plain-language report and the scalars behind it, a storm risk in [0,1] with the payout trigger at 0.75, sea state and any named cyclone nearby, an ensemble band for the risk, and an Ed25519 attestation over the fields a contract settles on. Data: Open-Meteo (CC BY 4.0) and GDACS. Paid access is through the Telegraph Protocol Engine over x402; the routes here are what the node calls.",
-    "license": { "name": "MIT", "url": "https://github.com/PugarHuda/amanat/blob/main/LICENSE" },
+    "license": {
+      "name": "MIT",
+      "url": "https://github.com/PugarHuda/amanat/blob/main/LICENSE"
+    },
     "x-source": "https://github.com/PugarHuda/amanat"
   },
-  "servers": [{ "url": "https://amanat-miner.vercel.app" }],
+  "servers": [
+    {
+      "url": "https://amanat-miner.vercel.app"
+    }
+  ],
   "paths": {
     "/forecast": {
       "post": {
@@ -17,24 +24,94 @@
         "description": "Give coordinates, or a question naming a place. The answer restates what was asked, then reports it. `hours` is measured from now (0..168) and is read from the question when not given.",
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ForecastRequest" } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForecastRequest"
+              }
+            }
+          }
         },
         "responses": {
-          "200": { "description": "The reading", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Forecast" } } } },
-          "400": { "description": "Refused: missing or out-of-range input, or a question naming no place", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
-          "429": { "description": "The day's upstream quota is spent", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+          "200": {
+            "description": "The reading",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Forecast"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Refused: missing or out-of-range input, or a question naming no place",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "The day's upstream quota is spent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
         }
       },
       "get": {
         "operationId": "forecastQuery",
         "summary": "The same, with query parameters",
         "parameters": [
-          { "name": "lat", "in": "query", "schema": { "type": "number" } },
-          { "name": "lon", "in": "query", "schema": { "type": "number" } },
-          { "name": "hours", "in": "query", "schema": { "type": "integer", "minimum": 0, "maximum": 168 } },
-          { "name": "question", "in": "query", "schema": { "type": "string" } }
+          {
+            "name": "lat",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "lon",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "hours",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 168
+            }
+          },
+          {
+            "name": "question",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "The reading", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Forecast" } } } } }
+        "responses": {
+          "200": {
+            "description": "The reading",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Forecast"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/route": {
@@ -42,18 +119,93 @@
         "operationId": "route",
         "summary": "Storm risk along a route, each leg forecast for the hour the vehicle reaches it",
         "parameters": [
-          { "name": "from", "in": "query", "required": true, "schema": { "type": "string" }, "description": "A place name or \"lat, lon\"" },
-          { "name": "to", "in": "query", "required": true, "schema": { "type": "string" } },
-          { "name": "speed", "in": "query", "schema": { "type": "number", "default": 37 }, "description": "km/h; `speed_kmh` is accepted as an alias" },
-          { "name": "legs", "in": "query", "schema": { "type": "integer", "minimum": 2, "maximum": 12, "default": 8 }, "description": "`max_legs` is accepted as an alias" }
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "A place name or \"lat, lon\""
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "speed",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "default": 37
+            },
+            "description": "km/h; `speed_kmh` is accepted as an alias"
+          },
+          {
+            "name": "legs",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 12,
+              "default": 8
+            },
+            "description": "`max_legs` is accepted as an alias"
+          }
         ],
-        "responses": { "200": { "description": "Legs with risk, the worst leg, and whether it breaches" }, "429": { "description": "The per-minute route budget is spent; the quota is shared with /forecast" } }
+        "responses": {
+          "200": {
+            "description": "Legs with risk, the worst leg, and whether it breaches"
+          },
+          "429": {
+            "description": "The per-minute route budget is spent; the quota is shared with /forecast"
+          }
+        }
       },
       "post": {
         "operationId": "routeJson",
         "summary": "The same, as a JSON body",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["from", "to"], "properties": { "from": { "type": "string" }, "to": { "type": "string" }, "speed_kmh": { "type": "number", "default": 37 }, "max_legs": { "type": "integer", "minimum": 2, "maximum": 12, "default": 8 } } } } } },
-        "responses": { "200": { "description": "Legs with risk, the worst leg, and whether it breaches" } }
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "from",
+                  "to"
+                ],
+                "properties": {
+                  "from": {
+                    "type": "string"
+                  },
+                  "to": {
+                    "type": "string"
+                  },
+                  "speed_kmh": {
+                    "type": "number",
+                    "default": 37
+                  },
+                  "max_legs": {
+                    "type": "integer",
+                    "minimum": 2,
+                    "maximum": 12,
+                    "default": 8
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Legs with risk, the worst leg, and whether it breaches"
+          }
+        }
       }
     },
     "/api/backtest": {
@@ -62,83 +214,517 @@
         "summary": "Would the trigger have fired? The risk score over what actually happened",
         "description": "The live thresholds applied hour by hour to the Open-Meteo reanalysis archive. At most 31 days; the archive trails real time by about six days.",
         "parameters": [
-          { "name": "lat", "in": "query", "required": true, "schema": { "type": "number" } },
-          { "name": "lon", "in": "query", "required": true, "schema": { "type": "number" } },
-          { "name": "start", "in": "query", "required": true, "schema": { "type": "string", "format": "date" } },
-          { "name": "end", "in": "query", "required": true, "schema": { "type": "string", "format": "date" } }
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "lon",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Hourly risk, the peak hour, and whether it breached", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Backtest" } } } } }
+        "responses": {
+          "200": {
+            "description": "Hourly risk, the peak hour, and whether it breached",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Backtest"
+                }
+              }
+            }
+          }
+        }
       }
     },
-    "/api/board": { "get": { "operationId": "board", "summary": "The published storm board: five shipping lanes screened through Telegraph", "responses": { "200": { "description": "Lanes with their worst-leg risk" }, "503": { "description": "Not published yet" } } } },
-    "/api/survey": { "get": { "operationId": "survey", "summary": "What the network scores: the measured bar per intent beside the displayed champion score", "responses": { "200": { "description": "Per-intent rows" } } } },
-    "/api/asked": { "get": { "operationId": "asked", "summary": "The last fifty questions this miner was sent, with the field each arrived in", "responses": { "200": { "description": "Newest first" } } } },
-    "/health": { "get": { "operationId": "health", "summary": "Per-upstream ledger (last success, last failure and why), budgets, cache fill, board age, signing key", "responses": { "200": { "description": "status is \"ok\", or \"degraded\" when the weather model failed more recently than it succeeded; always 200 so the node's liveness check is not failed by someone else's outage" } } } },
-    "/.well-known/amanat.json": { "get": { "operationId": "wellKnown", "summary": "The public key answers are signed with, and where the spec is", "responses": { "200": { "description": "Key and links" } } } }
+    "/api/board": {
+      "get": {
+        "operationId": "board",
+        "summary": "The published storm board: five shipping lanes screened through Telegraph",
+        "responses": {
+          "200": {
+            "description": "Lanes with their worst-leg risk"
+          },
+          "503": {
+            "description": "Not published yet"
+          }
+        }
+      }
+    },
+    "/api/survey": {
+      "get": {
+        "operationId": "survey",
+        "summary": "What the network scores: the measured bar per intent beside the displayed champion score",
+        "responses": {
+          "200": {
+            "description": "Per-intent rows"
+          }
+        }
+      }
+    },
+    "/api/jobable": {
+      "get": {
+        "operationId": "jobable",
+        "summary": "Which intents an ERC-8183 job cannot survive, and who on each one can receive one",
+        "description": "A job is routed by rank, and nothing in that path checks whether the miner it lands on declares an on_chain.request mapping. On an intent whose rank-1 miner has none, every job is answered from that miner's first endpoint with no parameters. Measured on jobs 15-18: 14 of 15 scored name-hashed intents are closed this way.",
+        "responses": {
+          "200": {
+            "description": "dead[] per intent, jobable_by_intent, and the per-miner rows it was computed from"
+          }
+        }
+      }
+    },
+    "/api/asked": {
+      "get": {
+        "operationId": "asked",
+        "summary": "The last fifty questions this miner was sent, with the field each arrived in",
+        "responses": {
+          "200": {
+            "description": "Newest first"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health",
+        "summary": "Per-upstream ledger (last success, last failure and why), budgets, cache fill, board age, signing key",
+        "responses": {
+          "200": {
+            "description": "status is \"ok\", or \"degraded\" when the weather model failed more recently than it succeeded; always 200 so the node's liveness check is not failed by someone else's outage"
+          }
+        }
+      }
+    },
+    "/.well-known/amanat.json": {
+      "get": {
+        "operationId": "wellKnown",
+        "summary": "The public key answers are signed with, and where the spec is",
+        "responses": {
+          "200": {
+            "description": "Key and links"
+          }
+        }
+      }
+    }
   },
   "components": {
     "schemas": {
       "ForecastRequest": {
         "type": "object",
         "properties": {
-          "lat": { "type": "number", "minimum": -90, "maximum": 90 },
-          "lon": { "type": "number", "minimum": -180, "maximum": 180 },
-          "hours": { "type": "integer", "minimum": 0, "maximum": 168, "description": "Hours from now" },
-          "question": { "type": "string", "description": "A place, a coordinate pair, or a question naming one. Also accepted as q, query, prompt, text, input, place, location, city." }
+          "lat": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "lon": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "hours": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 168,
+            "description": "Hours from now"
+          },
+          "question": {
+            "type": "string",
+            "description": "A place, a coordinate pair, or a question naming one. Also accepted as q, query, prompt, text, input, place, location, city."
+          }
         }
       },
       "Forecast": {
         "type": "object",
-        "required": ["summary", "temp_c", "wind_kmh", "gust_kmh", "precip_mm", "risk", "breach", "valid_at", "wave_cm", "cyclone_km", "attestation"],
+        "required": [
+          "summary",
+          "temp_c",
+          "wind_kmh",
+          "gust_kmh",
+          "precip_mm",
+          "risk",
+          "breach",
+          "valid_at",
+          "wave_cm",
+          "cyclone_km",
+          "attestation"
+        ],
         "properties": {
-          "summary": { "type": "string", "description": "The report. Opens by restating the question." },
-          "place": { "type": ["string", "null"] },
-          "lat": { "type": "number" }, "lon": { "type": "number" }, "hours": { "type": "integer" },
-          "valid_at": { "type": "string", "description": "UTC hour the reading applies to" },
-          "condition": { "type": ["string", "null"] }, "weather_code": { "type": ["integer", "null"] },
-          "temp_c": { "type": "number" }, "feels_like_c": { "type": ["number", "null"] }, "dew_point_c": { "type": ["number", "null"] },
-          "humidity_pct": { "type": ["number", "null"] }, "cloud_pct": { "type": ["number", "null"] },
-          "temp_min_c": { "type": ["number", "null"] }, "temp_max_c": { "type": ["number", "null"] },
-          "wind_kmh": { "type": "number" }, "gust_kmh": { "type": "number" },
-          "wind_dir_deg": { "type": ["number", "null"] }, "wind_dir": { "type": ["string", "null"], "description": "Compass point" },
-          "precip_mm": { "type": "number" }, "precip_prob_pct": { "type": ["number", "null"] },
-          "days": { "type": "array", "items": { "type": "object", "properties": { "date": { "type": "string" }, "label": { "type": "string" }, "high_c": { "type": "number" }, "low_c": { "type": "number" }, "condition": { "type": ["string", "null"] }, "precip_prob_pct": { "type": ["number", "null"] }, "wind_max_kmh": { "type": ["number", "null"] } } } },
-          "wave_m": { "type": ["number", "null"], "description": "Significant wave height; null over land" },
-          "sea_level_m": { "type": ["number", "null"], "description": "Sea level above mean, tide and surge together; reported, not scored; null over land" },
-          "wave_cm": { "type": "integer", "description": "The on-chain form of wave_m; 0 over land" },
-          "cyclone_name": { "type": ["string", "null"] }, "cyclone_km_now": { "type": ["integer", "null"] },
-          "cyclone_max_wind_kmh": { "type": ["integer", "null"] }, "cyclone_alert": { "type": ["string", "null"] },
-          "cyclone_km": { "type": "integer", "description": "The on-chain form of cyclone_km_now; 0 when none within 500 km" },
-          "risk": { "type": "number", "minimum": 0, "maximum": 1, "description": "Worst of wind, gusts, rain, waves and cyclone proximity" },
-          "breach": { "type": "boolean", "description": "risk >= 0.75" },
-          "risk_band": { "type": ["object", "null"], "description": "Risk across ECMWF ensemble members at the same hour", "properties": { "model": { "type": "string" }, "members": { "type": "integer" }, "p10": { "type": "number" }, "p50": { "type": "number" }, "p90": { "type": "number" }, "max": { "type": "number" }, "breach_probability": { "type": "number" } } },
-          "attestation": { "$ref": "#/components/schemas/Attestation" },
-          "source": { "type": "string" }, "attribution": { "type": "object" }
+          "summary": {
+            "type": "string",
+            "description": "The report. Opens by restating the question."
+          },
+          "place": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lat": {
+            "type": "number"
+          },
+          "lon": {
+            "type": "number"
+          },
+          "hours": {
+            "type": "integer"
+          },
+          "valid_at": {
+            "type": "string",
+            "description": "UTC hour the reading applies to"
+          },
+          "condition": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "weather_code": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "temp_c": {
+            "type": "number"
+          },
+          "feels_like_c": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "dew_point_c": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "humidity_pct": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "cloud_pct": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "temp_min_c": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "temp_max_c": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "wind_kmh": {
+            "type": "number"
+          },
+          "gust_kmh": {
+            "type": "number"
+          },
+          "wind_dir_deg": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "wind_dir": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Compass point"
+          },
+          "precip_mm": {
+            "type": "number"
+          },
+          "precip_prob_pct": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "high_c": {
+                  "type": "number"
+                },
+                "low_c": {
+                  "type": "number"
+                },
+                "condition": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "precip_prob_pct": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "wind_max_kmh": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                }
+              }
+            }
+          },
+          "wave_m": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Significant wave height; null over land"
+          },
+          "sea_level_m": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Sea level above mean, tide and surge together; reported, not scored; null over land"
+          },
+          "wave_cm": {
+            "type": "integer",
+            "description": "The on-chain form of wave_m; 0 over land"
+          },
+          "cyclone_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cyclone_km_now": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "cyclone_max_wind_kmh": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "cyclone_alert": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cyclone_km": {
+            "type": "integer",
+            "description": "The on-chain form of cyclone_km_now; 0 when none within 500 km"
+          },
+          "risk": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Worst of wind, gusts, rain, waves and cyclone proximity"
+          },
+          "breach": {
+            "type": "boolean",
+            "description": "risk >= 0.75"
+          },
+          "risk_band": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Risk across ECMWF ensemble members at the same hour",
+            "properties": {
+              "model": {
+                "type": "string"
+              },
+              "members": {
+                "type": "integer"
+              },
+              "p10": {
+                "type": "number"
+              },
+              "p50": {
+                "type": "number"
+              },
+              "p90": {
+                "type": "number"
+              },
+              "max": {
+                "type": "number"
+              },
+              "breach_probability": {
+                "type": "number"
+              }
+            }
+          },
+          "attestation": {
+            "$ref": "#/components/schemas/Attestation"
+          },
+          "source": {
+            "type": "string"
+          },
+          "attribution": {
+            "type": "object"
+          }
         }
       },
       "Attestation": {
         "type": "object",
         "description": "Ed25519 over the canonical JSON of signed_fields. Verify with crypto.verify(null, canonical, public_key, signature) in Node, no library needed.",
         "properties": {
-          "algorithm": { "type": "string", "const": "ed25519" },
-          "signed_fields": { "type": "array", "items": { "type": "string" } },
-          "canonical": { "type": "string" }, "sha256": { "type": "string" },
-          "signature": { "type": "string", "description": "base64" }, "public_key": { "type": "string", "description": "base64 SPKI DER" },
-          "key_persistent": { "type": "boolean", "description": "false means this instance generated its key at start" }
+          "algorithm": {
+            "type": "string",
+            "const": "ed25519"
+          },
+          "signed_fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "canonical": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "signature": {
+            "type": "string",
+            "description": "base64"
+          },
+          "public_key": {
+            "type": "string",
+            "description": "base64 SPKI DER"
+          },
+          "key_persistent": {
+            "type": "boolean",
+            "description": "false means this instance generated its key at start"
+          }
         }
       },
       "Backtest": {
         "type": "object",
         "properties": {
-          "lat": { "type": "number" }, "lon": { "type": "number" }, "start": { "type": "string" }, "end": { "type": "string" },
-          "trigger": { "type": "number" }, "hours": { "type": "integer" },
-          "peak": { "type": ["object", "null"], "properties": { "at": { "type": "string" }, "risk": { "type": "number" }, "wind_kmh": { "type": "number" }, "gust_kmh": { "type": "number" }, "precip_mm": { "type": "number" } } },
-          "breach": { "type": "boolean" }, "hours_above_trigger": { "type": "integer" },
-          "series": { "type": "array", "items": { "type": "object", "properties": { "at": { "type": "string" }, "risk": { "type": "number" } } } },
-          "source": { "type": "string" }
+          "lat": {
+            "type": "number"
+          },
+          "lon": {
+            "type": "number"
+          },
+          "start": {
+            "type": "string"
+          },
+          "end": {
+            "type": "string"
+          },
+          "trigger": {
+            "type": "number"
+          },
+          "hours": {
+            "type": "integer"
+          },
+          "peak": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "risk": {
+                "type": "number"
+              },
+              "wind_kmh": {
+                "type": "number"
+              },
+              "gust_kmh": {
+                "type": "number"
+              },
+              "precip_mm": {
+                "type": "number"
+              }
+            }
+          },
+          "breach": {
+            "type": "boolean"
+          },
+          "hours_above_trigger": {
+            "type": "integer"
+          },
+          "series": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "at": {
+                  "type": "string"
+                },
+                "risk": {
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "source": {
+            "type": "string"
+          }
         }
       },
-      "Error": { "type": "object", "properties": { "error": { "type": "string" } } }
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        }
+      }
     }
   }
 }
