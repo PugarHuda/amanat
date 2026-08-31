@@ -389,16 +389,24 @@ test.describe("the page @ui", () => {
   });
 
   // The gauge is drawn from the published board, so it costs one cached request
-  // rather than five live forecasts per visitor. At a 10 000-a-day upstream
-  // quota, those five were the ceiling on how many people could use the site.
+  // rather than one live forecast per lane per visitor. At a 10 000-a-day
+  // upstream quota, that was the ceiling on how many people could use the site.
   test("plots the published lanes against the trigger line", async ({ page }) => {
     let forecasts = 0;
     page.on("request", (r) => { if (r.url().includes("/forecast")) forecasts++; });
 
+    // How many lanes there are is a property of the board, not of this test.
+    // Hardcoding five meant that widening the board to ten turned CI red on a
+    // page that was working perfectly — the same mistake as the heading that
+    // read "Five lanes" over ten rows.
+    const published = await (await fetch(`${BASE}/api/board`)).json();
+    const lanes = published.lanes.length;
+    expect(lanes, "the board must publish at least one lane").toBeGreaterThan(0);
+
     await page.goto(BASE);
     const readings = page.locator(".reading");
     await expect(readings.first()).toBeVisible({ timeout: 30_000 });
-    await expect(readings).toHaveCount(5, { timeout: 60_000 });
+    await expect(readings).toHaveCount(lanes, { timeout: 60_000 });
 
     for (const value of await page.locator(".reading .val").allTextContents()) {
       const risk = Number(value);
