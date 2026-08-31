@@ -120,6 +120,65 @@ function readPaid(signer, ledger) {
   };
 }
 
+/**
+ * The other half of a lane's risk, asked only when the weather half is already
+ * bad enough to matter.
+ *
+ * A storm is not the only thing that shuts a shipping lane. A strike, a port
+ * closure, a blockade or a grounded ship in a canal stops traffic just as hard,
+ * and none of it appears in a forecast. So a lane whose worst hour is already
+ * elevated gets a second question on a different intent, and the board reports
+ * both.
+ *
+ * Conditional rather than blanket, for two reasons and only one of them is
+ * cost. Asking about disruption on a calm lane is noise — there is nothing to
+ * decide — and a board that asks the same question about everything is not
+ * combining signals, it is collecting them. The threshold is what makes it a
+ * decision.
+ *
+ * The intent is declared by the shape of the question rather than by an id: the
+ * Engine classifies and routes, which is the half of the protocol a direct call
+ * never exercises. Whichever news miner it picks is the network's choice, and
+ * `answered_by` records it beside the weather miners.
+ */
+const DISRUPTION_FLOOR = 0.5;
+
+// And at most this many a run, worst first. The floor alone is not a budget: on
+// a rough day six of ten lanes clear 0.5, which is twice what this feature was
+// costed at. Three is the number that was budgeted, and the three worst lanes
+// are the ones a reader would check anyway.
+const DISRUPTION_MAX = 3;
+
+async function disruptionFor(place, signer, ledger) {
+  if (ledger.spent + 0.01 > ledger.budget) return { skipped: "run budget reached" };
+  try {
+    const answer = await ask(
+      `Are there any reports in the last 48 hours of port closures, strikes, blockades or ` +
+      `shipping disruption affecting ${place}? Answer with what was reported and when.`,
+      { signer },
+    );
+    ledger.calls++;
+    ledger.spent += Number(answer.cost_usd ?? 0.01);
+    const who = answer.miner_name ?? answer.miner_slug ?? "unnamed";
+    ledger.answered[who] = (ledger.answered[who] ?? 0) + 1;
+    ledger.crossDomain++;
+
+    const r = answer.result;
+    const said = typeof r === "string" ? r : (r?.summary ?? r?.answer ?? r?.reason ?? JSON.stringify(r));
+    return {
+      asked: place,
+      miner: who,
+      signal_hash: answer.signal_hash ?? null,
+      // Trimmed, not interpreted. The board does not decide what a news answer
+      // means about a lane — it publishes the weather number it settles on and
+      // the human-readable second opinion beside it.
+      reported: String(said ?? "").slice(0, 600),
+    };
+  } catch (e) {
+    return { asked: place, error: e.message.slice(0, 120) };
+  }
+}
+
 async function main() {
   reject(process.argv.slice(2), ["--dry", "--budget", "--legs"]);
   const dry = has(process.argv, "--dry");
@@ -139,7 +198,7 @@ async function main() {
   // It also settles a fair question about this board: whether screening lanes
   // through the Engine is real demand or a loop paying itself. The tally says
   // who answered, and most of the time it is not us.
-  const ledger = { calls: 0, spent: 0, routed: 0, direct: 0, budget, answered: {} };
+  const ledger = { calls: 0, spent: 0, routed: 0, direct: 0, budget, answered: {}, crossDomain: 0 };
 
   if (!dry) {
     const address = await signer.getAddress();
@@ -189,6 +248,24 @@ async function main() {
     }
   }
 
+  // A second intent, on the lanes where it changes a decision. Skipped entirely
+  // on the free rail: there is nothing to route and nobody to pay.
+  if (!dry) {
+    const elevated = lanes
+      .filter((l) => l.worst && l.worst.risk >= DISRUPTION_FLOOR)
+      .sort((a, b) => b.worst.risk - a.worst.risk)
+      .slice(0, DISRUPTION_MAX);
+    if (elevated.length) {
+      const over = lanes.filter((l) => l.worst && l.worst.risk >= DISRUPTION_FLOOR).length;
+      console.log(`\ncross-domain  ${elevated.length} of ${over} lane(s) at or above ${DISRUPTION_FLOOR} — asking NEWS`);
+      for (const lane of elevated) {
+        lane.disruption = await disruptionFor(lane.to, signer, ledger);
+        const d = lane.disruption;
+        console.log(`  ${lane.name.padEnd(28)} ${d.error ? `could not ask — ${d.error}` : d.skipped ? d.skipped : `via ${d.miner}`}`);
+      }
+    }
+  }
+
   const board = {
     generated_at: new Date().toISOString(),
     rail: dry ? "free (miner HTTP, unverified)" : "paid (Telegraph Engine, verified)",
@@ -199,6 +276,7 @@ async function main() {
       spent_usd: Number(ledger.spent.toFixed(4)),
       routed: ledger.routed,
       schema_fallback: ledger.direct,
+      cross_domain_calls: ledger.crossDomain,
       // Miner name -> routed calls it answered this run, most first.
       answered_by: Object.fromEntries(
         Object.entries(ledger.answered).sort((a, b) => b[1] - a[1]),
