@@ -147,6 +147,60 @@ async function main() {
     console.log(`  ${w(i, 26)} ${slugs.length} miner: ${slugs.join(", ")}`);
   }
   if (!both.length) console.log("  (none yet — this is the gap Amanat fills)");
+
+  await deadIntents(rows);
+}
+
+/**
+ * The intents whose on-chain rail is dead, and why.
+ *
+ * A job is routed by rank. Nothing in that path checks whether the miner it
+ * lands on can receive a job at all — so when the highest-ranked miner on an
+ * intent declares no `on_chain.request` block, every job for that intent goes
+ * to it, the node has no mapping to build a call from, and it falls back to the
+ * miner's first endpoint with no parameters.
+ *
+ * Measured, not inferred. Four ERC-8183 jobs from this repo (15, 16, 18 on
+ * STORM_ALERT and 17 on WEATHER_FORECAST) were all answered by `livecert`,
+ * rank 1 on STORM_ALERT, ten endpoints, no on_chain block — every one of them
+ * with the same reply from its *first* endpoint, `/ssl-check`:
+ * "No hostname was supplied with this request."
+ *
+ * The uncomfortable part is that rank causes it. Rank is earned on the
+ * off-chain rail, where a generalist serving ten intents does well; that same
+ * rank then routes on-chain jobs to a miner that cannot serve one. The better a
+ * generalist ranks, the more completely the on-chain rail closes behind it.
+ */
+async function deadIntents(rows) {
+  const jobable = new Set(rows.filter((r) => r.has_request && r.routable_by_name).map((r) => r.slug));
+  const all = await miners();
+
+  // rank 1 per intent, from the live scoreboard
+  const top = {};
+  for (const m of all) {
+    for (const sc of m.scores ?? []) {
+      const intent = sc.intent_id ?? sc.intent;
+      if (!NAME_HASHED.has(intent)) continue;
+      if (!top[intent] || sc.rank < top[intent].rank) {
+        top[intent] = { rank: sc.rank, slug: m.slug, endpoints: (m.endpoints ?? []).length };
+      }
+    }
+  }
+
+  const dead = Object.entries(top).filter(([, t]) => !jobable.has(t.slug)).sort();
+  console.log(`
+Intents whose rank-1 miner cannot receive an ERC-8183 job:`);
+  if (!dead.length) {
+    console.log("  none — every leader on a name-hashed intent declares on_chain.request");
+    return;
+  }
+  for (const [intent, t] of dead) {
+    console.log(`  ${String(intent).padEnd(26)} rank 1 is ${t.slug} (${t.endpoints} endpoint${t.endpoints === 1 ? "" : "s"}, no on_chain.request)`);
+  }
+  console.log(`
+  ${dead.length} of ${Object.keys(top).length} scored name-hashed intents. A job on one of these`);
+  console.log(`  is answered from the leader's first endpoint with no parameters, whatever`);
+  console.log(`  it asked for. Measured on jobs 15–18 — see docs/bug-report.md.`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

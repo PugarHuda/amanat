@@ -885,11 +885,47 @@ Three jobs, two intents, one answer. `/ssl-check` is the **first entry** in
 `/weather-forecast` are the second and sixth. The on-chain path is taking
 `endpoints[0]` rather than the endpoint bound to the job's intent.
 
-That makes it general rather than ours: **every multi-intent miner on this
-network answers every on-chain job from whichever endpoint it happens to have
-listed first**, whatever the job asked for. A miner declaring one endpoint for
-all its intents — as this one does — cannot be hit by it, which is why nobody
-serving a single domain would ever notice.
+**And `livecert` declares no `on_chain` block at all.** That is the mechanism.
+A job carries `OnChainData` arrays; the node can only build an HTTP call out of
+them if the miner's YAML declares an `on_chain.request` mapping. `livecert` has
+none — so there is nothing to map the latitude and longitude onto, and the call
+falls back to the first endpoint with no parameters. `/ssl-check` with no
+hostname is exactly what that produces.
+
+**Nothing in the routing path checks for it.** The job is routed by rank, and
+`livecert` is **rank 1 on STORM_ALERT**. Job 18, a fourth attempt an hour later,
+went to it again. Four for four is not a lottery.
+
+### How much of the network this closes
+
+`node agent/audit-jobable.mjs` now reports it, because the answer is worse than
+one intent:
+
+```
+Intents whose rank-1 miner cannot receive an ERC-8183 job:
+  STORM_ALERT       rank 1 is livecert   (10 endpoints, no on_chain.request)
+  WEATHER_FORECAST  rank 1 is txlens     (15 endpoints, no on_chain.request)
+  WEATHER_CHECK     rank 1 is weatherapi ( 2 endpoints, no on_chain.request)
+  FACT_CHECK        rank 1 is tavily     ( 2 endpoints, no on_chain.request)
+  …
+  14 of 15 scored name-hashed intents
+```
+
+**Fourteen of fifteen.** On all but one, an ERC-8183 job is routed to a miner
+that cannot receive one, and comes back as whatever that miner's first endpoint
+says when handed nothing.
+
+The uncomfortable part is that **rank causes it.** Rank is earned on the
+off-chain rail, where a generalist serving ten or fifteen intents does well.
+That same rank then routes on-chain jobs to a miner that cannot serve one. The
+better a generalist ranks, the more completely the on-chain rail closes behind
+it — and the flywheel the hackathon exists to demonstrate is what turns the
+handle.
+
+The fix is a filter, not a redesign: route on-chain jobs only among miners whose
+registration declares `on_chain.request`. That set is already computable from
+the public YAMLs — this audit computes it in one pass — and on `STORM_ALERT` it
+is two miners rather than seven.
 
 ### Reproducing
 

@@ -646,13 +646,27 @@ curl -s "https://miner-wine.vercel.app/storm-alert?location=14.60,120.98"
 
 0.79 is over the 0.75 trigger this contract pays at. **The miner the protocol
 chose had the answer, on an endpoint it publishes for exactly this intent, and
-policy 1 would have been paid.** `/ssl-check` is the *first* entry in
-`livecert`'s published endpoints; `/storm-alert` and `/weather-forecast` are the
-second and sixth. The on-chain path takes `endpoints[0]`, so **every
-multi-intent miner on this network answers every on-chain job from whichever
-endpoint it happens to have listed first.** A miner declaring one endpoint for
-all its intents — as this one does — cannot be hit by it, which is why nobody
-serving a single domain would ever notice. Instead the contract received a certificate
+policy 1 would have been paid.** And `livecert` declares **no `on_chain` block at all** — so the node has nothing
+to map a latitude onto and falls back to its first endpoint, `/ssl-check`, with
+no parameters. Nothing in the routing path checks for that, and `livecert` is
+**rank 1 on STORM_ALERT**.
+
+`npm run audit` now measures how much of the network this closes:
+
+```
+Intents whose rank-1 miner cannot receive an ERC-8183 job:
+  STORM_ALERT       rank 1 is livecert   (10 endpoints, no on_chain.request)
+  WEATHER_FORECAST  rank 1 is txlens     (15 endpoints, no on_chain.request)
+  WEATHER_CHECK     rank 1 is weatherapi ( 2 endpoints, no on_chain.request)
+  … 14 of 15 scored name-hashed intents
+```
+
+**Fourteen of fifteen.** And rank is what causes it: rank is earned on the
+off-chain rail, where a generalist serving fifteen intents does well, and that
+same rank then routes on-chain jobs to a miner that cannot serve one. The
+flywheel the hackathon exists to demonstrate is what closes the on-chain rail.
+The fix is a filter — route on-chain jobs only among miners declaring
+`on_chain.request`, a set already computable from the public YAMLs. Instead the contract received a certificate
 error and declined — correctly, because acting on intelligence it did not ask
 for is the one thing a parametric cover must never do: `Declined(policyId,
 "unreadable answer shape")`. That is the property these two jobs demonstrate, and
