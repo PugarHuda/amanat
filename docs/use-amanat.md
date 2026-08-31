@@ -14,13 +14,14 @@ trust the answer.
 
 ### From an agent, over MCP
 
-Four tools, no dependencies, no wallet, no key. It talks to the public miner over
-HTTPS, so there is nothing to run but the file:
+Four tools, no dependencies, no wallet, no key. Published to npm and listed in
+the official MCP registry as `io.github.PugarHuda/amanat`, so there is nothing to
+clone:
 
 ```json
 {
   "mcpServers": {
-    "amanat": { "command": "node", "args": ["/path/to/amanat/mcp/server.mjs"] }
+    "amanat": { "command": "npx", "args": ["-y", "amanat-mcp"] }
   }
 }
 ```

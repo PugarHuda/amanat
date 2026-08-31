@@ -1,6 +1,6 @@
 {
   "name": "amanat-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Storm risk, route risk and reanalysis backtests for any point on earth, plus an audit of which Telegraph intents an on-chain job can actually reach. Four tools, no dependencies, no API key, no wallet.",
   "keywords": [
     "mcp",
@@ -22,10 +22,14 @@
   "license": "MIT",
   "author": "Pugar Huda Mantoro",
   "type": "module",
-  "engines": { "node": ">=20" },
-  "bin": { "amanat-mcp": "server.mjs" },
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "amanat-mcp": "server.mjs"
+  },
   "main": "server.mjs",
-  "mcpName": "io.github.pugarhuda/amanat",
+  "mcpName": "io.github.PugarHuda/amanat",
   "files": [
     "server.mjs",
     "README.md"

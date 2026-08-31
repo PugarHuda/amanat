@@ -15,6 +15,9 @@ Built for Telegraph Hackathon Season I. One codebase, three entries:
 storm risk for any point, no wallet, no sign-up. It is the same call the contract
 makes before it spends anything.
 
+**In one line, from any MCP client:** `npx -y amanat-mcp` — published to npm and
+listed in the official MCP registry as `io.github.PugarHuda/amanat`.
+
 **In three minutes:** [the deck](https://amanat-miner.vercel.app/slides) ·
 [the film](media/amanat-demo.mp4) (84 s, cut from live sessions — no mockups) ·
 [`/api/jobable`](https://amanat-miner.vercel.app/api/jobable), which measures why
@@ -757,7 +760,7 @@ npm run miner                   # the miner, locally
 npm test                        # miner self-check + 34 scorer tests
 npm run build:profiles          # ten binaries, fails if any two match
 npm run bench && npm run attacks # champions are gitignored — fetch them first, see Track 2
-node mcp/server.mjs             # the MCP server: four tools, no wallet
+npx -y amanat-mcp               # the MCP server from npm: four tools, no wallet
 npm run agent:dry               # the loop, read-only, spends nothing
 npm run survey                  # the scoring board: measured bar vs displayed score, free
 npm run audit                   # which intents an on-chain job cannot survive, free
