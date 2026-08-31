@@ -4,7 +4,24 @@
 //   node agent/standing.mjs --json   the same, written to standing.json
 //
 // From hackathon.telegraphprotocol.com/rules, the Miner track is scored out of
-// 100: 75 points Normalized Performance and 25 points X engagement. Normalized
+// 100: 75 points Normalized Performance and 25 points X engagement.
+//
+// That split is Track 1's alone, and the page hides the fact well: the three
+// tracks are tabs rendered on the client, so the served HTML carries only the
+// Miner numbers, and reading the page without its JavaScript makes 75/25 look
+// like the whole rubric. The other two are in the page chunk:
+//
+//   Track 2, scripts   50 improvement over the canonical script, 30 robustness
+//                      and code quality, 10 X, 10 adoption by others
+//   Track 3, apps      45 real usage and adoption — users, and the volume of
+//                      Telegraph calls the application makes — 25 usefulness
+//                      and depth of integration, 25 X, 5 technical execution
+//
+// Which is why requests served is printed below at all. Under Track 1 it is
+// context; under Track 3 the call volume an application drives is most of 45
+// points, and only node-routed calls count toward it.
+//
+// Normalized
 // Performance is "your average Canonical Score divided by the highest average
 // score achieved inside your specific Intent" — so the best miner in an intent
 // scores 1.000 there whatever the absolute numbers are, and prizes go to "the
@@ -137,7 +154,10 @@ export async function standing() {
 function print(s) {
   const t = s.track1;
   console.log(`\namanat standing — ${s.read_at.slice(0, 16).replace("T", " ")} UTC`);
-  console.log(`rubric: 75% normalized performance + 25% X engagement (hackathon.telegraphprotocol.com/rules)\n`);
+  console.log(`Track 1 rubric: 75% normalized performance + 25% X engagement.`);
+  console.log(`Track 2: 50% improvement over the canonical script, 30% robustness, 10% X, 10% adoption.`);
+  console.log(`Track 3: 45% real usage and call volume, 25% depth of integration, 25% X, 5% execution.`);
+  console.log(`(hackathon.telegraphprotocol.com/rules — the last two sit behind client-side tabs)\n`);
 
   console.log(`TRACK 1 read as a SUM       ${t.total.toFixed(3)}   rank ${t.rank} of ${t.of}`);
   console.log(`TRACK 1 read as an AVERAGE  ${t.avg.toFixed(3)}   rank ${t.avg_rank} of ${t.avg_of} (miners on 3+ intents)`);
@@ -166,11 +186,12 @@ function print(s) {
   console.log(`  winning any of the three outright is worth. Under the AVERAGE it`);
   console.log(`  helps only if it beats ${t.avg.toFixed(3)}, and costs us rank if it does not.`);
 
-  console.log(`\nCONTEXT — requests served: #${s.requests.rank} of ${s.requests.of} (${s.requests.ours}).`);
-  console.log(`  Not one of the two weighted criteria, but it feeds the guardrail:`);
-  console.log(`  an intent needs 100+ real requests from Track 3 apps to pay cash.`);
+  console.log(`\nTRACK 3 — requests served: #${s.requests.rank} of ${s.requests.of} (${s.requests.ours}).`);
+  console.log(`  Not a Track 1 criterion. It is most of Track 3's 45 points, and it`);
+  console.log(`  feeds the guardrail as well: an intent needs 100+ real requests from`);
+  console.log(`  Track 3 applications before it can pay cash at all.`);
   console.log(`TRACK 2 — champion slots held: ${s.track2.slots_held.join(", ") || `none of ${s.track2.intents_on_board}`}`);
-  console.log(`\nThe other 25 points are on X and no API can read them. See docs/x-posts.md.\n`);
+  console.log(`\n25 points on every track are on X, and no API can read them. See docs/x-posts.md.\n`);
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
