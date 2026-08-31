@@ -10,16 +10,18 @@
 // scores 1.000 there whatever the absolute numbers are, and prizes go to "the
 // Top 3 Miners with the highest total normalized scores across all intents".
 //
-// Two things follow, and neither is obvious from the leaderboard:
+// "Total" is not defined, and the ambiguity is the whole story. Read as a sum,
+// breadth decides everything: thirteen intents at 0.55 beat three at 0.95. Read
+// as an average, quality decides it and a weak new intent is a liability. Both
+// are printed. The rules argue for the average without saying so — "the best
+// Miner in every intent has a fair chance to win, regardless of how strict or
+// easy their intent's Canonical Script is" is impossible under a sum, where a
+// specialist tops out at 1.0 against a generalist's 13.
 //
-//   Breadth compounds. The total is a SUM across intents, so a miner serving
-//   thirteen intents at 0.55 each beats one serving three at 0.95. Our rank
-//   inside an intent matters far less than how many intents we are in.
-//
-//   Being close to the leader is worth nearly as much as being the leader.
-//   Where every honest miner sits in the same narrow band — which is most
-//   weather intents, because the champion module is near-binary — second place
-//   normalizes to ~0.9 and costs almost nothing.
+// What holds either way: being close to the leader is worth nearly as much as
+// leading. Where every honest miner sits in the same narrow band — most weather
+// intents, because the champion module is near-binary — second place normalizes
+// to ~0.9 and costs almost nothing.
 //
 // The 25 points for X are not readable from any API. Neither is the guardrail
 // (an intent needs 3+ active miners AND 100+ real requests from Track 3 apps to
@@ -160,8 +162,9 @@ function print(s) {
     }
   }
 
-  console.log(`\n  A fourth intent at our median (${t.median_intent_worth.toFixed(3)}) would add more`);
-  console.log(`  than winning any single one of the three outright.`);
+  console.log(`\n  A fourth intent would add ~${t.median_intent_worth.toFixed(3)} to the SUM — more than`);
+  console.log(`  winning any of the three outright is worth. Under the AVERAGE it`);
+  console.log(`  helps only if it beats ${t.avg.toFixed(3)}, and costs us rank if it does not.`);
 
   console.log(`\nCONTEXT — requests served: #${s.requests.rank} of ${s.requests.of} (${s.requests.ours}).`);
   console.log(`  Not one of the two weighted criteria, but it feeds the guardrail:`);
