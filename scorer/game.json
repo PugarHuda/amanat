@@ -1,5 +1,5 @@
 {
-  "_note": "GAME_RESULT only. Ground truths and answer shapes are copied from what the three live GAME_RESULT miners actually return (sportwire-game-result 'X beat Y 5-1 (final)', scorewire-oracle's home/away/winner object, fourcast's canonical score string), read 31 August 2026. Every 'bad' is a failure a real miner makes: the wrong score with the right winner, the score reported backwards, a match called before it is final, a draw called for one side. Cases 16 onward are the harder shapes probed after registrations 2650 and 2652 were refused on ordering: a one-word answer, passive voice, a correct answer that omits the figures, a draw, an aggregate, a paraphrase sharing no vocabulary, and a correct answer carrying more numbers than the ground truth.",
+  "_note": "GAME_RESULT only. Ground truths and answer shapes are copied from what the three live GAME_RESULT miners actually return (sportwire-game-result 'X beat Y 5-1 (final)', scorewire-oracle's home/away/winner object, fourcast's canonical score string), read 31 August 2026. Every 'bad' is a failure a real miner makes: the wrong score with the right winner, the score reported backwards, a match called before it is final, a draw called for one side. Cases 16 onward are the harder shapes probed after registrations 2650 and 2652 were refused on ordering: a one-word answer, passive voice, a correct answer that omits the figures, a draw, an aggregate, a paraphrase sharing no vocabulary, and a correct answer carrying more numbers than the ground truth. Cases 32 onward are the false positives the attribution rule itself creates: a relative clause between the name and the verb, and \"took\" used as a loss (\"took a beating\", \"took the loss\") rather than a result (\"took it 3-2\").",
   "cases": [
     {
       "intent": "GAME_RESULT",
@@ -217,6 +217,34 @@
       "ground_truth": "Boston Celtics beat Miami Heat 101-99 (final).",
       "good": "Boston Celtics beat Miami Heat 101-99.",
       "bad": "Who won the Celtics game? Boston Celtics, Miami Heat, 101, 99, final."
+    },
+    {
+      "intent": "GAME_RESULT",
+      "question": "Who won the Knicks game?",
+      "ground_truth": "New York Knicks beat Boston Celtics 112-108 (final).",
+      "good": "Boston, who won last week, lost to New York 108-112.",
+      "bad": "New York, who won last week, lost to Boston 108-112."
+    },
+    {
+      "intent": "GAME_RESULT",
+      "question": "Who won between Arsenal and Chelsea?",
+      "ground_truth": "Arsenal beat Chelsea 3-0 in the Premier League (final).",
+      "good": "Chelsea took a beating from Arsenal, 0-3.",
+      "bad": "Arsenal took a beating from Chelsea, 0-3."
+    },
+    {
+      "intent": "GAME_RESULT",
+      "question": "Who won the Dodgers game?",
+      "ground_truth": "Los Angeles Dodgers beat San Francisco Giants 4-3 (final).",
+      "good": "San Francisco took the loss, 3-4.",
+      "bad": "Los Angeles took the loss, 3-4."
+    },
+    {
+      "intent": "GAME_RESULT",
+      "question": "Who won the Rangers game?",
+      "ground_truth": "New York Rangers beat New Jersey Devils 3-2 in a shootout (final).",
+      "good": "The Rangers took it 3-2 in a shootout against New Jersey.",
+      "bad": "The Devils took it 3-2 in a shootout against New York."
     }
   ],
   "attacks": []

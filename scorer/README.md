@@ -168,8 +168,28 @@ and not one in "took a beating", and `won` picks the nearest name before it, so
 "Boston, who won last week, lost to New York 108-112" credits Boston. Both are
 reachable in ordinary sportswriting and neither is in our fifteen.
 
-That is a hypothesis with a cost attached, and the cost is a binary. It is not
-being spent. Sixteen further shapes were probed and none is a case the champion
+**It was a hypothesis with a cost attached, and the cost was one binary. Spent,
+and it paid.** Restricting the rule to unambiguous verbs is `game3`: a relative
+pronoun between a name and a verb ends the claim on that name, and `took` counts
+as a result only when what follows it is `it` or a figure. On the four shapes
+built to provoke exactly those two mistakes, `game2` scores **−0.4248 and 1 of
+4** — it was not merely missing them, it was ranking the wrong answer higher.
+`game3` scores **+0.6374 and 3 of 4**, and the fourth is a tie rather than an
+inversion.
+
+On the full corpus, now 35 cases:
+
+| module | margin | wins |
+|---|---|---|
+| `amanat_scorer_game3` | **0.4175** | **28/35** |
+| `amanat_scorer_game2` | 0.2719 | 25/35 |
+| `amanat_scorer_verdict` (the profile reg 1253 used) | −0.0471 | 15/35 |
+| champion reg 1265 | −0.0435 | 15/35 |
+
+The lesson is the one the earlier paragraphs were circling without saying: **a
+rule that reads the world correctly can still be wrong about the sentence in
+front of it.** "Took" is a result in *took it 3-2* and its opposite in *took a
+beating*, and nothing about knowing who won tells you which you are looking at. Sixteen further shapes were probed and none is a case the champion
 wins and we lose, so a third attempt would be guessing at a fixture nobody
 outside the node can see — which is the mistake registration 1112 paid for once
 already. What is worth keeping is the measurement: **a mechanism can be plainly

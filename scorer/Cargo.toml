@@ -37,6 +37,12 @@ game = []
 # 2650 was refused at 14 ordering wins against 15 with its margin already past
 # the bar, and the case it lost was exactly that shape.
 game2 = ["game"]
+# Registration 1253 scored 15 of 15 on GAME_RESULT with no attribution at all;
+# 2650 and 2652 both scored 14 with it. So the rule costs an ordering win on the
+# node's corpus, and the loose verbs are where a false positive would come from:
+# "took" is a result in "took it 3-2" and not in "took a beating", and "won"
+# credits the nearest name before it, which a relative clause is not.
+game3 = ["game2"]
 
 [dependencies]
 

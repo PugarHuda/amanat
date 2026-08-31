@@ -18,7 +18,7 @@ jobs:
           node-version: 22
       # The profile with the most code in it, so the attribution tests run here
       # and not only when someone remembers the flag.
-      - run: cd scorer && cargo test --features game2
+      - run: cd scorer && cargo test --features game3
       - run: npm install
       - run: node scorer/build-profiles.mjs
       - name: every profile must beat the champion and hold every attack

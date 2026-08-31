@@ -864,14 +864,30 @@ fn word_hash(w: &[u8]) -> u32 {
     h
 }
 
+/// A relative pronoun. What follows one is a clause about a name, not a result
+/// for it: "Boston, who won last week, lost to New York 108-112" credits Boston
+/// under a rule that only looks for the nearest name before the verb.
+#[cfg(feature = "game3")]
+fn is_relative(w: &[u8]) -> bool {
+    matches!(w, b"who" | b"whom" | b"that" | b"which" | b"whose")
+}
+
+/// `took` is a result verb in "took it 3-2" and not one in "took a beating" or
+/// "took the loss". The difference is entirely in what follows, so the decision
+/// waits one token.
+#[cfg(feature = "game3")]
+fn settles_took(w: &[u8]) -> bool {
+    w == b"it" || w.iter().all(|b| b.is_ascii_digit())
+}
+
 /// A verb that credits the words before it. `0` is not one.
 #[cfg(feature = "game")]
 fn is_win_verb(w: &[u8]) -> bool {
     matches!(
         w,
         b"beat" | b"beats" | b"defeated" | b"defeat" | b"defeats" | b"won" | b"win" | b"wins"
-            | b"edged" | b"downed" | b"topped" | b"outscored" | b"overcame" | b"took"
-    )
+            | b"edged" | b"downed" | b"topped" | b"outscored" | b"overcame"
+    ) || (cfg!(not(feature = "game3")) && w == b"took")
 }
 
 /// A verb that credits the words *after* it — the result read backwards.
@@ -951,10 +967,39 @@ fn credited(s: &[u8]) -> (Side, Side) {
     let mut loser = Side::empty();
     let mut after: Option<bool> = None; // Some(true): collecting the loser
     let mut done = false;
+    // The subject `took` would credit, held until the next token says whether
+    // `took` was a result at all.
+    #[cfg(feature = "game3")]
+    let mut pending_took: Option<Side> = None;
+    #[cfg(feature = "game3")]
+    let mut prev_relative = false;
 
     for_each_word(s, |w| {
         if done {
             return;
+        }
+
+        #[cfg(feature = "game3")]
+        if let Some(subject) = pending_took.take() {
+            if settles_took(w) {
+                winner = subject;
+                after = Some(true);
+                return;
+            }
+            // Not a result. Fall through and read this token normally.
+        }
+
+        #[cfg(feature = "game3")]
+        {
+            let relative = is_relative(w);
+            let was_relative = prev_relative;
+            prev_relative = relative;
+            if relative {
+                return; // a pronoun is not a name and not a verb
+            }
+            if was_relative && (is_win_verb(w) || is_loss_verb(w) || w == b"took") {
+                return; // the clause belongs to the name, not the result
+            }
         }
         if let Some(collecting_loser) = after {
             // Fill the far side, then stop. Stopwords are the join words —
@@ -970,6 +1015,11 @@ fn credited(s: &[u8]) -> (Side, Side) {
             if side.n == SIDE_WORDS {
                 done = true;
             }
+            return;
+        }
+        #[cfg(feature = "game3")]
+        if w == b"took" {
+            pending_took = Some(recent);
             return;
         }
         if is_win_verb(w) {
@@ -1704,6 +1754,34 @@ mod tests {
             let gt = b"New York Knicks beat Boston Celtics 112-108 (final).";
             assert!(!misattributes(gt, b"Boston 108, New York 112."));
             assert!(misattributes(gt, b"New York 108, Boston 112."));
+        }
+
+        // The false positives the rule itself creates. Registration 1253 scored
+        // 15 of 15 on this intent with no attribution at all and both
+        // attribution builds scored 14, so the rule costs an ordering win
+        // somewhere — and these are the two shapes where it would.
+        #[cfg(feature = "game3")]
+        #[test]
+        fn a_relative_clause_is_not_a_result() {
+            let gt = b"New York Knicks beat Boston Celtics 112-108 (final).";
+            // Boston won last week and lost this one. The nearest name before
+            // "won" is Boston, and crediting it inverts the answer.
+            assert!(!misattributes(gt, b"Boston, who won last week, lost to New York 108-112."));
+            assert!(misattributes(gt, b"New York, who won last week, lost to Boston 108-112."));
+        }
+
+        #[cfg(feature = "game3")]
+        #[test]
+        fn took_is_a_result_only_when_something_follows_it() {
+            let gt = b"Arsenal beat Chelsea 3-0 in the Premier League (final).";
+            // "took a beating" is the opposite of "took it 3-2", and the only
+            // difference is the word after.
+            assert!(!misattributes(gt, b"Chelsea took a beating from Arsenal, 0-3."));
+            assert!(misattributes(gt, b"Arsenal took a beating from Chelsea, 0-3."));
+
+            let rangers = b"New York Rangers beat New Jersey Devils 3-2 in a shootout (final).";
+            assert!(!misattributes(rangers, b"The Rangers took it 3-2 in a shootout against New Jersey."));
+            assert!(misattributes(rangers, b"The Devils took it 3-2 in a shootout against New York."));
         }
 
         #[test]
