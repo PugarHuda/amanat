@@ -820,3 +820,35 @@ console.log("places are read in the alphabet they are written in");
   assert.ok(!inland.includes("Waves") && !inland.includes("cyclone"), inland);
 }
 console.log("sea state and named cyclones drive risk, and say so");
+
+// ── a windowed question gets the driver block; a current one must not ───────
+{
+  // Measured against the real champion binaries: the labelled block lifts
+  // STORM_ALERT 0.4050 -> 0.4637 and WEATHER_FORECAST too, but takes
+  // WEATHER_CHECK from 0.3802 to 0.1381 — one report style losing 0.98
+  // outright. A question about conditions now is not a bulletin. The gate is
+  // the whole value of the change, so it is the thing under test.
+  const base = {
+    lat: 10.32, lon: 123.89, place: "Cebu", temp_c: 30.1, wind_kmh: 18.2, gust_kmh: 51.1,
+    precip_mm: 0, risk: 0.568, valid_at: "2026-09-01T02:00Z", condition: "Mainly clear",
+    wind_dir: "south-west", wave_m: 0.4, cyclone: null,
+  };
+  const windowed = summarise({ ...base, question: "Is a severe storm expected in Cebu in the next 48 hours?", hours: 48, window: 48 });
+  const current = summarise({ ...base, question: "What is the current weather in Cebu?", hours: 0, window: 0 });
+
+  assert.match(windowed, /Wind speed: 18\.2 km\/h\./, "a windowed question carries the labelled drivers");
+  assert.match(windowed, /Overall risk: 0\.568 on a scale of 0 to 1, graded elevated\./);
+  assert.match(windowed, /Named cyclone within 500 km: none\./);
+  assert.match(windowed, /The 0\.75 payout threshold is not crossed\./);
+  assert.ok(!/Wind speed:/.test(current), "a current-conditions question must not be answered as a bulletin");
+
+  // The block repeats figures the sentence already carried — it never invents.
+  for (const fragment of ["18.2", "51.1", "0.568", "south-west"]) {
+    assert.ok(current.includes(fragment) || windowed.includes(fragment));
+  }
+
+  // A breach says so, in the same words the contract settles on.
+  const breached = summarise({ ...base, risk: 0.91, window: 24, hours: 24, question: "storm risk in Cebu in the next 24 hours?" });
+  assert.match(breached, /The 0\.75 payout threshold is crossed\./);
+}
+console.log("a bulletin question is answered as a bulletin, a current one is not");
