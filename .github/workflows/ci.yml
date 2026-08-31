@@ -16,7 +16,9 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - run: cd scorer && cargo test
+      # The profile with the most code in it, so the attribution tests run here
+      # and not only when someone remembers the flag.
+      - run: cd scorer && cargo test --features game2
       - run: npm install
       - run: node scorer/build-profiles.mjs
       - name: every profile must beat the champion and hold every attack
@@ -41,6 +43,7 @@ jobs:
       - run: node scripts/check-sources.mjs
       - run: node agent/test.mjs
       - run: node miner/test.mjs
+      - run: node app/test.mjs
       # Firefox and WebKit too: the page tests run on all three, and layout,
       # focus order and CSS support are exactly where engines disagree.
       - run: npx playwright install --with-deps chromium firefox webkit
