@@ -759,3 +759,55 @@ only after the second activates — which the slug-per-wallet rule appears to
 forbid. Every miner that has ever updated a live registration has been offline
 for at least the node's validation latency, and any of them that sent a YAML
 the schema disliked was offline until they noticed.
+
+## `daemon/api/questions?limit=101` returns an empty list, not an error
+
+The daemon feed is the only public window onto what the node actually asks and
+what miners actually answer. It takes a `limit`, and past 100 it stops
+returning rows — silently, with `200 OK` and `"results": []`.
+
+```
+limit=5    -> 5 rows
+limit=20   -> 20
+limit=50   -> 50
+limit=100  -> 100
+limit=101  -> 0
+limit=150  -> 0
+```
+
+Read 31 August 2026 against `devnode.telegraphprotocol.com`. A clamp to 100 or a
+`400` would both be fine; an empty array is the one answer that cannot be told
+apart from "there is no traffic", and a caller that asked for 200 rows to be
+safe concludes the network is idle. It cost us an afternoon of believing
+GAME_RESULT had never been asked a question.
+
+## The weather intents are fed questions with no weather in them
+
+The same feed shows where a large share of weather traffic comes from:
+`collector-gdelt:global_event`, a news collector. Four weather rows in one
+hundred, on 31 August:
+
+| Question | Intent |
+|---|---|
+| Will France see severe agricultural damage from El Niño? | `STORM_ALERT` |
+| Will El Niño cause global food shortages? | `WEATHER_FORECAST` |
+| Will El Niño disrupt Panama Canal traffic? | `STORM_ALERT` |
+| Is total war now in Russia? | `WEATHER_FORECAST` |
+
+Three of the four name El Niño, which is a climate phenomenon and also a village
+in Baja California. `livecert` answered the France question about **El Nido,
+Mimaropa, Philippines**; this miner answered the Panama Canal question about
+**El Niño, Baja California, Mexico**, with the question restated around it so it
+read as a confident correct answer. Both are geocoding a phenomenon.
+
+That is not a bug in either miner so much as a routing one: a question about
+whether a canal will be disrupted is not answerable as a point forecast, and
+sending it to `STORM_ALERT` guarantees that every miner on the intent invents a
+location or refuses. A miner that refuses scores zero, so the incentive runs the
+wrong way — the honest answer is the one that loses.
+
+We fixed our half (the phrase is no longer offered as a place, so that question
+now resolves to the Panama Canal and a question with no place in it resolves to
+none), and it is worth saying plainly that we cannot tell whether that raises
+our score or lowers it. The ground truth these are graded against is not
+published anywhere.
