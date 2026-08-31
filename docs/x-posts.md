@@ -12,6 +12,45 @@ A claim that was true in August and is not true today is worse than no post.
 Anything below that quotes a rank, a score or a slot is anchored to the epoch or
 the date it was read, because all three move.
 
+## The try-it post (31 August)
+
+Attach `https://amanat-miner.vercel.app/card.png` as an image rather than
+trusting the link preview: X caches OG images, ours changed today, and the card
+is drawn from the live board — so the picture is that morning's ten lanes with
+the worst one pinned in the red. It redraws itself, which means this post can be
+run again in a fortnight and the image is new without anyone editing anything.
+
+**269 characters.** The limit is 280 and the first draft was 284; the sentence
+that went was "no sign-up".
+
+> Type a place. Get a storm risk, the 51-member ensemble band behind it, and the
+> line a contract pays on.
+>
+> Free, no wallet:
+> amanat-miner.vercel.app
+>
+> Ten shipping lanes screened through @Telegraphprotoc twice a day. A pin in the
+> red is a claim the contract settles itself.
+
+**Alternate, 261 — leads with the film** (attach `media/amanat-demo.mp4`, X takes
+video up to 2:20 and this is 1:04):
+
+> 84 seconds, cut from five real sessions against the live miner. No mockups.
+>
+> A reading, a route, the on-chain ledger, and the audit that says 14 of 15
+> @Telegraphprotoc intents can't be reached by an on-chain job at all.
+>
+> Try it yourself: amanat-miner.vercel.app
+
+**Alternate, 169 — the one-liner**, for a reply or a quote-tweet:
+
+> A contract that buys its own storm reading from @Telegraphprotoc and pays the
+> claim itself when it crosses 0.75.
+>
+> Read any point free, no wallet: amanat-miner.vercel.app
+
+---
+
 ## What to post next
 
 Re-checked against the live node on 31 August. In this order:
