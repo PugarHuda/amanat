@@ -44,6 +44,28 @@ const NOT_A_PLACE = new Set([
   "celsius", "fahrenheit", "mm", "km", "speed", "gust", "gusts", "precipitation",
 ]);
 
+/**
+ * Capitalised runs that are a climate phenomenon rather than the place a
+ * question is about.
+ *
+ * The node's weather intents are fed by a news collector, and a large share of
+ * what arrives is a question about El Nino: "Will El Nino disrupt Panama Canal
+ * traffic?", "Will France see severe agricultural damage from El Nino?". There
+ * is a village called El Nino in Baja California and a town called El Nido in
+ * the Philippines, and both resolve — so a sentence whose subject is the Panama
+ * Canal was answered about a village in Mexico, with the question restated
+ * around it so it read as a confident correct answer. Another miner on the same
+ * question answered about El Nido.
+ *
+ * A phrase, checked before the words are offered separately: dropping "nino" as
+ * a word would leave "El" behind, and "El" resolves too. "El Paso" and "El
+ * Salvador" are untouched, because only the whole run is matched.
+ *
+ * ponytail: two phrases, not a climate glossary. These are the ones the feed
+ * actually sends; add another when a question is seen losing to it.
+ */
+const NOT_A_PLACE_PHRASE = new Set(["el niño", "la niña"]);
+
 /** A pair of decimals in the text is already an answer — no lookup needed. */
 export function coordinatesIn(text) {
   // The separator is required, not optional. With `[,;]?` any two loose
@@ -69,7 +91,10 @@ export function coordinatesIn(text) {
  * without a parser.
  */
 export function placeCandidates(text) {
-  const s = String(text);
+  // NFC once, up front. The capitalised-run regex matches letters, and a
+  // combining tilde is a mark, not a letter — so a decomposed "Nino" broke the
+  // run in the middle and offered "El Nin" as a place name.
+  const s = String(text).normalize("NFC");
   const seen = new Set();
   const out = [];
   const add = (c) => {
@@ -92,6 +117,7 @@ export function placeCandidates(text) {
     while (kept.length && NOT_A_PLACE.has(kept[0].toLowerCase())) kept.shift();
     while (kept.length && NOT_A_PLACE.has(kept[kept.length - 1].toLowerCase())) kept.pop();
     if (!kept.length) continue;
+    if (NOT_A_PLACE_PHRASE.has(kept.join(" ").toLowerCase())) continue;
 
     add(kept.join(" "));
     // And each capitalised word alone: "Cebu Port Terminal" does not resolve,

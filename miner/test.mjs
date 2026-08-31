@@ -759,6 +759,33 @@ console.log("the answer opens with the question that was asked, and drops nothin
 }
 console.log("places are read in the alphabet they are written in");
 
+// ── a climate phenomenon is not the place the question is about ─────────────
+{
+  // The node's weather intents are fed by a news collector, and much of what
+  // arrives asks about El Niño. There is a village called El Niño in Baja
+  // California, so "Will El Niño disrupt Panama Canal traffic?" was answered
+  // about Mexico with the question restated around it — the Null Island failure
+  // again, wearing a name that is real.
+  const nino = "Will El Niño disrupt Panama Canal traffic?";
+  assert.equal(placeCandidates(nino)[0], "Panama Canal");
+  assert.ok(!placeCandidates(nino).some((c) => /niño/i.test(c)), "El Niño must not be offered as a place");
+
+  // The same phrase written with a combining tilde. Before the input was
+  // normalised the run regex broke at the mark and offered "El Nin".
+  const decomposed = nino.normalize("NFD");
+  assert.equal(placeCandidates(decomposed)[0], "Panama Canal");
+
+  // A question with nothing else in it has no place, and saying so is the
+  // honest answer. Guessing one is how the wrong continent gets reported.
+  assert.ok(!placeCandidates("Will El Niño cause global food shortages?").includes("El Niño"));
+
+  // Only the whole phrase. Two of the most-asked-about places on earth begin
+  // with the same word.
+  assert.equal(placeCandidates("El Paso heat warning?")[0], "El Paso");
+  assert.equal(placeCandidates("Is it raining in El Salvador?")[0], "El Salvador");
+}
+console.log("a climate phenomenon is not the place the question is about");
+
 // ── the sea and the storm are drivers of risk, not decoration ───────────────
 {
   // A 4 m significant wave height is Douglas 6, "very rough", and reaches the
