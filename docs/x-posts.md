@@ -12,6 +12,38 @@ A claim that was true in August and is not true today is worse than no post.
 Anything below that quotes a rank, a score or a slot is anchored to the epoch or
 the date it was read, because all three move.
 
+## The MCP launch post (31 August)
+
+`amanat-mcp` is on npm and listed in the official MCP registry as
+`io.github.PugarHuda/amanat`. This is the post that turns a published package
+into users, which is the half of Track 3's 45% we otherwise score nothing on.
+
+No image needed — the command *is* the call to action, and a card would push the
+one line people have to copy below the fold.
+
+**A — the one-liner, 255 characters.** Leads with what they get and what it
+costs them, which is nothing.
+
+> Storm risk for any point on earth, in your agent, in one line:
+> 
+> npx -y amanat-mcp
+> 
+> Four tools, no API key, no wallet. Risk 0-1 with the 51-member ECMWF band behind it, route risk leg by leg, and a reanalysis backtest.
+> 
+> Reads a live @Telegraphprotoc miner.
+
+**B — the odd tool, 266 characters.** For a more technical timeline. The
+weather is the boring half; the interesting half is that the tool audits the
+network it runs on, and the five failed jobs are the receipt.
+
+> Shipped an MCP server for storm risk: npx -y amanat-mcp
+> 
+> No key, no wallet. The fourth tool is the odd one — it tells you which @Telegraphprotoc intents an on-chain job can actually reach.
+> 
+> Five of my jobs came back as TLS certificate errors. Now it's one tool call.
+
+---
+
 ## The try-it post (31 August)
 
 Attach `https://amanat-miner.vercel.app/card.png` as an image rather than
