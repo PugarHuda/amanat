@@ -625,8 +625,11 @@ reason:No hostname was supplied with this request, so the TLS/SSL certificate
        could not be analyzed. … Supply a domain such as example.com.
 ```
 
-Two contracts, two coordinate pairs, two windows, one answer. **The routing is
-right and the endpoint is wrong.** That text is `livecert`'s, and `livecert` is
+Then job 17 re-checked the same policy against **`WEATHER_FORECAST`** — a
+different intent id, one `livecert` also serves, at `/weather-forecast` — and got
+the same certificate error back. Three jobs, two intents, one answer.
+
+**The routing is right and the endpoint is not read at all.** That text is `livecert`'s, and `livecert` is
 registered on `STORM_ALERT` — legitimately, alongside nine other intents
 including `SSL_VERIFICATION`. It publishes one endpoint per intent. The job
 declared `STORM_ALERT`, reached the miner that serves it, and then called
@@ -643,7 +646,13 @@ curl -s "https://miner-wine.vercel.app/storm-alert?location=14.60,120.98"
 
 0.79 is over the 0.75 trigger this contract pays at. **The miner the protocol
 chose had the answer, on an endpoint it publishes for exactly this intent, and
-policy 1 would have been paid.** Instead the contract received a certificate
+policy 1 would have been paid.** `/ssl-check` is the *first* entry in
+`livecert`'s published endpoints; `/storm-alert` and `/weather-forecast` are the
+second and sixth. The on-chain path takes `endpoints[0]`, so **every
+multi-intent miner on this network answers every on-chain job from whichever
+endpoint it happens to have listed first.** A miner declaring one endpoint for
+all its intents — as this one does — cannot be hit by it, which is why nobody
+serving a single domain would ever notice. Instead the contract received a certificate
 error and declined — correctly, because acting on intelligence it did not ask
 for is the one thing a parametric cover must never do: `Declined(policyId,
 "unreadable answer shape")`. That is the property these two jobs demonstrate, and

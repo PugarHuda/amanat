@@ -869,13 +869,27 @@ them. `/ssl-check` needs a hostname, was handed a latitude and a longitude, and
 said so. From outside that reads exactly like the `on_chain.request` mapping
 failure the earlier sections of this report went looking for.
 
-**A hypothesis, offered as one:** `/ssl-check` is the *first* entry in
-`livecert`'s published `endpoints` array. If the on-chain path takes
-`endpoints[0]` rather than the one bound to the job's intent, that would produce
-this exactly, and it would mean every multi-intent miner answers every on-chain
-job from whichever endpoint it happens to have listed first. One job routed to a
-multi-intent miner whose first endpoint is *not* its SSL one would confirm or
-kill that in a single test.
+**Job 17 settles it: the intent is not read at all.** Policy 1 was re-checked an
+hour later against `WEATHER_FORECAST` — `keccak256` `0x9eefcfc9…`, a different
+intent id, an intent `livecert` also serves, at `/weather-forecast`. The answer
+came back **byte for byte the same `/ssl-check` error**.
+
+| Job | Intent declared | Answered from |
+|---|---|---|
+| 15 | `STORM_ALERT` | `/ssl-check` |
+| 16 | `STORM_ALERT` | `/ssl-check` |
+| 17 | `WEATHER_FORECAST` | `/ssl-check` |
+
+Three jobs, two intents, one answer. `/ssl-check` is the **first entry** in
+`livecert`'s published `endpoints` array, and `/storm-alert` and
+`/weather-forecast` are the second and sixth. The on-chain path is taking
+`endpoints[0]` rather than the endpoint bound to the job's intent.
+
+That makes it general rather than ours: **every multi-intent miner on this
+network answers every on-chain job from whichever endpoint it happens to have
+listed first**, whatever the job asked for. A miner declaring one endpoint for
+all its intents — as this one does — cannot be hit by it, which is why nobody
+serving a single domain would ever notice.
 
 ### Reproducing
 
@@ -894,12 +908,13 @@ is the only public window onto what the network asks and answers, and the entire
 on-chain rail is invisible in it — so a misrouting like this cannot be seen by
 anyone who is not decoding their own callback calldata.
 
-### What is not yet known
+### What would fix it
 
-Whether it is specific to `STORM_ALERT` or affects every intent sent on-chain.
-`livecert` serves `WEATHER_FORECAST` at `/weather-forecast`, so re-checking the
-same policy against that intent tests the endpoint selection directly.
-`CHECK_RETRY_AFTER` is an hour, so it has to wait.
+Bind the endpoint to the intent on the on-chain path the way the off-chain
+router already does — the same `livecert` answers `STORM_ALERT` correctly
+through the Engine, from `/storm-alert`, minutes apart from failing it on chain.
+The registration YAML already declares which endpoint serves which intent; the
+job carries the intent; only the lookup between them is missing.
 
 ### Correction
 
