@@ -18,6 +18,17 @@ const ESCROW_BALANCE = "0x55af6353";
 
 const STATUS = ["None", "Active", "Claimed", "Declined", "Expired"];
 
+// keccak256("Declined(uint256,string)"). The reason a check came back unusable
+// lives in this event and nowhere in storage, so a policy that has been answered
+// and refused looks identical on chain to one nobody has asked about yet.
+const DECLINED_TOPIC = "0x066a1d0911cda14ea4cd3220c4d7100f3e30816fc3ec06ab5aa6a05c78b346c1";
+
+// ponytail: 50 000 blocks, because that is the cap this RPC enforces on
+// eth_getLogs and paging back further is a loop with a rate limit in it. At two
+// seconds a block that is about 28 hours — long enough for the reason a recent
+// check failed, and a policy older than that simply shows no note.
+const LOG_WINDOW = 49_999;
+
 /**
  * One or many `eth_call`s in a single request.
  *
@@ -49,6 +60,58 @@ async function callMany(calls) {
     if (typeof entry?.id === "number" && entry.result) out[entry.id] = entry.result.replace(/^0x/, "");
   }
   return out;
+}
+
+/**
+ * The most recent decline reason per policy.
+ *
+ * Read from logs rather than storage because the contract does not keep it: a
+ * declined check leaves `status` Active and `riskReported` zero, which is also
+ * what an untouched policy looks like. Without this the ledger showed two
+ * policies at risk 0.000 and no way to tell that both had been answered — with
+ * a TLS certificate error, which is the most interesting fact on the page.
+ *
+ * Failures here are swallowed: the reason is a note beside a row, and losing it
+ * must not cost the reader the rows themselves.
+ */
+async function declineReasons() {
+  try {
+    const head = await rpc("eth_blockNumber", []);
+    const from = Math.max(0, parseInt(head, 16) - LOG_WINDOW);
+    const logs = await rpc("eth_getLogs", [{
+      address: AMANAT,
+      fromBlock: "0x" + from.toString(16),
+      toBlock: "latest",
+      topics: [DECLINED_TOPIC],
+    }]);
+    const out = {};
+    for (const log of logs ?? []) {
+      const id = Number(BigInt(log.topics[1]));
+      // data is a lone `string`: an offset word, a length word, then the bytes.
+      const hex = String(log.data).replace(/^0x/, "");
+      const length = Number(BigInt("0x" + word(hex, 1)));
+      const bytes = hex.slice(128, 128 + length * 2);
+      let reason = "";
+      for (let k = 0; k < bytes.length; k += 2) reason += String.fromCharCode(parseInt(bytes.slice(k, k + 2), 16));
+      out[id] = reason; // later logs overwrite earlier ones: the newest wins
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+async function rpc(method, params) {
+  const res = await fetch(RPC, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!res.ok) throw new Error(`rpc ${res.status}`);
+  const body = await res.json();
+  if (body.error) throw new Error(body.error.message);
+  return body.result;
 }
 
 async function call(to, data) {
@@ -112,12 +175,15 @@ export async function policies({ limit = 40 } = {}) {
 
   const results = await callMany(ids.map((id) => ({ to: AMANAT, data: POLICIES + padUint(id) })));
 
+  const notes = await declineReasons();
   const rows = [];
   let unreadable = 0;
   results.forEach((hex, i) => {
     if (hex === null) { unreadable++; return; }
     try {
-      rows.push(decodePolicy(ids[i], hex));
+      const row = decodePolicy(ids[i], hex);
+      if (notes[row.id]) row.note = notes[row.id];
+      rows.push(row);
     } catch {
       unreadable++;
     }
