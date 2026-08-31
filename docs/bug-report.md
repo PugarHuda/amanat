@@ -811,3 +811,68 @@ now resolves to the Panama Canal and a question with no place in it resolves to
 none), and it is worth saying plainly that we cannot tell whether that raises
 our score or lowers it. The ground truth these are graded against is not
 published anywhere.
+
+## The answer: an on-chain job asking for STORM_ALERT is answered by an SSL certificate miner
+
+Everything above about the `on_chain.request` mapping was chasing the wrong
+thing. On 31 August the payload the protocol delivers was finally decoded, and
+the parameters are not the problem — the routing is.
+
+Job 15, created by contract `0x4A5ECEB…` with
+`intentId = keccak256("STORM_ALERT") = 0x1d7f423d…`, `strings = ["14.60",
+"120.98"]`, `integers = [15]`. The Diamond delivered this to `subnetMessage`:
+
+```
+error:invalid_domain
+domain:<nil>
+verdict:unknown
+reason:No hostname was supplied with this request, so the TLS/SSL certificate
+       could not be analyzed. Certificate chain completeness and hostname
+       validation cannot be verified without a domain. Supply a domain such as
+       example.com.
+```
+
+Job 16, a different policy at 10.32, 123.89 with a different window, came back
+**byte for byte the same**. Two jobs, two coordinate pairs, both declaring
+`STORM_ALERT`, both answered by a TLS certificate miner asking for a hostname.
+
+`isCanonicalIntent("STORM_ALERT")` returns `true` on the Diamond, so the intent
+the contract sends is a real one. The miner that answered is not registered on
+it. Nothing about the request is malformed; the job is simply handed to a miner
+from another domain, which then correctly reports that it was given no domain.
+
+That is why jobs 7 through 16 have never settled, and it is not specific to this
+contract. **Any ERC-8183 job on this network is being answered by whatever miner
+the router reaches for, regardless of the intent it declares** — which makes the
+on-chain half of the protocol unusable for everyone, not just for us. A contract
+cannot act on intelligence it did not ask for, and ours declines rather than
+guessing: `Declined(policyId, "unreadable answer shape")`.
+
+The parameters almost certainly *were* arriving all along. A TLS miner has no
+use for a latitude, so it reported the field it did need as missing, and that
+reads exactly like a mapping failure from the outside.
+
+### Reproducing
+
+```bash
+node --env-file=.env agent/policy.mjs "Cebu port cover" 10.32 123.89 6
+# then decode the delivery, which is a transaction to the Diamond that
+# calls subnetMessage on the policy contract:
+#   getLogs on the contract -> the Declined event -> its transactionHash
+#   -> getTransaction(hash).data -> the ASCII in the tail words
+```
+
+### A smaller thing found alongside
+
+ERC-8183 job traffic does not appear in `daemon/api/questions` at all. That feed
+is the only public window onto what the network asks and answers, and the entire
+on-chain rail is invisible in it — so a misrouting like this cannot be seen by
+anyone who is not decoding their own callback calldata.
+
+### What is not yet known
+
+Whether the misrouting is specific to `STORM_ALERT` or affects every intent sent
+on-chain. `CHECK_RETRY_AFTER` is an hour, so the same policy cannot be re-checked
+against `WEATHER_FORECAST` immediately; that test is the one that would settle
+it, and it is worth running before anyone concludes the router ignores the
+intent field entirely rather than mapping one intent wrongly.
