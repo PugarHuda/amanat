@@ -13,7 +13,7 @@
   },
   "scripts": {
     "miner": "node miner/server.mjs",
-    "test": "node miner/test.mjs && node agent/test.mjs && node app/test.mjs && node scripts/check-sources.mjs && cd scorer && cargo test",
+    "test": "node miner/test.mjs && node agent/test.mjs && node app/test.mjs && node scripts/check-sources.mjs && cd scorer && cargo test --features game",
     "lint": "eslint . && solhint \"onchain/src/**/*.sol\"",
     "typecheck": "tsc -p jsconfig.json",
     "audit": "node agent/audit-jobable.mjs",

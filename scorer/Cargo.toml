@@ -28,6 +28,11 @@ authenticity = []   # a verdict on text with nothing to measure
 # three fixtures across three builds — mid-quality answers saturating until
 # they tie, and a tie is a lost pair under the ordering gate.
 authenticity2 = []
+# A result question is the one place where every figure can be right and the
+# answer still wrong: "Boston beat New York 112-108" against a truth that New
+# York won. This profile reads which side a result verb points at. Nothing else
+# changes, and no other profile carries it.
+game = []
 
 [dependencies]
 

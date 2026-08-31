@@ -1,0 +1,111 @@
+{
+  "_note": "GAME_RESULT only. Ground truths and answer shapes are copied from what the three live GAME_RESULT miners actually return (sportwire-game-result 'X beat Y 5-1 (final)', scorewire-oracle's home/away/winner object, fourcast's canonical score string), read 31 August 2026. Every 'bad' is a failure a real miner makes: the wrong score with the right winner, the score reported backwards, a match called before it is final, a draw called for one side.",
+  "cases": [
+    {
+      "intent": "GAME_RESULT",
+      "question": "Who won the last Bayern Munich match?",
+      "ground_truth": "FC Bayern Munchen beat VfB Stuttgart 5-1 in the Bundesliga on 28 August 2026 (final). The winner was FC Bayern Munchen.",
+      "good": "Bayern Munich won, beating Stuttgart 5-1 in the Bundesliga on 28 August (final).",
+      "bad": "Bayern Munich won, beating Stuttgart 3-1 in the Bundesliga on 28 August (final)."
+    },
+    {
+      "intent": "GAME_RESULT",
+      "question": "Who won the last Bayern Munich match?",
+      "ground_truth": "FC Bayern Munchen beat VfB Stuttgart 5-1 in the Bundesliga on 28 August 2026 (final). The winner was FC Bayern Munchen.",
+      "good": "Bayern Munich beat Stuttgart 5-1.",
+      "bad": "Stuttgart beat Bayern Munich 5-1."
+    },
+    {
+      "intent": "GAME_RESULT",
+      "question": "What was the result of the Real Madrid game?",
+      "ground_truth": "Real Madrid beat Barcelona 2-1 (final). Winner: Real Madrid.",
+      "good": "Real Madrid won the Clasico 2-1 against Barcelona. Final.",
+      "bad": "Real Madrid and Barcelona drew 1-1."
+    },
+    {
+      "intent": "GAME_RESULT",
+      "question": "What was the result of the Real Madrid game?",
+      "ground_truth": "Real Madrid beat Barcelona 2-1 (final). Winner: Real Madrid.",
+      "good": "Home side Real Madrid 2, Barcelona 1. Match ended.",
+      "bad": "Real Madrid lead Barcelona 2-1, the match is still in play."
+    },
+    {
+      "intent": "GAME_RESULT",
+      "question": "Who won the Knicks game last night?",
+      "ground_truth": "New York Knicks beat Boston Celtics 112-108 (final).",
+      "good": "The Knicks won 112-108 over the Celtics.",
+      "bad": "The Knicks won 118-104 over the Celtics."
+    },
+    {
+      "intent": "GAME_RESULT",
+      "question": "Who won the Knicks game last night?",
+      "ground_truth": "New York Knicks beat Boston Celtics 112-108 (final).",
+      "good": "New York took it 112-108 at home. Final score confirmed.",
+      "bad": "Boston Celtics beat the New York Knicks 112-108."
+    },
+    {
+      "intent": "GAME_RESULT",
+      "question": "Did Liverpool win?",
+      "ground_truth": "Liverpool drew 2-2 with Everton in the Premier League (final). No winner: draw.",
+      "good": "No. Liverpool drew 2-2 with Everton. The match finished level.",
+      "bad": "Yes. Liverpool beat Everton 2-2."
+    },
+    {
+      "intent": "GAME_RESULT",
+      "question": "Who won the Dodgers game?",
+      "ground_truth": "Los Angeles Dodgers beat San Francisco Giants 4-3 (final).",
+      "good": "Dodgers 4, Giants 3. Los Angeles won.",
+      "bad": "Dodgers 4, Giants 3. San Francisco won."
+    },
+    {
+      "intent": "GAME_RESULT",
+      "question": "Result of the Chiefs game?",
+      "ground_truth": "Kansas City Chiefs beat Buffalo Bills 27-24 (final), decided in overtime.",
+      "good": "Kansas City won 27-24 over Buffalo in overtime. Final.",
+      "bad": "Kansas City won 27-20 over Buffalo in overtime. Final."
+    },
+    {
+      "intent": "GAME_RESULT",
+      "question": "Result of the Chiefs game?",
+      "ground_truth": "Kansas City Chiefs beat Buffalo Bills 27-24 (final), decided in overtime.",
+      "good": "Chiefs beat the Bills 27-24 in OT.",
+      "bad": "The Chiefs are scheduled to play the Bills. No result yet."
+    },
+    {
+      "intent": "GAME_RESULT",
+      "question": "Who won between Arsenal and Chelsea?",
+      "ground_truth": "Arsenal beat Chelsea 3-0 in the Premier League (final). Winner: Arsenal.",
+      "good": "Arsenal, 3-0. A clean sheet against Chelsea, full time.",
+      "bad": "Chelsea, 3-0 against Arsenal at full time."
+    },
+    {
+      "intent": "GAME_RESULT",
+      "question": "Who won between Arsenal and Chelsea?",
+      "ground_truth": "Arsenal beat Chelsea 3-0 in the Premier League (final). Winner: Arsenal.",
+      "good": "Arsenal won three nil.",
+      "bad": "Arsenal won two nil."
+    },
+    {
+      "intent": "GAME_RESULT",
+      "question": "Who won the Rangers game?",
+      "ground_truth": "New York Rangers beat New Jersey Devils 3-2 in a shootout (final).",
+      "good": "The Rangers took it 3-2 in a shootout against New Jersey.",
+      "bad": "The Devils took it 3-2 in a shootout against New York."
+    },
+    {
+      "intent": "GAME_RESULT",
+      "question": "What happened in the Celtics game?",
+      "ground_truth": "Boston Celtics beat Miami Heat 101-99 (final).",
+      "good": "Boston edged Miami 101-99.",
+      "bad": "Boston edged Miami 110-99."
+    },
+    {
+      "intent": "GAME_RESULT",
+      "question": "Did Manchester City win their last match?",
+      "ground_truth": "Manchester City lost 1-2 to Aston Villa in the Premier League (final). Winner: Aston Villa.",
+      "good": "No. Manchester City lost 1-2 to Aston Villa.",
+      "bad": "Yes. Manchester City won 2-1 against Aston Villa."
+    }
+  ],
+  "attacks": []
+}

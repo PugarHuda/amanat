@@ -202,7 +202,12 @@ async function main() {
     process.exit(2);
   }
 
-  const bench = JSON.parse(await readFile(join(HERE, "bench.json"), "utf8"));
+  // --cases swaps the corpus. The default bench is 38 cases across 31 intents,
+  // which is the wrong instrument for tuning one intent: a change worth 0.2 on
+  // GAME_RESULT moves the general margin by 0.005 and disappears into it.
+  const which = args.indexOf("--cases");
+  const corpus = which === -1 ? join(HERE, "bench.json") : args[which + 1];
+  const bench = JSON.parse(await readFile(corpus, "utf8"));
 
   // Where do we lose? Stage 2 needs wins >= champion AND margin >= champion,
   // so a case the champion orders correctly and we do not is a hard blocker.

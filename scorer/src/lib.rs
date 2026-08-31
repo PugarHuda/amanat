@@ -92,6 +92,11 @@ const HEDGE_PENALTY: f32 = 0.25;
 #[cfg(not(any(feature = "verdict", any(feature = "authenticity", feature = "authenticity2"))))]
 const HEDGE_PENALTY: f32 = 0.4;
 
+/// What crediting the result to the losing side costs. Same as contradicting a
+/// verdict, because on a result question it is the same act.
+#[cfg(feature = "game")]
+const ATTRIBUTION_PENALTY: f32 = 0.15;
+
 /// How much of the score the reading decides, when there is a reading.
 #[cfg(any(feature = "authenticity", feature = "authenticity2"))]
 const W_NUMERIC: f32 = 0.25; // "is this AI-written?" has no figure to check
@@ -792,6 +797,160 @@ fn polarity_on(s: &[u8], classify: fn(&[u8]) -> i32) -> i32 {
     total
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Attribution
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Which side a result is credited to.
+///
+/// `GAME_RESULT` is the intent where every figure can be right and the answer
+/// still wrong. "Boston Celtics beat the New York Knicks 112-108" carries the
+/// same two teams and the same two numbers as the truth that the Knicks won,
+/// so a scorer that reads quantities and vocabulary sees no difference at all.
+/// Measured 31 August 2026 on fifteen cases: this module and the reigning
+/// champion (registration 1265) both lost four of them, and all four were that
+/// swap. Neither module was wrong about the score — both were blind to who won.
+///
+/// The rule is the one a reader uses. A result verb points from the winner to
+/// the loser; `lost to` and `fell to` point the other way. The non-stopword
+/// words just before the verb name one side, the words just after name the
+/// other. The first result a text states is the one it is asserting, so the
+/// walk stops there — the same principle the verdict axis already uses.
+///
+/// Names are compared as sets of words rather than whole strings, because a
+/// ground truth says "New York Knicks" and an honest answer says "New York" or
+/// "the Knicks". Sharing one word is agreement; sharing none while sharing a
+/// word with the *other* side is a swap.
+///
+/// ponytail: verbless answers are not read. "Arsenal, 3-0. A clean sheet
+/// against Chelsea" credits Arsenal by word order alone, and so does "Chelsea,
+/// 3-0 against Arsenal" credit Chelsea. Reading that needs a subject rule, not
+/// a verb rule; it is the fourth of the four lost cases and it stays lost.
+#[cfg(feature = "game")]
+const SIDE_WORDS: usize = 4;
+
+/// One side of a result: up to four name words, hashed.
+#[cfg(feature = "game")]
+#[derive(Clone, Copy)]
+struct Side {
+    words: [u32; SIDE_WORDS],
+    n: usize,
+}
+
+#[cfg(feature = "game")]
+impl Side {
+    fn empty() -> Self {
+        Side { words: [0; SIDE_WORDS], n: 0 }
+    }
+    fn push(&mut self, h: u32) {
+        if self.n < SIDE_WORDS {
+            self.words[self.n] = h;
+            self.n += 1;
+        }
+    }
+    fn shares(&self, other: &Side) -> bool {
+        self.words[..self.n].iter().any(|a| other.words[..other.n].contains(a))
+    }
+}
+
+/// FNV-1a over a token — the same constants the trigram bitset already uses.
+#[cfg(feature = "game")]
+fn word_hash(w: &[u8]) -> u32 {
+    let mut h: u32 = 2166136261;
+    for &b in w {
+        h ^= b as u32;
+        h = h.wrapping_mul(16777619);
+    }
+    h
+}
+
+/// A verb that credits the words before it. `0` is not one.
+#[cfg(feature = "game")]
+fn is_win_verb(w: &[u8]) -> bool {
+    matches!(
+        w,
+        b"beat" | b"beats" | b"defeated" | b"defeat" | b"defeats" | b"won" | b"win" | b"wins"
+            | b"edged" | b"downed" | b"topped" | b"outscored" | b"overcame" | b"took"
+    )
+}
+
+/// A verb that credits the words *after* it — the result read backwards.
+#[cfg(feature = "game")]
+fn is_loss_verb(w: &[u8]) -> bool {
+    matches!(w, b"lost" | b"fell" | b"lose" | b"loses" | b"loss")
+}
+
+/// (winner, loser) as named by the first result verb in the text.
+#[cfg(feature = "game")]
+fn credited(s: &[u8]) -> (Side, Side) {
+    // The subject of the verb about to arrive: the last two name words seen.
+    // Two, not four. "Dodgers 4, Giants 3. Los Angeles won" names four teams
+    // before the verb, and a window wide enough to hold them all credits the
+    // Dodgers for a sentence that credits San Francisco. The nearest name is
+    // the subject; anything further back belongs to an earlier clause. Numbers
+    // are skipped so the scoreline between the names does not push them out.
+    const SUBJECT_WORDS: usize = 2;
+    let mut recent = Side::empty();
+    let mut winner = Side::empty();
+    let mut loser = Side::empty();
+    let mut after: Option<bool> = None; // Some(true): collecting the loser
+    let mut done = false;
+
+    for_each_word(s, |w| {
+        if done {
+            return;
+        }
+        if let Some(collecting_loser) = after {
+            // Fill the far side, then stop. Stopwords are the join words —
+            // "over the Celtics", "to Aston Villa" — and carry no name.
+            if is_stopword(w) || w.iter().all(|b| b.is_ascii_digit()) {
+                if collecting_loser && loser.n > 0 || !collecting_loser && winner.n > 0 {
+                    done = true;
+                }
+                return;
+            }
+            let side = if collecting_loser { &mut loser } else { &mut winner };
+            side.push(word_hash(w));
+            if side.n == SIDE_WORDS {
+                done = true;
+            }
+            return;
+        }
+        if is_win_verb(w) {
+            winner = recent;
+            after = Some(true);
+            return;
+        }
+        if is_loss_verb(w) {
+            loser = recent;
+            after = Some(false);
+            return;
+        }
+        if is_stopword(w) || w.iter().all(|b| b.is_ascii_digit()) {
+            return;
+        }
+        if recent.n == SUBJECT_WORDS {
+            recent.words.copy_within(1..SUBJECT_WORDS, 0);
+            recent.n -= 1;
+        }
+        recent.push(word_hash(w));
+    });
+
+    (winner, loser)
+}
+
+/// True when the answer hands the result to the side the ground truth says lost.
+///
+/// Deliberately narrow. An answer that names no winner is not contradicting
+/// one — plenty of honest answers just state the score — so silence costs
+/// nothing. Only crediting the *other* named side is charged.
+#[cfg(feature = "game")]
+fn misattributes(ground_truth: &[u8], answer: &[u8]) -> bool {
+    let (gw, gl) = credited(ground_truth);
+    let (aw, _) = credited(answer);
+    gw.n > 0 && aw.n > 0 && gl.n > 0 && !aw.shares(&gw) && aw.shares(&gl)
+}
+
 /// True when a text asserts both poles — "valid ... however it is invalid".
 pub fn hedges(s: &[u8]) -> bool {
     let mut pos = false;
@@ -1053,6 +1212,13 @@ pub fn signals(question: &[u8], ground_truth: &[u8], answer: &[u8]) -> [f32; 4] 
     let opposed = contradicts(polarity(ground_truth), polarity(answer))
         || contradicts(authenticity(ground_truth), authenticity(answer));
     let mut verdict = if opposed { VERDICT_PENALTY } else { 1.0 };
+
+    // Naming the wrong winner is not a near miss on a result question, it is
+    // the answer to a different question with the right numbers attached.
+    #[cfg(feature = "game")]
+    if misattributes(ground_truth, answer) {
+        verdict *= ATTRIBUTION_PENALTY;
+    }
 
     // Saying a thing and its opposite is not an answer twice over, it is a
     // hedge. Only charged when the ground truth itself commits one way, so a
@@ -1420,5 +1586,50 @@ mod tests {
         let qs = extract(b"bittensor sn32 v2 returned 5 mm");
         assert_eq!(qs.as_slice().len(), 1, "{:?}", qs.as_slice());
         assert_eq!(qs.as_slice()[0].dim, Dim::Length);
+    }
+
+    // The four checks that decide whether the `game` profile is worth a
+    // registration. Run them with `cargo test --features game`.
+    #[cfg(feature = "game")]
+    mod attribution {
+        use super::super::*;
+
+        const KNICKS: &[u8] = b"New York Knicks beat Boston Celtics 112-108 (final).";
+
+        #[test]
+        fn the_same_figures_credited_the_other_way_is_a_wrong_answer() {
+            assert!(misattributes(KNICKS, b"Boston Celtics beat the New York Knicks 112-108."));
+        }
+
+        #[test]
+        fn a_shorter_name_for_the_same_side_is_the_same_side() {
+            // The ground truth says "New York Knicks", the answer says "New
+            // York". Names are compared word by word for exactly this.
+            assert!(!misattributes(KNICKS, b"New York took it 112-108 at home."));
+        }
+
+        #[test]
+        fn the_nearest_name_is_the_subject() {
+            // Four teams are named before the verb. The subject of "won" is the
+            // one next to it, which is why the window holds two words and not
+            // the whole sentence.
+            let gt = b"Los Angeles Dodgers beat San Francisco Giants 4-3 (final).";
+            assert!(misattributes(gt, b"Dodgers 4, Giants 3. San Francisco won."));
+            assert!(!misattributes(gt, b"Dodgers 4, Giants 3. Los Angeles won."));
+        }
+
+        #[test]
+        fn naming_no_winner_costs_nothing() {
+            // Stating the score without saying who won is incomplete, not
+            // wrong, and the lexical side already charges for what is missing.
+            assert!(!misattributes(KNICKS, b"The final score was 112-108."));
+        }
+
+        #[test]
+        fn a_result_read_backwards_still_names_the_winner() {
+            let gt = b"Manchester City lost 1-2 to Aston Villa in the Premier League (final).";
+            assert!(misattributes(gt, b"Yes. Manchester City won 2-1 against Aston Villa."));
+            assert!(!misattributes(gt, b"No. Manchester City lost 1-2 to Aston Villa."));
+        }
     }
 }
