@@ -543,7 +543,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
         </table>
       </div>
       <div class="foot-note">
-        <span>Contract <a class="mono" href="https://sepolia.basescan.org/address/0x0700c9300D5cfD8A4b2C7fBbaB2703087AB0590c">0x0700c930…590c</a></span>
+        <span>Contract <a class="mono" id="bookaddr" href="https://sepolia.basescan.org/address/0x4A5ECEBdd8E011C50bE20C8C49988cf0d37B9893">0x4A5ECEBd…9893</a></span>
         <span id="bookstat">reading the book…</span>
       </div>
     </div>
@@ -910,6 +910,15 @@ fetch("/api/book")
   .then((b) => {
     $("bookstat").textContent =
       `${b.policies} policies written · ${b.jobBudget} USDC left for jobs`;
+    // The address is served with the book, so the link cannot point at a
+    // contract other than the one these rows were read from. It was hardcoded,
+    // and after the book moved the page linked to the wrong contract while
+    // showing the right one's policies.
+    if (b.contract) {
+      const a = $("bookaddr");
+      a.href = `https://sepolia.basescan.org/address/${b.contract}`;
+      a.textContent = `${b.contract.slice(0, 10)}…${b.contract.slice(-4)}`;
+    }
   })
   .catch(() => { $("bookstat").textContent = "book unavailable"; });
 

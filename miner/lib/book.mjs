@@ -8,7 +8,7 @@
 // chain said so.
 
 const RPC = process.env.BASE_SEPOLIA_RPC ?? "https://base-sepolia-rpc.publicnode.com";
-const AMANAT = process.env.AMANAT_CONTRACT ?? "0x0700c9300D5cfD8A4b2C7fBbaB2703087AB0590c";
+const AMANAT = process.env.AMANAT_CONTRACT ?? "0x4A5ECEBdd8E011C50bE20C8C49988cf0d37B9893";
 const DIAMOND = process.env.TELEGRAPH_DIAMOND ?? "0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8";
 
 // First four bytes of keccak256 over each signature.
