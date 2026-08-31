@@ -14,6 +14,27 @@ Point it elsewhere with `AMANAT_MINER=http://localhost:8080`. The root
 the file is executable with its own shebang too (`./app/storm.mjs Cebu`).
 
 Every command takes `--json` and prints the miner's own object, unaltered.
+
+`--telegraph` is the exception to all of the above: it asks the *network*
+rather than this miner, and the node routes the question to whichever miner it
+ranks best on the intent. That costs $0.01 in Base Sepolia USDC and needs
+`AGENT_PRIVATE_KEY`, so it is never the default — and the answer is often not
+ours. Two consecutive calls with the same question went to TxLens and then to
+LiveCert, which is what probabilistic routing looks like from outside.
+
+```
+$ node app/storm.mjs "Cebu" --telegraph
+routed by Telegraph to LiveCert Operational Signals  —  $0.01  —  0x463bef69…
+
+Regarding what is the storm risk in Cebu right now? … Wind speed: sustained
+winds of 17.2 km/h … Overall risk: 0.34 on a scale of 0 to 1, graded low.
+```
+
+A bare place name is turned into a question first. Asked the literal string
+"Cebu", the router sent it to a miner that answered "no location was supplied"
+— the classifier needs a sentence, and paying $0.01 to find that out is the
+kind of thing this flag is for.
+
 Exit codes: **0** it answered, **1** the miner could not answer or a signature
 did not verify, **2** the arguments were wrong.
 

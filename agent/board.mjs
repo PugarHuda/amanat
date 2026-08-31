@@ -35,6 +35,17 @@ const LANES = [
   { name: "Hong Kong → Kaohsiung", from: "Hong Kong", to: "Kaohsiung", speed: 37 },
   { name: "Surabaya → Makassar", from: "Surabaya", to: "Makassar", speed: 37 },
   { name: "Ho Chi Minh City → Manila", from: "Ho Chi Minh City", to: "Manila", speed: 37 },
+  // The Luzon Strait is where a Pacific typhoon arrives, and the Bashi Channel
+  // is the gap every northbound box ship takes through it.
+  { name: "Manila → Kaohsiung", from: "Manila", to: "Kaohsiung", speed: 37 },
+  // The recurve. A storm that misses the Philippines turns here.
+  { name: "Shanghai → Busan", from: "Shanghai", to: "Busan", speed: 37 },
+  // Malacca, at strait speed rather than open-sea speed — the traffic
+  // separation scheme is the constraint, not the engine. About 15 knots.
+  { name: "Port Klang → Singapore", from: "Port Klang", to: "Singapore", speed: 28 },
+  { name: "Da Nang → Hong Kong", from: "Da Nang", to: "Hong Kong", speed: 37 },
+  // Ryukyu, the lane a typhoon crosses on its way to the East China Sea.
+  { name: "Naha → Kaohsiung", from: "Naha", to: "Kaohsiung", speed: 37 },
 ];
 
 async function resolve(spec) {
@@ -111,7 +122,10 @@ async function main() {
   reject(process.argv.slice(2), ["--dry", "--budget", "--legs"]);
   const dry = has(process.argv, "--dry");
   const legs = Number(flag(process.argv, "--legs", 3));
-  const budget = Number(flag(process.argv, "--budget", 0.35));
+  // Ten lanes at three legs is 30 calls, $0.30, and a lane that has to fall
+  // back to the schema miner spends twice. $0.70 covers a run where a third of
+  // them do.
+  const budget = Number(flag(process.argv, "--budget", 0.70));
 
   const signer = dry ? null : wallet();
   const ledger = { calls: 0, spent: 0, routed: 0, direct: 0, budget };

@@ -76,6 +76,48 @@ export async function reading(target, hours) {
   });
 }
 
+/**
+ * The same question, asked through Telegraph instead of at one miner.
+ *
+ * Everything else here calls `AMANAT_MINER` directly, which is the honest
+ * default for a tool: you know whose answer you are reading. This is the other
+ * thing the protocol is for. Declare the need, let the node route to whichever
+ * miner it ranks best on the intent, and read whatever comes back — which on a
+ * given day is not necessarily ours.
+ *
+ * It costs $0.01 in Base Sepolia USDC and needs `AGENT_PRIVATE_KEY`, so it is
+ * behind a flag and never the default. The x402 exchange and the wallet live in
+ * agent/, imported only when the flag is used: without it this file still runs
+ * on node: builtins alone, with no key and nothing installed.
+ */
+export async function routedReading(target) {
+  if (!target) throw usage('give a place name or a question');
+  if (!process.env.AGENT_PRIVATE_KEY) {
+    throw new Fail("--telegraph pays $0.01 per call and needs AGENT_PRIVATE_KEY in the environment");
+  }
+  let ask;
+  try {
+    ({ ask } = await import("../agent/telegraph.mjs"));
+  } catch (e) {
+    throw new Fail(`--telegraph needs the repo's agent/ and its one dependency: ${e.message}`);
+  }
+  // A bare place name is not a question, and the router is a classifier: asked
+  // "Cebu" it sent this to a miner that answered "no location was supplied".
+  // Whatever is not already a question becomes one, in the same words the board
+  // uses, so the network is judged on routing rather than on our phrasing.
+  const point = asPoint(target);
+  const where = point ? `latitude ${point.lat}, longitude ${point.lon}` : target;
+  const query = target.includes("?")
+    ? target
+    : `What is the storm risk in ${where} right now? ` +
+      `Report wind speed, gusts, precipitation and an overall risk between 0 and 1.`;
+  try {
+    return await ask(query);
+  } catch (e) {
+    throw new Fail(`Telegraph could not answer: ${e.message}`);
+  }
+}
+
 // ---- formatting -------------------------------------------------------------
 
 const f3 = (n) => (typeof n === "number" ? n.toFixed(3) : "?");
@@ -120,9 +162,30 @@ function spark(series, width = 72) {
   return out;
 }
 
+/** What the network answered, and who it picked. */
+async function cmdRouted(target) {
+  const a = await routedReading(target);
+  // Every miner returns its own shape, so read the field that carries prose and
+  // fall back to the object. Wrapping raw JSON breaks it across its own quotes.
+  const r = a.result;
+  const said = typeof r === "string"
+    ? r
+    : r?.summary ?? r?.answer ?? r?.reason ?? JSON.stringify(r);
+  const cost = a.paidAmount ? `$${(Number(a.paidAmount) / 1e6).toFixed(2)}` : "$0.01";
+  return {
+    json: a,
+    text: [
+      `routed by Telegraph to ${a.miner_name ?? a.miner_slug ?? "a miner"}  —  ${cost}  —  ${a.signal_hash ?? "no signal hash"}`,
+      "",
+      wrap(said),
+    ].join("\n"),
+  };
+}
+
 // ---- commands ---------------------------------------------------------------
 
 async function cmdRead(target, opts) {
+  if (opts.telegraph) return cmdRouted(target);
   const a = await reading(target, opts.hours);
   const head = [a.place ?? where(a), where(a), `valid ${a.valid_at} (+${a.hours}h)`].join("  —  ");
   return {
@@ -262,8 +325,11 @@ const HELP = `storm — read the Amanat miner (${BASE})
   node app/storm.mjs board                           the published lane board
   node app/storm.mjs verify [place]                  check the Ed25519 attestation
 
-  --json    the miner's own JSON, unaltered
-  --hours   0..168, hours from now (default: read from the question)
+  --json       the miner's own JSON, unaltered
+  --hours      0..168, hours from now (default: read from the question)
+  --telegraph  ask the network instead of this miner: the node routes to
+               whoever it ranks best on the intent. $0.01 in Base Sepolia
+               USDC, needs AGENT_PRIVATE_KEY, and the answer may not be ours.
 
 Exit 0 answered, 1 the miner could not answer or a signature failed, 2 bad arguments.
 Set AMANAT_MINER to point at another instance.`;
@@ -291,6 +357,7 @@ export async function run(argv) {
         hours: { type: "string" },
         legs: { type: "string" },
         speed: { type: "string" },
+        telegraph: { type: "boolean", default: false },
       },
     });
   } catch (e) {
@@ -303,6 +370,7 @@ export async function run(argv) {
     hours: num(values.hours, "hours", { min: 0, max: 168, int: true }),
     legs: num(values.legs, "legs", { min: 2, max: 12, int: true }),
     speed: num(values.speed, "speed", { min: 1, max: 2000 }),
+    telegraph: values.telegraph,
   };
 
   const cmd = COMMANDS.has(positionals[0]) ? positionals[0] : "read";
