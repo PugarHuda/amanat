@@ -42,6 +42,12 @@ const NOT_A_PLACE = new Set([
   "expect", "expected", "chance", "likely", "severe", "warning", "alert", "check",
   "current", "currently", "now", "later", "high", "low", "over", "under", "near",
   "celsius", "fahrenheit", "mm", "km", "speed", "gust", "gusts", "precipitation",
+  // The tails of prepositional idioms. Each of these follows "at", "in" or
+  // "for" in ordinary English and each resolves to a real town somewhere, which
+  // is the whole difficulty: the list can never be complete, so the rule above
+  // does the work and this only catches what has actually been seen.
+  "least", "most", "fact", "once", "general", "instance", "example", "short",
+  "time", "times", "sale", "large", "best", "worst", "worse", "better",
 ]);
 
 /**
@@ -138,7 +144,11 @@ export function placeCandidates(text) {
   // "in cebu", "di surabaya" is how an uncased question names a place, and it
   // is the only shape worth guessing from. A sentence with no preposition and
   // no capitalised name has no place in it, and saying so is the answer.
-  for (const [, word] of s.matchAll(/(?<!\p{L})(?:in|at|for|near|around|over|en|em|di|à)\s+(\p{Ll}[\p{L}]*)/gu)) {
+  // Four letters, not three. A preposition plus a short word is usually an
+  // idiom rather than a place — "at all" offered "all", which is Albenga in
+  // Liguria, and the miner answered a question containing no place at all with
+  // the weather in Italy.
+  for (const [, word] of s.matchAll(/(?<!\p{L})(?:in|at|for|near|around|over|en|em|di|à)\s+(\p{Ll}[\p{L}]{3,})/gu)) {
     if (!NOT_A_PLACE.has(word.toLowerCase())) add(word);
   }
 

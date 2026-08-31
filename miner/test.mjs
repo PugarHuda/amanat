@@ -792,6 +792,14 @@ console.log("places are read in the alphabet they are written in");
   assert.deepEqual(placeCandidates("Will El Niño cause global food shortages?"), []);
   assert.deepEqual(placeCandidates("Will it see heavy rain this evening?"), []);
 
+  // A preposition plus a short word is an idiom, not a place. "at all" offered
+  // "all", which is Albenga in Liguria — so a question containing no place was
+  // answered with the weather in Italy. Found by the MCP suite, which asked for
+  // a refusal and got a forecast.
+  assert.deepEqual(placeCandidates("a sentence with no place in it at all"), []);
+  assert.deepEqual(placeCandidates("will it rain at least a bit"), []);
+  assert.deepEqual(placeCandidates("storm risk for now"), []);
+
   // An uncased question still names its place, after a preposition.
   assert.equal(placeCandidates("weather in cebu tomorrow")[0], "cebu");
   assert.equal(placeCandidates("bagaimana cuaca di surabaya besok?")[0], "surabaya");
