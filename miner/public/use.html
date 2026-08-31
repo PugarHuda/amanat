@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amanat — call it from your own agent</title>
+<meta name="description" content="Four ways into Amanat, cheapest first: plain HTTP, MCP from an agent, the Telegraph Engine, or an on-chain job. No wallet needed for the first one.">
+<link rel="canonical" href="https://amanat-miner.vercel.app/use">
+<meta name="theme-color" content="#0b1f2e">
+
+<!-- Every link to this site posted on X rendered as a bare URL: no title, no
+     description, no image. A quarter of the hackathon score is engagement
+     there, and a card is most of what a reader sees before deciding whether to
+     click. The image is drawn from the live board, so it shows the lanes at
+     today’s risk against the line that pays rather than a stock picture. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Amanat">
+<meta property="og:url" content="https://amanat-miner.vercel.app/">
+<meta property="og:title" content="Amanat — weather cover that pays itself">
+<meta property="og:description" content="A contract buys a verified storm reading from Telegraph and pays the claim itself when it crosses 0.75. Nobody approves it. Nobody can decline it out of turn.">
+<meta property="og:image" content="https://amanat-miner.vercel.app/card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Storm risk on five shipping lanes plotted against the payout trigger at 0.75.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Amanat — weather cover that pays itself">
+<meta name="twitter:description" content="A contract buys a verified storm reading from Telegraph and pays the claim itself when it crosses 0.75.">
+<meta name="twitter:image" content="https://amanat-miner.vercel.app/card.png">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="7" fill="%23F2ECE0"/><g stroke="%238FA9B8" stroke-width="1.5"><line x1="7" y1="18" x2="57" y2="18"/><line x1="7" y1="46" x2="57" y2="46"/></g><line x1="7" y1="32" x2="57" y2="32" stroke="%23C8341E" stroke-width="1.6" stroke-dasharray="4 3.5" stroke-linecap="round"/><g fill="none" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><polyline points="10,53 16,48 21,49 27,40 31,32" stroke="%232A5D4E"/><polyline points="31,32 36,24 42,21 48,13 53,11" stroke="%23C8341E"/></g><circle cx="53" cy="11" r="4.5" fill="%23C8341E"/></svg>'>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Archivo:wght@400;500;600&family=Azeret+Mono:wght@400;500&display=swap">
+<style>
+/* The Beaufort plate. One ivory reference plate on a night sea. The plate's
+   ink is black, its keylines are chart blue-grey, and the only red on the page
+   is the band from 0.75 up: the line the contract pays on. Below the trigger
+   a reading is sea green. Depth comes from overlap of flat colour, never from
+   a gradient or a shadow. */
+:root{
+  --sea:#0b1f2e; --sea-2:#10293b; --sea-3:#163448;
+  --on-sea:#e9eef0; --on-sea-2:#a9bcc7;
+  --plate:#f2ece0; --plate-2:#e6dcc7; --plate-3:#d9ccb2;
+  --ink:#14110c; --ink-2:#3d3a33; --ink-3:#575349;
+  --key:#8fa9b8; --key-2:#b9c9d2;
+  --trigger:#c8341e; --trigger-ink:#ffffff; --trigger-tint:#f1cfc5;
+  --calm:#2a5d4e; --calm-tint:#cfe0d6;
+  --display:"Big Shoulders Display","Big Shoulders",Impact,"Arial Narrow",sans-serif;
+  --body:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --mono:"Azeret Mono",ui-monospace,Menlo,Consolas,monospace;
+  --swing:cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%; scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto} }
+body{
+  margin:0; background:var(--sea); color:var(--on-sea);
+  font-family:var(--body); font-size:17px; line-height:1.55;
+  font-variant-numeric:tabular-nums;
+}
+::selection{background:var(--trigger); color:var(--trigger-ink)}
+.plate ::selection{background:var(--ink); color:var(--plate)}
+a{color:inherit; text-decoration-thickness:1px; text-underline-offset:3px}
+:focus-visible{outline:2px solid var(--trigger); outline-offset:3px}
+.plate :focus-visible{outline-color:var(--ink)}
+h1,h2,h3{font-family:var(--display); font-weight:900; margin:0; line-height:.95; letter-spacing:-.01em; text-wrap:balance}
+h1{font-size:clamp(2.8rem,6.6vw,5.2rem); text-transform:uppercase}
+h2{font-size:clamp(2rem,5vw,3.6rem); text-transform:uppercase}
+h3{font-size:1.35rem; text-transform:uppercase; letter-spacing:.01em}
+p{margin:0}
+code,.mono{font-family:var(--mono); font-size:.92em; overflow-wrap:anywhere}
+/* Grid children default to min-width:auto, which lets a long unbreakable
+   string (a URL in a code span, a lane name) push the whole plate past the
+   viewport edge. Firefox measured 86px of sideways scroll on a phone from it. */
+.band > *, .reading > *, .foot-note > *, .plate-head > *, ol.flow li > *{min-width:0}
+.foot-note span{overflow-wrap:anywhere}
+.wrap{max-width:1180px; margin:0 auto; padding:0 24px}
+button{font:inherit}
+
+/* ── masthead: a strip label across the top of the desk ─────────────────── */
+header{border-bottom:1px solid var(--sea-3)}
+.bar{display:flex; align-items:center; justify-content:space-between; gap:20px; padding:18px 0; flex-wrap:wrap}
+.mark{display:flex; align-items:center; gap:12px; color:var(--on-sea); text-decoration:none}
+.mark .glyph{width:34px; height:34px; flex:0 0 auto; display:block}
+.mark .word{font-family:var(--display); font-weight:900; font-size:1.7rem; letter-spacing:.06em; text-transform:uppercase; line-height:1}
+.mark .sub{font-size:.8rem; color:var(--on-sea-2); letter-spacing:.02em}
+@media (max-width:560px){ .mark .sub{display:none} }
+nav{display:flex; gap:4px 18px; font-size:.9rem; flex-wrap:wrap}
+nav a{color:var(--on-sea-2); text-decoration:none; white-space:nowrap; padding:4px 0; border-bottom:2px solid transparent}
+nav a:hover{color:var(--on-sea); border-bottom-color:var(--key)}
+
+/* ── the plate ───────────────────────────────────────────────────────────── */
+.plate{
+  background:var(--plate); color:var(--ink);
+  border:2px solid var(--ink);
+  margin:28px 0 0;
+}
+.plate-head{position:relative; padding:38px 36px 20px; border-bottom:2px solid var(--ink); display:grid; grid-template-columns:1fr; gap:14px}
+.plate-head .lede{font-size:1.04rem; color:var(--ink-2); max-width:62ch}
+/* The plate's number, printed in the margin the way a plate book prints it:
+   top right, out of the heading's way. Never a label above a title. */
+.plate-no{position:absolute; top:12px; right:16px; font-family:var(--display); font-weight:700; font-size:.95rem; color:var(--ink-3)}
+.sheet{position:relative}
+@media (min-width:900px){
+  .plate-head{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); align-items:end; gap:32px}
+}
+.plate-body{display:grid; grid-template-columns:1fr}
+@media (min-width:900px){ .plate-body{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)} }
+/* The scale on the left, the lanes and the question on the right, so the
+   first viewport carries the instrument and the action together. On a phone
+   the lanes and the question come first; the scale is the reference below. */
+.side{display:flex; flex-direction:column}
+.side .caption{border-top:2px solid var(--ink); flex:1}
+@media (max-width:899px){
+  .side{order:-1}
+  .bands{border-top:2px solid var(--ink)}
+}
+
+/* the bands: the scale itself, 0.0 at the foot, 1.0 at the head */
+.bands{list-style:none; margin:0; padding:0; display:flex; flex-direction:column-reverse; border-right:0}
+@media (min-width:900px){ .bands{border-right:2px solid var(--ink)} }
+.band{
+  display:grid; grid-template-columns:5.4rem 1fr 4.6rem; align-items:center; gap:12px;
+  padding:9px 18px 9px 22px; border-top:1px solid var(--key-2); min-height:52px;
+}
+.band:last-child{border-top:0}
+.band .f{font-family:var(--display); font-weight:900; font-size:1.9rem; line-height:1; letter-spacing:.01em}
+.band .f small{display:block; font-family:var(--body); font-weight:500; font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3); margin-top:3px}
+.band .what{font-size:.9rem; color:var(--ink-2); line-height:1.35}
+.band .what b{color:var(--ink); font-weight:600}
+.band svg{width:100%; height:34px; display:block}
+.band.pays{background:var(--trigger); color:var(--trigger-ink); border-top-color:var(--trigger)}
+.band.pays .f small,.band.pays .what,.band.pays .what b{color:var(--trigger-ink)}
+.band.pays + .band{border-top-color:var(--trigger)}
+.band.rim{background:var(--plate-2)}
+
+/* the pins: the five lanes read against the scale */
+.pins{padding:18px 22px 14px; display:flex; flex-direction:column; gap:4px}
+.pins-head{display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:10px}
+.pins-head h2{font-size:1.5rem}
+.pins-head .note{font-size:.86rem; color:var(--ink-3)}
+#plot{display:flex; flex-direction:column; gap:10px; min-height:60px}
+#plot .err{color:var(--trigger); font-weight:500; padding:8px 0}
+.reading{display:grid; grid-template-columns:minmax(0,12.5rem) 1fr 3.9rem; align-items:center; gap:10px}
+.reading .place{font-weight:600; font-size:.92rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.reading .val{font-family:var(--display); font-weight:900; font-size:1.55rem; text-align:right; line-height:1}
+.reading.over .val{color:var(--trigger)}
+.reading.missing .val{font-family:var(--body); font-weight:500; font-size:.82rem; color:var(--ink-3)}
+.track{position:relative; height:26px; background:var(--plate-2); border:1px solid var(--key)}
+.track::after{content:""; position:absolute; top:-1px; bottom:-1px; left:75%; right:-1px; background:var(--trigger-tint); border-left:2px solid var(--trigger)}
+.pin{
+  position:absolute; top:-6px; bottom:-6px; width:3px; background:var(--calm); left:0;
+  transition:left .55s var(--swing); z-index:1;
+}
+.pin::before{content:""; position:absolute; left:50%; top:-5px; width:11px; height:11px; margin-left:-5.5px; background:inherit; border-radius:50%}
+.reading.over .pin{background:var(--trigger)}
+@media (prefers-reduced-motion:reduce){ .pin{transition:none} }
+.scale-foot{display:flex; justify-content:space-between; font-size:.78rem; color:var(--ink-3); padding:4px 0 0 calc(12.5rem + 10px)}
+.scale-foot span:last-child{color:var(--trigger); font-weight:600}
+@media (max-width:560px){
+  .reading{grid-template-columns:minmax(0,7.5rem) 1fr 3.4rem}
+  /* A lane name wraps to two lines here rather than losing its far end: the
+     port it is going to is the half a reader needs. */
+  .reading .place{white-space:normal; line-height:1.15; font-size:.84rem}
+  .scale-foot{padding-left:calc(7.5rem + 10px)}
+}
+.stamp{margin-top:8px; font-size:.86rem; color:var(--ink-3); display:flex; gap:8px 16px; flex-wrap:wrap; justify-content:space-between}
+#plotstamp.stale{color:var(--trigger); font-weight:600}
+
+/* the caption line: where the plate is asked a question */
+.caption{padding:18px 36px 28px}
+.caption h2{font-size:1.5rem; margin-bottom:4px}
+.caption > p{font-size:.96rem; color:var(--ink-2); max-width:70ch; margin-bottom:12px}
+form{display:flex; gap:10px; flex-wrap:wrap}
+input{
+  flex:1 1 16rem; min-width:0; padding:13px 14px; font-size:1.02rem; color:var(--ink);
+  background:#fff; border:2px solid var(--ink); border-radius:0; font-family:var(--body);
+}
+input::placeholder{color:var(--ink-3)}
+button{
+  padding:13px 22px; background:var(--ink); color:var(--plate); border:2px solid var(--ink); border-radius:0;
+  font-family:var(--display); font-weight:900; font-size:1.15rem; letter-spacing:.06em; text-transform:uppercase; cursor:pointer;
+}
+button:hover{background:var(--sea)}
+button:disabled{background:var(--ink-3); border-color:var(--ink-3); cursor:wait}
+.presets{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px}
+.presets button{padding:7px 12px; font-family:var(--body); font-weight:500; font-size:.86rem; letter-spacing:0; text-transform:none; background:transparent; color:var(--ink); border:1px solid var(--ink-3)}
+.presets button:hover{background:var(--ink); color:var(--plate); border-color:var(--ink)}
+
+/* a reading, in three fixed positions: the hook, the place, the number */
+.result{display:none; margin-top:22px; border-top:2px solid var(--ink); padding-top:18px}
+.result.shown{display:block}
+.verdict{display:grid; grid-template-columns:auto 1fr; align-items:end; gap:16px}
+.verdict .num{font-family:var(--display); font-weight:900; font-size:clamp(3.4rem,9vw,5.6rem); line-height:.85; color:var(--calm)}
+.result.breach .verdict .num{color:var(--trigger)}
+.verdict span:last-child{font-family:var(--display); font-weight:700; font-size:1.3rem; text-transform:uppercase; letter-spacing:.04em; padding-bottom:6px}
+.result.breach .verdict span:last-child{color:var(--trigger)}
+.summary{margin-top:14px; font-size:1rem; color:var(--ink-2); max-width:78ch}
+.figures{display:flex; gap:10px 26px; flex-wrap:wrap; margin-top:16px; padding-top:14px; border-top:1px solid var(--key-2)}
+.figures div{font-size:.82rem; color:var(--ink-3)}
+.figures b{display:block; font-family:var(--display); font-weight:700; font-size:1.25rem; color:var(--ink); margin-top:2px; letter-spacing:.01em}
+.err{color:var(--trigger); font-weight:500}
+
+/* legs of a route */
+.legs{margin-top:16px; border-top:1px solid var(--key-2)}
+.legs-head,.leg{display:grid; grid-template-columns:5rem 4rem 1fr 4.2rem; gap:12px; align-items:center; padding:8px 0; border-bottom:1px solid var(--key-2); font-size:.9rem}
+.legs-head{color:var(--ink-3); font-size:.8rem}
+.leg .bar{position:relative; height:14px; background:var(--plate-2); border:1px solid var(--key)}
+.leg .bar::after{content:""; position:absolute; top:-1px; bottom:-1px; left:75%; width:2px; background:var(--trigger)}
+.leg .bar i{position:absolute; left:0; top:0; bottom:0; background:var(--calm)}
+.leg.over .bar i{background:var(--trigger)}
+.leg.over .risk{color:var(--trigger); font-weight:600}
+.leg.unread{color:var(--ink-3)}
+.leg .risk{text-align:right; font-family:var(--display); font-weight:700; font-size:1.1rem}
+
+/* ── plates further down: one thing per viewport ─────────────────────────── */
+.sheet{padding:34px 36px 32px}
+.sheet > p{font-size:1.02rem; color:var(--ink-2); max-width:66ch; margin:14px 0 0}
+.tablewrap{margin-top:20px; overflow-x:auto; border:1px solid var(--ink); padding:6px 14px 10px; background:#fff}
+/* Forty-five intents is the whole board and the whole board is the point, but
+   it must not be the whole page: the table scrolls inside its own frame. */
+#survey .tablewrap{max-height:520px; overflow:auto}
+#survey thead th{position:sticky; top:0; background:#fff}
+table{border-collapse:collapse; width:100%; font-size:.92rem}
+th,td{text-align:left; padding:10px 12px; border-bottom:1px solid var(--key-2); white-space:nowrap}
+th{font-size:.78rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-3)}
+tr:last-child td{border-bottom:0}
+td.m,th.m{text-align:right}
+.tag{display:inline-block; padding:3px 9px; font-size:.78rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; background:var(--trigger); color:var(--trigger-ink)}
+.tag.declined{background:var(--plate-2); color:var(--ink-2); border:1px solid var(--key)}
+.tag.active{background:var(--calm); color:#fff}
+.foot-note{font-size:.84rem; color:var(--ink-3); margin-top:14px; display:flex; gap:6px 14px; flex-wrap:wrap}
+.foot-note code{font-size:.8rem}
+
+/* the replay: the archive run through the needle, hour by hour */
+.replay{margin-top:22px; border-top:2px solid var(--ink); padding-top:18px; display:grid; gap:12px}
+.replay-head{display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap}
+.replay-head h3{font-size:1.2rem}
+.replay .clock{font-family:var(--display); font-weight:700; font-size:1.2rem; color:var(--ink-2); letter-spacing:.03em}
+.replay .track{height:34px}
+.replay .pin{transition:left .12s linear}
+.replay .pin.red{background:var(--trigger)}
+.replay .read{display:flex; justify-content:space-between; font-size:.86rem; color:var(--ink-3)}
+.replay .read b{font-family:var(--display); font-size:1.35rem; color:var(--ink)}
+.replay .read b.red{color:var(--trigger)}
+
+/* the steps, as rows of the plate */
+ol.flow{list-style:none; margin:24px 0 0; padding:0; border-top:2px solid var(--ink)}
+ol.flow li{display:grid; grid-template-columns:8rem 1fr; gap:18px; padding:18px 0; border-bottom:1px solid var(--key-2)}
+ol.flow li:last-child{border-bottom:0}
+ol.flow .who{font-family:var(--display); font-weight:900; font-size:1.7rem; text-transform:uppercase; line-height:1; color:var(--ink)}
+ol.flow h3{margin-bottom:6px}
+ol.flow p{font-size:.98rem; color:var(--ink-2); max-width:66ch}
+@media (max-width:640px){ ol.flow li{grid-template-columns:1fr; gap:8px} }
+
+footer{margin:56px 0 40px; padding-top:20px; border-top:1px solid var(--sea-3); font-size:.86rem; color:var(--on-sea-2); display:grid; gap:8px}
+footer a{color:var(--on-sea)}
+
+@media (max-width:640px){
+  .plate-head,.caption,.sheet{padding-left:18px; padding-right:18px}
+  .band{grid-template-columns:4.4rem 1fr 3.6rem; padding-left:14px; padding-right:12px}
+  .band .f{font-size:1.5rem}
+  .pins{padding:18px 14px 14px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <a class="mark" href="/" aria-label="Amanat, home">
+      <!-- The same geometry as /logo.svg, inlined so it takes the page's own
+           tokens: sea green below the line, the red of the trigger above. -->
+      <svg class="glyph" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+        <rect width="64" height="64" rx="7" fill="var(--plate)"/>
+        <g stroke="var(--key)" stroke-width="1.5">
+          <line x1="7" y1="18" x2="57" y2="18"/>
+          <line x1="7" y1="46" x2="57" y2="46"/>
+        </g>
+        <line x1="7" y1="32" x2="57" y2="32" stroke="var(--trigger)" stroke-width="1.6" stroke-dasharray="4 3.5" stroke-linecap="round"/>
+        <g fill="none" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="10,53 16,48 21,49 27,40 31,32" stroke="var(--calm)"/>
+          <polyline points="31,32 36,24 42,21 48,13 53,11" stroke="var(--trigger)"/>
+        </g>
+        <circle cx="53" cy="11" r="4.5" fill="var(--trigger)"/>
+      </svg>
+      <span class="word">Amanat</span><span class="sub">parametric weather cover</span>
+    </a>
+    <nav aria-label="Sections">
+      <a href="/#check">Check a place</a>
+      <a href="/#route">Check a route</a>
+      <a href="/#backtest">Backtest</a>
+      <a href="/#settles">How it settles</a>
+      <a href="/#ledger">Ledger</a>
+      <a href="/use" aria-current="page">Use it</a>
+      <a href="https://github.com/PugarHuda/amanat">Source</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="plate" id="use" aria-labelledby="use-title">
+    <div class="sheet">
+      <div class="plate-no">Plate VII · four ways in</div>
+      <h2 id="use-title">Call it from your own agent.</h2>
+      <p>Cheapest first. The reading is useful anywhere a decision waits on weather; the contract is only one thing to do with it.</p>
+      <ol class="flow">
+        <li>
+          <span class="who">free</span>
+          <div>
+            <h3>Straight over HTTP</h3>
+            <p><code>POST /forecast</code> with <code>lat</code>, <code>lon</code> and <code>hours</code>, or a question. No wallet, no key. Nothing is verified by validators on this route, and it costs nothing; those go together. The spec is at <a href="/openapi.json">/openapi.json</a>, the signing key at <a href="/.well-known/amanat.json">/.well-known/amanat.json</a>.</p>
+          </div>
+        </li>
+        <li>
+          <span class="who">$0.01</span>
+          <div>
+            <h3>From an agent, over MCP</h3>
+            <p>The Telegraph MCP server discovers every registered miner, so Amanat is already a tool in Claude Desktop, Cursor, Continue, Goose and LangChain. It appears as <code>tg_amanat_weather_risk_forecast</code>.</p>
+          </div>
+        </li>
+        <li>
+          <span class="who">$0.01</span>
+          <div>
+            <h3>Through the Engine</h3>
+            <p>Ask in plain language and the protocol picks the miner. You may or may not get Amanat. That is the point, and it is how you find out whether we are any good.</p>
+          </div>
+        </li>
+        <li>
+          <span class="who">$1.00</span>
+          <div>
+            <h3>From a contract</h3>
+            <p>Escrow USDC, open a job against an intent, receive the answer through <code>subnetMessage</code>. The contract on this page is a working receiver you can copy.</p>
+          </div>
+        </li>
+      </ol>
+      <p style="margin-top:20px"><a href="https://github.com/PugarHuda/amanat/blob/main/docs/use-amanat.md">Copy-paste configs and the full field reference</a></p>
+    </div>
+  </section>
+
+  <footer>
+    <span>Amanat: a miner, a scoring module and a contract on Telegraph Protocol, settled on Base Sepolia.</span>
+    <span>
+      Weather, marine, ensemble and archive data by <a href="https://open-meteo.com">Open-Meteo</a>,
+      <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>; storm risk derived from
+      their published wind, gust, precipitation and wave readings. Cyclone positions by <a href="https://www.gdacs.org">GDACS</a>.
+    </span>
+    <span><a href="https://github.com/PugarHuda/amanat">github.com/PugarHuda/amanat</a> · <a href="https://github.com/PugarHuda/amanat/blob/main/docs/bug-report.md">what broke on the network</a></span>
+  </footer>
+
+</main>
+
+</body>
+</html>

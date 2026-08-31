@@ -95,6 +95,7 @@ async function endpointOf(spec, which) {
 const HERE = dirname(fileURLToPath(import.meta.url));
 // One file, read once. The page is static and the server has no build step.
 const PAGE = readFileSync(join(HERE, "public/index.html"));
+const USE = readFileSync(join(HERE, "public/use.html"));
 const LOGO = readFileSync(join(HERE, "public/logo.svg"));
 const OPENAPI = readFileSync(join(HERE, "public/openapi.json"));
 const LLMS = readFileSync(join(HERE, "public/llms.txt"));
@@ -141,6 +142,14 @@ export const server = createServer(async (req, res) => {
     if (pathname === "/" || pathname === "/index.html") {
       res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Content-Length": PAGE.length });
       return res.end(PAGE);
+    }
+
+    // The four ways in, on their own plate. It is the one section written for a
+    // builder rather than a judge, and the front page has to prove the loop
+    // closes inside a minute — so this is the section that can afford a click.
+    if (pathname === "/use" || pathname === "/use.html") {
+      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Content-Length": USE.length });
+      return res.end(USE);
     }
 
     // Health, with enough in it to act on.
@@ -232,6 +241,7 @@ export const server = createServer(async (req, res) => {
       const body = `<?xml version="1.0" encoding="UTF-8"?>\n` +
         `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
         `  <url><loc>${SITE}/</loc><changefreq>hourly</changefreq></url>\n` +
+        `  <url><loc>${SITE}/use</loc><changefreq>monthly</changefreq></url>\n` +
         `</urlset>\n`;
       res.writeHead(200, { "Content-Type": "application/xml; charset=utf-8", "Content-Length": Buffer.byteLength(body) });
       return res.end(body);

@@ -13,6 +13,7 @@ Every answer is a weather report plus the scalars behind it: temperature, wind, 
 
 ## Read it
 
+- [Four ways in](https://amanat-miner.vercel.app/use): plain HTTP, MCP, the Engine, or an on-chain job — cheapest first
 - [OpenAPI](https://amanat-miner.vercel.app/openapi.json): every route and schema
 - [Signing key](https://amanat-miner.vercel.app/.well-known/amanat.json): verify an answer with Node's crypto.verify and nothing else
 - [Source](https://github.com/PugarHuda/amanat): miner, scorer, contract, agent

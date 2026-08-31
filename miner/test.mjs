@@ -582,6 +582,26 @@ console.log("a place name beats two decimals that only look like a position");
 }
 console.log("a geocoder that is down says so, instead of denying the place exists");
 
+// ── the two pages are one design system, not two ───────────────────────────
+{
+  // DESIGN.md is law, and the Impeccable detector reads inline styles only — it
+  // returns [] for an external stylesheet even when that file carries a
+  // box-shadow, a radius and a gradient, which was measured before this split.
+  // So the style block has to stay inline on both pages, and the only thing
+  // stopping the two copies drifting apart is this check.
+  const { readFileSync } = await import("node:fs");
+  const cut = (f) => {
+    const html = readFileSync(new URL(f, import.meta.url), "utf8");
+    const a = html.indexOf("<style>");
+    const b = html.indexOf("</style>");
+    assert.ok(a > 0 && b > a, `${f} must carry its styles inline, or the detector stops seeing them`);
+    return html.slice(a, b);
+  };
+  assert.equal(cut("public/use.html"), cut("public/index.html"),
+    "index.html and use.html must carry the same style block byte for byte — edit both, or neither");
+}
+console.log("both pages carry the same design system, byte for byte");
+
 // ── risk is always a number, because it is an on-chain integer field ────────
 {
   // NaN would serialise to null, print as "low (NaN)", and be signed.

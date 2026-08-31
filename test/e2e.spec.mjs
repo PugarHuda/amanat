@@ -542,6 +542,25 @@ test.describe("the page @ui", () => {
     expect(errors).toEqual([]);
   });
 
+  test("the four ways in live on their own page, reachable from the nav @ui", async ({ page }) => {
+    await page.goto(BASE);
+
+    // The front page no longer carries the section; the nav leaves for it.
+    await expect(page.locator("#use")).toHaveCount(0);
+    await page.click('nav a[href="/use"]');
+    await expect(page).toHaveURL(new RegExp("/use$"));
+
+    // All four ways survived the move, cheapest first.
+    await expect(page.locator("#use-title")).toContainText("Call it from your own agent");
+    await expect(page.locator("ol.flow li")).toHaveCount(4);
+    await expect(page.locator("ol.flow .who").first()).toContainText("free");
+
+    // And the way back is the mark, plus every section link on the front page.
+    await expect(page.locator('a.mark[href="/"]')).toBeVisible();
+    await page.click('nav a[href="/#route"]');
+    await expect(page.locator("#route")).toBeVisible();
+  });
+
   test("fits a phone without clipping the navigation", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(BASE);

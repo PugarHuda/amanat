@@ -134,6 +134,14 @@ test.describe("accessibility @ui", () => {
     }
   });
 
+  test("the four-ways-in page audits as clean as the front page @ui", async ({ page }) => {
+    // It carries the same style block, but it is a page of its own now and an
+    // audit of the front page says nothing about it.
+    await page.goto(`${BASE}/use`);
+    await expect(page.locator("#use-title")).toBeVisible();
+    await audit(page, "/use");
+  });
+
   test("the page still works with motion turned off", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.route("**/forecast", (route) => route.fulfill({ json: FORECAST }));
