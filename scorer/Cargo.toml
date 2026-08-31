@@ -33,6 +33,10 @@ authenticity2 = []
 # York won. This profile reads which side a result verb points at. Nothing else
 # changes, and no other profile carries it.
 game = []
+# Same reading, plus the answer that names a winner without a verb. Registration
+# 2650 was refused at 14 ordering wins against 15 with its margin already past
+# the bar, and the case it lost was exactly that shape.
+game2 = ["game"]
 
 [dependencies]
 

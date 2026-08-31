@@ -880,6 +880,62 @@ fn is_loss_verb(w: &[u8]) -> bool {
     matches!(w, b"lost" | b"fell" | b"lose" | b"loses" | b"loss")
 }
 
+/// The side with the higher figure, when nothing in the text says who won.
+///
+/// Registration 2650 (31 August 2026) was refused on the ordering gate at 14 of
+/// 15 against a champion's 15, with the margin already past the bar — 0.6222
+/// against 0.5573. Our own fifteen-case corpus loses exactly one too, and it is
+/// the verbless shape: "Arsenal, 3-0. A clean sheet against Chelsea, full time"
+/// says who won without a verb to say it, and so does its mirror image
+/// "Chelsea, 3-0 against Arsenal at full time" say the opposite.
+///
+/// A scoreline binds a name to a figure by adjacency, so this pairs each name
+/// with the number that follows it and credits the largest. That reads "Boston
+/// 108, New York 112" correctly, which taking the first name would not.
+#[cfg(feature = "game2")]
+fn scored_highest(s: &[u8]) -> Side {
+    const SUBJECT_WORDS: usize = 2;
+    let mut recent = Side::empty();
+    let mut best = Side::empty();
+    let mut best_value: u32 = 0;
+    let mut seen_any = false;
+
+    for_each_word(s, |w| {
+        if w.iter().all(|b| b.is_ascii_digit()) {
+            if recent.n == 0 || w.len() > 6 {
+                return;
+            }
+            let mut v: u32 = 0;
+            for &b in w {
+                v = v * 10 + (b - b'0') as u32;
+            }
+            // Strictly greater, so a tie keeps the earlier name. A drawn
+            // ground truth has no winning verb, so nothing is compared against
+            // it and the choice never reaches a verdict.
+            if !seen_any || v > best_value {
+                best = recent;
+                best_value = v;
+                seen_any = true;
+            }
+            // The name that owns this figure is spent. Without this the window
+            // carries it into the next pairing, and "New York 108, Boston 112"
+            // credits a side named "York Boston" that shares a word with both.
+            recent = Side::empty();
+            return;
+        }
+        if is_stopword(w) {
+            return;
+        }
+        if recent.n == SUBJECT_WORDS {
+            recent.words.copy_within(1..SUBJECT_WORDS, 0);
+            recent.n -= 1;
+        }
+        recent.push(word_hash(w));
+    });
+
+    best
+}
+
 /// (winner, loser) as named by the first result verb in the text.
 #[cfg(feature = "game")]
 fn credited(s: &[u8]) -> (Side, Side) {
@@ -935,6 +991,12 @@ fn credited(s: &[u8]) -> (Side, Side) {
         }
         recent.push(word_hash(w));
     });
+
+    // No verb at all: the scoreline is the only thing that says who won.
+    #[cfg(feature = "game2")]
+    if winner.n == 0 && loser.n == 0 {
+        winner = scored_highest(s);
+    }
 
     (winner, loser)
 }
@@ -1623,6 +1685,25 @@ mod tests {
             // Stating the score without saying who won is incomplete, not
             // wrong, and the lexical side already charges for what is missing.
             assert!(!misattributes(KNICKS, b"The final score was 112-108."));
+        }
+
+        // The case registration 2650 was refused on: 14 ordering wins against a
+        // champion's 15, margin already past the bar.
+        #[cfg(feature = "game2")]
+        #[test]
+        fn a_scoreline_with_no_verb_still_names_a_winner() {
+            let gt = b"Arsenal beat Chelsea 3-0 in the Premier League (final). Winner: Arsenal.";
+            assert!(misattributes(gt, b"Chelsea, 3-0 against Arsenal at full time."));
+            assert!(!misattributes(gt, b"Arsenal, 3-0. A clean sheet against Chelsea, full time."));
+        }
+
+        // Taking the first name instead would read this one backwards.
+        #[cfg(feature = "game2")]
+        #[test]
+        fn the_larger_figure_names_the_winner_not_the_earlier_one() {
+            let gt = b"New York Knicks beat Boston Celtics 112-108 (final).";
+            assert!(!misattributes(gt, b"Boston 108, New York 112."));
+            assert!(misattributes(gt, b"New York 108, Boston 112."));
         }
 
         #[test]
