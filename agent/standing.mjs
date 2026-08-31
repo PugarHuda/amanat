@@ -82,9 +82,19 @@ export async function standing() {
   }
 
   const board = [...totals.entries()]
-    .map(([slug, t]) => ({ slug, total: t.sum, intents: t.intents }))
+    .map(([slug, t]) => ({ slug, total: t.sum, avg: t.sum / t.intents, intents: t.intents }))
     .sort((a, b) => b.total - a.total);
   const rank = board.findIndex((r) => r.slug === US) + 1;
+  // The rubric says "total normalized scores across all intents" without saying
+  // whether that is a sum or an average, and the two invert the strategy — so
+  // both are printed rather than one being chosen for you. A sum rewards
+  // breadth; an average rewards quality and is dragged down by a weak new
+  // intent. The rules' own justification — "the best Miner in every intent has
+  // a fair chance to win, regardless of how strict or easy their intent's
+  // Canonical Script is" — only holds under an average: under a sum a
+  // one-intent specialist can never beat a thirteen-intent generalist.
+  const avgBoard = board.filter((r) => r.intents >= 3).sort((a, b) => b.avg - a.avg);
+  const avgRank = avgBoard.findIndex((r) => r.slug === US) + 1;
 
   const served = all
     .map((m) => ({ slug: m.slug, requests: m.total_requests_served ?? 0 }))
@@ -100,6 +110,10 @@ export async function standing() {
     track1: {
       rank,
       of: board.length,
+      avg_rank: avgRank,
+      avg_of: avgBoard.length,
+      avg: (totals.get(US)?.sum ?? 0) / (totals.get(US)?.intents || 1),
+      avg_leaders: avgBoard.slice(0, 3).map((r) => ({ slug: r.slug, avg: r.avg, intents: r.intents })),
       total: totals.get(US)?.sum ?? 0,
       intents: ours.sort((a, b) => b.normalized - a.normalized),
       leaders: board.slice(0, 5),
@@ -121,10 +135,16 @@ export async function standing() {
 function print(s) {
   const t = s.track1;
   console.log(`\namanat standing — ${s.read_at.slice(0, 16).replace("T", " ")} UTC`);
-  console.log(`rubric: 75% normalized performance, summed across intents; 25% X engagement\n`);
+  console.log(`rubric: 75% normalized performance + 25% X engagement (hackathon.telegraphprotocol.com/rules)\n`);
 
-  console.log(`TRACK 1 — total normalized  ${t.total.toFixed(3)}   rank ${t.rank} of ${t.of}`);
-  console.log(`  prizes go to the top 3 by this number.\n`);
+  console.log(`TRACK 1 read as a SUM       ${t.total.toFixed(3)}   rank ${t.rank} of ${t.of}`);
+  console.log(`TRACK 1 read as an AVERAGE  ${t.avg.toFixed(3)}   rank ${t.avg_rank} of ${t.avg_of} (miners on 3+ intents)`);
+  console.log(`  The rubric does not say which. A sum rewards breadth; an average`);
+  console.log(`  rewards quality, and a weak new intent drags it down.`);
+  for (const r of t.avg_leaders) {
+    console.log(`   avg ${r.avg.toFixed(3)}  ${r.slug.padEnd(28)}${String(r.intents).padStart(2)} intents`);
+  }
+  console.log("");
   for (const r of t.leaders) {
     const mark = r.slug === "amanat-weather-risk" ? " <- us" : "";
     console.log(`   ${r.total.toFixed(3).padStart(6)}  ${r.slug.padEnd(28)}${String(r.intents).padStart(2)} intents${mark}`);
