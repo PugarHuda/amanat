@@ -283,11 +283,13 @@ built-in WebAssembly, so comparing against a champion needs no extra toolchain.
 
 ## On-chain so far
 
-**The loop closes.** `Amanat.sol` is deployed at
-[`0x0700c930…590c`](https://sepolia.basescan.org/address/0x0700c9300D5cfD8A4b2C7fBbaB2703087AB0590c)
-— source [verified on Sourcify](https://sourcify.dev/server/v2/contract/84532/0x0700c9300D5cfD8A4b2C7fBbaB2703087AB0590c),
+**The loop closes.** `Amanat.sol` is live at
+[`0x4A5ECEBd…9893`](https://sepolia.basescan.org/address/0x4A5ECEBdd8E011C50bE20C8C49988cf0d37B9893)
+— the address the page reads, holding a 3.00 USDC job budget and two open
+policies. The same source was verified on Sourcify at its previous address
+[`0x0700c930…590c`](https://sourcify.dev/server/v2/contract/84532/0x0700c9300D5cfD8A4b2C7fBbaB2703087AB0590c),
 creation and runtime bytecode both a full match, so what the chain runs is
-what this repo shows — and settles claims with nobody in the loop:
+what this repo shows. It settles claims with nobody in the loop:
 
 ```
 openPolicy -> requestCheck -> createJob(keccak256("STORM_ALERT"))
@@ -606,14 +608,40 @@ and cannot predict verdicts, and says so:
 the published `eval_score` is a frozen number, and `WEATHER_FORECAST` displays
 0.5302 while measuring 0.9898.
 
-**Track 3 — application.** Fourteen ERC-8183 jobs have ever been created on this
-network. **Eight of them are ours** — jobs 7 through 14, across two contracts.
-Jobs 7–11 settled through the callback and reached `Terminal`. Jobs 12, 13 and
-14 have sat in `Funded` since, the last of them opened against a freshly
-deployed contract on `STORM_ALERT` — the intent this miner then ranked 2 of 4
-on, and ranks 4 of 7 on at epoch 294. Nothing routed. The contract's Diamond
-escrow is zero and the Diamond has no withdrawal path, so there will be no ninth
-job. 70-plus paid Engine calls.
+**Track 3 — application.** Sixteen ERC-8183 jobs have ever been created on this
+network. **Ten of them are ours** — jobs 7 through 16, across three contracts.
+Jobs 7–11 settled through the callback and reached `Terminal`; 12, 13 and 14 sat
+in `Funded` and never moved.
+
+**Jobs 15 and 16, on 31 August, finally said why, and the answer was not what
+three weeks of this repo assumed.** Both declared
+`keccak256("STORM_ALERT")` — canonical on the Diamond — and carried a latitude,
+a longitude and a window. Both were answered, byte for byte identically, by a
+TLS certificate miner:
+
+```
+error:invalid_domain / domain:<nil> / verdict:unknown
+reason:No hostname was supplied with this request, so the TLS/SSL certificate
+       could not be analyzed. … Supply a domain such as example.com.
+```
+
+Two contracts, two coordinate pairs, two windows, one answer. **An on-chain job
+is handed to a miner from another domain regardless of the intent it declares.**
+That is why nothing has ever settled, it is not specific to this contract, and it
+means the on-chain half of the protocol does not work for anyone today. The
+parameters were almost certainly arriving all along — a TLS miner has no use for
+a latitude, so it reported the field it *did* need as missing, which from outside
+reads exactly like the mapping failure the earlier sections of
+[`docs/bug-report.md`](docs/bug-report.md) went looking for.
+
+The contract declined both rather than guessing: `Declined(policyId, "unreadable
+answer shape")`. Acting on intelligence it did not ask for is the one thing a
+parametric cover must never do, and that is the property these two jobs actually
+demonstrate. Decoding it took reading the callback calldata by hand — ERC-8183
+traffic does not appear in `daemon/api/questions`, so the on-chain rail is
+invisible in the only public feed the network has.
+
+80-plus paid Engine calls.
 
 **The contract's own rail held.** Policies 1 and 2 were opened against jobs
 that never returned. Twenty-five hours later `npm run expire` called
@@ -627,9 +655,10 @@ The failure the timeout was written for had not happened before 26 August;
 when it did, the book was not held hostage. The Diamond's escrow, by contrast,
 still has no exit.
 
-What is not working is as much of the result as what is: the on-chain rail
+What is not working is as much of the result as what is. The on-chain rail
 settled five jobs and then stopped, and from outside a job record says only
-`Funded` and never why.
+`Funded` and never why — until you decode the callback yourself, which is how the
+misrouting above was found on the sixteenth job rather than the seventh.
 
 ## The page
 
