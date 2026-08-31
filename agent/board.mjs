@@ -96,7 +96,9 @@ function readPaid(signer, ledger) {
       const risk = readRisk(answer.result);
       if (risk !== null) {
         ledger.routed++;
-        return { ...answer.result, risk, signal_hash: answer.signal_hash, miner: answer.miner_name };
+        const who = answer.miner_name ?? answer.miner_slug ?? "unnamed";
+        ledger.answered[who] = (ledger.answered[who] ?? 0) + 1;
+        return { ...answer.result, risk, signal_hash: answer.signal_hash, miner: who };
       }
       why = `${answer.miner_name} stated no readable risk`;
     } catch (e) {
@@ -128,7 +130,16 @@ async function main() {
   const budget = Number(flag(process.argv, "--budget", 0.70));
 
   const signer = dry ? null : wallet();
-  const ledger = { calls: 0, spent: 0, routed: 0, direct: 0, budget };
+  // `answered` tallies which miner the node actually chose, per routed call.
+  // The board was already paying for that answer and throwing the name away —
+  // and it is the most interesting thing a routed call produces. Over a week of
+  // runs it is a record of how probabilistic routing behaves on this network,
+  // which nothing else here or anywhere else publishes.
+  //
+  // It also settles a fair question about this board: whether screening lanes
+  // through the Engine is real demand or a loop paying itself. The tally says
+  // who answered, and most of the time it is not us.
+  const ledger = { calls: 0, spent: 0, routed: 0, direct: 0, budget, answered: {} };
 
   if (!dry) {
     const address = await signer.getAddress();
@@ -163,6 +174,9 @@ async function main() {
           km_from_start: l.km_from_start, eta_hours: l.eta_hours,
           lat: l.lat, lon: l.lon, risk: l.risk ?? null,
           condition: l.condition ?? null, signal_hash: l.signal_hash ?? null,
+          // Who the node routed this leg to. Null on the free rail, where
+          // nothing was routed and nobody was paid.
+          miner: l.miner ?? null,
         })),
       });
       const worst = route.worst ? route.worst.risk.toFixed(3) : "unread";
@@ -180,13 +194,26 @@ async function main() {
     rail: dry ? "free (miner HTTP, unverified)" : "paid (Telegraph Engine, verified)",
     trigger: 0.75,
     lanes,
-    telegraph: dry ? null : { calls: ledger.calls, spent_usd: Number(ledger.spent.toFixed(4)), routed: ledger.routed, schema_fallback: ledger.direct },
+    telegraph: dry ? null : {
+      calls: ledger.calls,
+      spent_usd: Number(ledger.spent.toFixed(4)),
+      routed: ledger.routed,
+      schema_fallback: ledger.direct,
+      // Miner name -> routed calls it answered this run, most first.
+      answered_by: Object.fromEntries(
+        Object.entries(ledger.answered).sort((a, b) => b[1] - a[1]),
+      ),
+    },
   };
 
   await writeFile(OUT, JSON.stringify(board, null, 2) + "\n");
   console.log(`\nwrote      board.json — ${lanes.filter((l) => l.worst).length} of ${lanes.length} lanes read`);
   if (!dry) {
     console.log(`telegraph  ${ledger.calls} calls, $${ledger.spent.toFixed(2)} — ${ledger.routed} routed, ${ledger.direct} schema fallback`);
+    const answered = Object.entries(ledger.answered).sort((a, b) => b[1] - a[1]);
+    if (answered.length) {
+      console.log(`routed to  ${answered.map(([who, n]) => `${who} ${n}`).join(", ")}`);
+    }
   }
 }
 

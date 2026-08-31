@@ -113,6 +113,11 @@ export async function assessRoute({ from, to, speedKmh = 37, everyKm = 250, max 
         valid_at: reading.valid_at,
         summary: reading.summary,
         signal_hash: reading.signal_hash ?? null,
+        // Which miner the reading came from, when the caller's `read` knows.
+        // The board's paid rail routes each leg through the Engine and the node
+        // picks who answers — so this is the network's own choice, and it was
+        // being computed and dropped one layer up.
+        miner: reading.miner ?? null,
       });
     } catch (e) {
       // One unreachable waypoint must not discard the rest of the route. It is
