@@ -121,40 +121,38 @@ function readPaid(signer, ledger) {
 }
 
 /**
- * The other half of a lane's risk, asked only when the weather half is already
- * bad enough to matter.
+ * The other half of a lane's risk: what the news says, asked once a run.
  *
  * A storm is not the only thing that shuts a shipping lane. A strike, a port
- * closure, a blockade or a grounded ship in a canal stops traffic just as hard,
- * and none of it appears in a forecast. So a lane whose worst hour is already
- * elevated gets a second question on a different intent, and the board reports
- * both.
+ * closure, a blockade or a grounded ship stops traffic just as hard, and none
+ * of it appears in a forecast.
  *
- * Conditional rather than blanket, for two reasons and only one of them is
- * cost. Asking about disruption on a calm lane is noise — there is nothing to
- * decide — and a board that asks the same question about everything is not
- * combining signals, it is collecting them. The threshold is what makes it a
- * decision.
+ * The first version of this asked per lane and named the port. Every one of
+ * those was routed to a *weather* miner and answered with a forecast — three
+ * paid calls a run buying back the number the board already had. Two calls
+ * found out why:
  *
- * The intent is declared by the shape of the question rather than by an id: the
- * Engine classifies and routes, which is the half of the protocol a direct call
- * never exercises. Whichever news miner it picks is the network's choice, and
- * `answered_by` records it beside the weather miners.
+ *   "…disruption affecting Manila, Philippines?"        -> LiveCert, a forecast
+ *   "…reported in the news over the last 48 hours?"      -> Tavily, search results
+ *
+ * A place name that can be geocoded outweighs everything else in the sentence
+ * when the Engine classifies it. A region does not: naming Southeast Asia and
+ * East Asia still routes to search. So the question is regional and asked once,
+ * which is a third of the cost and the only version that actually reaches
+ * another domain.
+ *
+ * Still gated on a lane being elevated. If every lane is calm there is nothing
+ * to decide, and a board that asks regardless is collecting signals rather than
+ * combining them.
  */
 const DISRUPTION_FLOOR = 0.5;
 
-// And at most this many a run, worst first. The floor alone is not a budget: on
-// a rough day six of ten lanes clear 0.5, which is twice what this feature was
-// costed at. Three is the number that was budgeted, and the three worst lanes
-// are the ones a reader would check anyway.
-const DISRUPTION_MAX = 3;
-
-async function disruptionFor(place, signer, ledger) {
+async function regionalDisruption(signer, ledger) {
   if (ledger.spent + 0.01 > ledger.budget) return { skipped: "run budget reached" };
   try {
     const answer = await ask(
-      `Are there any reports in the last 48 hours of port closures, strikes, blockades or ` +
-      `shipping disruption affecting ${place}? Answer with what was reported and when.`,
+      "What port closures, dock strikes or shipping blockades were reported in the news " +
+      "across Southeast Asia and East Asia over the last 48 hours?",
       { signer },
     );
     ledger.calls++;
@@ -166,16 +164,16 @@ async function disruptionFor(place, signer, ledger) {
     const r = answer.result;
     const said = typeof r === "string" ? r : (r?.summary ?? r?.answer ?? r?.reason ?? JSON.stringify(r));
     return {
-      asked: place,
+      question: "shipping disruption reported across SE and E Asia, last 48h",
       miner: who,
       signal_hash: answer.signal_hash ?? null,
-      // Trimmed, not interpreted. The board does not decide what a news answer
-      // means about a lane — it publishes the weather number it settles on and
-      // the human-readable second opinion beside it.
-      reported: String(said ?? "").slice(0, 600),
+      // Trimmed, never interpreted. The board settles on the weather number and
+      // prints the second opinion beside it; deciding what a news answer means
+      // for a lane is the reader's job, not this script's.
+      reported: String(said ?? "").slice(0, 800),
     };
   } catch (e) {
-    return { asked: place, error: e.message.slice(0, 120) };
+    return { error: e.message.slice(0, 140) };
   }
 }
 
@@ -248,21 +246,14 @@ async function main() {
     }
   }
 
-  // A second intent, on the lanes where it changes a decision. Skipped entirely
-  // on the free rail: there is nothing to route and nobody to pay.
+  // A second intent, once, when any lane is elevated enough for it to matter.
+  let disruption = null;
   if (!dry) {
-    const elevated = lanes
-      .filter((l) => l.worst && l.worst.risk >= DISRUPTION_FLOOR)
-      .sort((a, b) => b.worst.risk - a.worst.risk)
-      .slice(0, DISRUPTION_MAX);
+    const elevated = lanes.filter((l) => l.worst && l.worst.risk >= DISRUPTION_FLOOR);
     if (elevated.length) {
-      const over = lanes.filter((l) => l.worst && l.worst.risk >= DISRUPTION_FLOOR).length;
-      console.log(`\ncross-domain  ${elevated.length} of ${over} lane(s) at or above ${DISRUPTION_FLOOR} — asking NEWS`);
-      for (const lane of elevated) {
-        lane.disruption = await disruptionFor(lane.to, signer, ledger);
-        const d = lane.disruption;
-        console.log(`  ${lane.name.padEnd(28)} ${d.error ? `could not ask — ${d.error}` : d.skipped ? d.skipped : `via ${d.miner}`}`);
-      }
+      console.log(`\ncross-domain  ${elevated.length} lane(s) at or above ${DISRUPTION_FLOOR} — asking the news rail once`);
+      disruption = await regionalDisruption(signer, ledger);
+      console.log(`  ${disruption.error ? `could not ask — ${disruption.error}` : disruption.skipped ?? `via ${disruption.miner}`}`);
     }
   }
 
@@ -271,6 +262,7 @@ async function main() {
     rail: dry ? "free (miner HTTP, unverified)" : "paid (Telegraph Engine, verified)",
     trigger: 0.75,
     lanes,
+    disruption,
     telegraph: dry ? null : {
       calls: ledger.calls,
       spent_usd: Number(ledger.spent.toFixed(4)),
