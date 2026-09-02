@@ -1044,3 +1044,51 @@ cannot be fetched.
 
 `node agent/audit-jobable.mjs` reports the split, and refuses to call an
 unreadable registration evidence of anything.
+
+## A place name decides the intent, whatever the question asks
+
+Ask the Engine about port closures at a named port and a weather miner answers
+with a forecast. Two paid calls, one variable changed:
+
+```
+"Are there any reports in the last 48 hours of port closures, strikes,
+ blockades or shipping disruption affecting Manila, Philippines?"
+    -> LiveCert Operational Signals
+    -> "The wind and storm forecast for Manila over the next…"
+
+"What port closures, dock strikes or shipping blockades were reported
+ in the news over the last 48 hours?"
+    -> Tavily Web Search
+    -> {"query": "...", "results": [ … ]}
+```
+
+Same subject, same verbs, same 48-hour window. The only difference is a
+geocodable place name, and it moves the classification from search to weather.
+Naming a *region* does not: "across Southeast Asia and East Asia" still routes
+to Tavily. It is specifically a place that resolves to coordinates.
+
+**Why it matters beyond one board.** An application on this network cannot ask a
+non-weather question *about a named location*. Port strikes at Rotterdam, an
+exchange outage in Singapore, a factory fire in Shenzhen, an election result in
+Manila — every one of those is a question about a place, and the routing appears
+to read the place and stop. Multi-intent and cross-domain work is one of the
+high-value areas the hackathon rules name, and this closes the most natural
+shape of it: combining a location-scoped signal from two different domains.
+
+We found it by shipping the mistake. A first version of the storm board asked,
+per elevated lane, whether that port had been disrupted. It ran twice and spent
+six paid calls before the answers were read closely enough to notice they were
+forecasts — the board had bought back the number it already had, three times a
+run. The current version asks once, regionally, and reaches the news rail.
+
+Reproducing costs two calls and no wallet beyond the $0.02:
+
+```bash
+node --env-file=.env -e "
+const {ask} = await import('./agent/telegraph.mjs');
+for (const q of [
+  'Are there any reports in the last 48 hours of port closures affecting Manila, Philippines?',
+  'What port closures or dock strikes were reported in the news over the last 48 hours?',
+]) console.log((await ask(q)).miner_name);
+"
+```
