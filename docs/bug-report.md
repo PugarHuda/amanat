@@ -1092,3 +1092,52 @@ for (const q of [
 ]) console.log((await ask(q)).miner_name);
 "
 ```
+
+## Correction: rank is not what routes an on-chain job
+
+The sections above concluded that on-chain jobs fail because the router follows
+rank, and the rank-1 miner on these intents happened to declare no
+`on_chain.request` mapping. That explanation was wrong, and the network
+disproved it by changing underneath us.
+
+On 3 September the `STORM_ALERT` leaderboard reordered:
+
+| rank | miner | can receive a job |
+|---|---|---|
+| 1 | `skywire-storm-alert` | **yes** |
+| 2 | `chainsight-oracle` | **yes** |
+| 3 | `txlens` | no |
+| 4 | `livecert` | no |
+| 5 | `tempest-storm-intelligence` | **yes** |
+| 6 | `amanat-weather-risk` | **yes** |
+| 7 | `bittensor-sn18-zeus` | no |
+
+Four of seven can now receive a job, including both of the top two. Under the
+rank explanation, jobs should now mostly succeed. Two more were opened, jobs 25
+and 26, with the escrow funded specifically to test it.
+
+**Both went to `txlens` — rank 3 — and came back "no transaction hash was
+supplied."** That makes seven jobs in total: four to `livecert`, three to
+`txlens`, and **not one to any of the four miners that can actually serve them**.
+
+Seven consecutive draws avoiding every eligible miner is not rank-following and
+it is not chance. If the router picked uniformly among the seven, landing on a
+non-eligible miner all seven times has a probability of about **0.0009**. If it
+followed the published rank it would have hit `skywire-storm-alert` first.
+
+So the honest statement is narrower than the one this report made before: **an
+ERC-8183 job is consistently delivered to a miner that declares no
+`on_chain.request` mapping, and whatever selects that miner is not the public
+leaderboard.** `livecert` and `txlens` are the two largest multi-intent miners
+on the network and the two busiest after ours, which is a pattern but not an
+explanation — `chainsight-oracle` carries fourteen endpoints, declares the
+mapping, and has never once been selected.
+
+What has not changed is the consequence. Every job is answered from an endpoint
+that was asked for something else, the contract declines rather than guessing,
+and the on-chain rail has never settled for anyone.
+
+Seven jobs, ~$7 of escrow, and the useful part is the negative result: **do not
+assume the published rank tells you where an on-chain job will go.** An
+application that budgets for on-chain settlement on this network should assume
+it will not arrive.
