@@ -100,6 +100,16 @@ function readPaid(signer, ledger) {
         ledger.answered[who] = (ledger.answered[who] ?? 0) + 1;
         return { ...answer.result, risk, signal_hash: answer.signal_hash, miner: who };
       }
+      // Routed, answered, paid for — and the answer states no risk this board
+      // can act on. That is not a routing failure and recording it as one made
+      // `routed: 0` on a run where all thirty legs routed perfectly.
+      //
+      // It is usually not the miner's fault either. SkyWire publishes a field
+      // called `risk` whose own schema calls it "confidence in the assessment",
+      // and declares `confidence_field: risk` in its signal mapping. readRisk
+      // refuses it on purpose: reading a confidence as a risk is what makes a
+      // contract pay a claim that was never reported.
+      ledger.unreadable++;
       why = `${answer.miner_name} stated no readable risk`;
     } catch (e) {
       if (e.message === "run budget reached") throw e;
@@ -196,7 +206,7 @@ async function main() {
   // It also settles a fair question about this board: whether screening lanes
   // through the Engine is real demand or a loop paying itself. The tally says
   // who answered, and most of the time it is not us.
-  const ledger = { calls: 0, spent: 0, routed: 0, direct: 0, budget, answered: {}, crossDomain: 0 };
+  const ledger = { calls: 0, spent: 0, routed: 0, direct: 0, budget, answered: {}, crossDomain: 0, unreadable: 0 };
 
   if (!dry) {
     const address = await signer.getAddress();
@@ -267,6 +277,11 @@ async function main() {
       calls: ledger.calls,
       spent_usd: Number(ledger.spent.toFixed(4)),
       routed: ledger.routed,
+      // Routed and paid for, but the answer named no risk in a form this board
+      // will act on. Counted apart from `routed` so a run of thirty successful
+      // routes does not read as zero, and apart from a real routing failure so
+      // the two are not confused.
+      routed_unreadable: ledger.unreadable,
       schema_fallback: ledger.direct,
       cross_domain_calls: ledger.crossDomain,
       // Miner name -> routed calls it answered this run, most first.
@@ -279,7 +294,10 @@ async function main() {
   await writeFile(OUT, JSON.stringify(board, null, 2) + "\n");
   console.log(`\nwrote      board.json — ${lanes.filter((l) => l.worst).length} of ${lanes.length} lanes read`);
   if (!dry) {
-    console.log(`telegraph  ${ledger.calls} calls, $${ledger.spent.toFixed(2)} — ${ledger.routed} routed, ${ledger.direct} schema fallback`);
+    console.log(
+      `telegraph  ${ledger.calls} calls, $${ledger.spent.toFixed(2)} — ${ledger.routed} routed, ` +
+      `${ledger.unreadable} routed but unreadable, ${ledger.direct} schema fallback`,
+    );
     const answered = Object.entries(ledger.answered).sort((a, b) => b[1] - a[1]);
     if (answered.length) {
       console.log(`routed to  ${answered.map(([who, n]) => `${who} ${n}`).join(", ")}`);
