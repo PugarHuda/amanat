@@ -195,6 +195,56 @@ outside the node can see — which is the mistake registration 1112 paid for onc
 already. What is worth keeping is the measurement: **a mechanism can be plainly
 right on every case you can construct and still cost you a case you cannot.**
 
+## Registration 2754: it passed both gates that had refused it, and lost on the third
+
+`game3` was the third attempt on `GAME_RESULT` and the first built from a
+measurement rather than a guess — restricting attribution to unambiguous verbs,
+after finding that the rule itself was inverting relative clauses and "took a
+beating". The node's verdict:
+
+| | 2650 `game` | 2652 `game2` | **2754 `game3`** |
+|---|---|---|---|
+| candidate margin | 0.6222 | 0.6451 | **0.7402** |
+| bar (champion margin) | 0.5573 | 0.5573 | 0.5115 |
+| ordering | 14 / 15 | 14 / 15 | **14 / 14 — tied, and tied passes** |
+| agreement (Spearman) | not run | not run | **0.3499, needs 0.60** |
+| historical rows | 0 | 0 | 62 |
+| verdict | rejected, ordering | rejected, ordering | **rejected, agreement** |
+
+**Both gates that refused the first two attempts were cleared.** Separation by
+almost half again over the bar; ordering tied at 14 of 14, which the rule
+accepts. The refusal came from the gate that had never run before, because this
+was the first evaluation with real traffic behind it: 62 historical rows instead
+of zero.
+
+### Why that rejection is the strongest evidence in this directory
+
+The agreement gate asks whether a candidate ranks *real miner answers* the way
+the incumbent does. This module was built because the incumbent cannot tell who
+won — it scores "Boston beat the New York Knicks 112-108" at **1.0000** against a
+ground truth where the Knicks won, and on 35 cases its average margin is
+**−0.0435**, meaning it ranks wrong answers above right ones.
+
+So the two facts are the same fact. A scorer that fixes that behaviour *must*
+disagree with the champion on real traffic, because the champion's ordering is
+the thing being corrected. Agreeing at 0.60 would mean reproducing the error.
+
+That is not an argument that the gate is wrong. It is a good gate against a good
+champion, and it is what stops a random binary taking a working slot. But on an
+intent whose champion is measurably broken it is unpassable by anything that
+fixes it, and this repo now has the numbers on both sides of that: 0.7402 of
+separation, 14 of 14 on ordering, and 0.3499 of agreement with a module that
+scores backwards.
+
+It also matches what registrations 1250 and 1253 showed on 27 August, sent a
+minute apart: the one agreeing at 0.6868 went active, the one at 0.1288 was
+refused, and separation and ordering did not decide either.
+
+**Three binaries spent, and the third failed better than the first two.** No
+fourth is being sent. The result is on the record instead, which for a track
+scored 50% on improvement over the canonical script is worth more than a slot
+would have been.
+
 ## The gates, in the order they bite
 
 1. **Structural** — no host imports, `alloc`/`dealloc`/`rank_answer` exported,
