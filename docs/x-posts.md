@@ -61,8 +61,8 @@ that went was "no sign-up".
 > Free, no wallet:
 > amanat-miner.vercel.app
 >
-> Ten shipping lanes screened through @Telegraphprotoc twice a day. A pin in the
-> red is a claim the contract settles itself.
+> Ten shipping lanes screened through @Telegraphprotoc every six hours. A pin in
+> the red is a claim the contract settles itself.
 
 **Alternate, 261 — leads with the film** (attach `media/amanat-demo.mp4`, X takes
 video up to 2:20 and this is 1:04):
@@ -391,7 +391,7 @@ post it; see the note there.
 
 **27 — what replaced it**
 
-> Now it reads a board screened through @Telegraphprotoc every twelve hours.
+> Now it reads a board screened through @Telegraphprotoc every six hours.
 >
 > One cached request instead of five live ones, and every column has a signal
 > hash behind it instead of an unverified reading.

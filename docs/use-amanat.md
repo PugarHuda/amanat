@@ -145,8 +145,8 @@ npm run route -- "Cebu" "Manila" --legs 6
 curl https://amanat-miner.vercel.app/api/board
 ```
 
-Five Southeast and East Asian shipping lanes, screened through Telegraph every
-twelve hours by `agent/board.mjs`. Each leg carries the signal hash of the paid
+Ten Southeast and East Asian shipping lanes, screened through Telegraph every
+six hours by `agent/board.mjs`. Each leg carries the signal hash of the paid
 call behind it, so reading the board costs nothing while the readings in it were
 still bought and verified. The gauge on the landing page is drawn from this.
 

@@ -695,14 +695,16 @@ async function loadPlot() {
   const n = board.lanes.length;
   $("planehead").textContent = `${WORDS[n] ?? n} lane${n === 1 ? "" : "s"}, read now`;
   // A timestamp alone does not tell a reader whether they are looking at
-  // current weather. The board refreshes every twelve hours, so anything much
-  // older than that means the schedule has stopped, and a stale storm reading
-  // presented as current is worse than no reading at all.
+  // current weather. The board refreshes every six hours, so a board older than
+  // two of those means consecutive runs failed rather than one being late — and
+  // a stale storm reading presented as current is worse than no reading at all.
+  // The threshold was 26 hours, left over from the twelve-hour schedule, which
+  // let the board fall four runs behind before it admitted anything.
   const ageHours = (Date.now() - Date.parse(board.generated_at)) / 3600e3;
   const when = board.generated_at.replace("T", " ").slice(0, 16) + " UTC";
   const stamp = $("plotstamp");
-  stamp.textContent = ageHours > 26 ? `${when} — stale, the schedule has stopped` : when;
-  stamp.className = ageHours > 26 ? "mono stale" : "mono";
+  stamp.textContent = ageHours > 13 ? `${when} — stale, the schedule has stopped` : when;
+  stamp.className = ageHours > 13 ? "mono stale" : "mono";
 }
 
 // The hook, the place, the number: three fixed positions on every reading.

@@ -574,6 +574,10 @@ scores has no ranking worth agreeing with.
 any miner on the network, and 21% of the 1738 requests served across all 95
 registrations. Our registered payout address holds **0.0000 USDC**.
 
+*(Measured 27 August, when we served the most. On 4 September `DegenLens` serves
+1,346 to our 553, so the heading names a position we no longer hold. The finding
+does not rest on it: whoever is busiest, the payout is still zero.)*
+
 That is not a complaint about the amount. It is that the number is zero, and
 the ledger says the money arrived somewhere.
 

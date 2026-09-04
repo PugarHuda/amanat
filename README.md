@@ -283,9 +283,10 @@ thing that can act on a reading.**
   ```
 
 - The storm board — ten shipping lanes screened through the Telegraph Engine
-  twice a day, about 30 paid calls, published to a branch and served at
-  `/api/board`. Most of those calls are routed by the node to whichever miner it
-  ranks best, which is usually not this one.
+  every six hours, about 30 paid calls a run, published to a branch and served
+  at `/api/board`. Most of those calls are routed by the node to whichever miner
+  it ranks best, which is usually not this one: the run of 4 September sent all
+  thirty legs to `ChainSight`, and the board publishes that tally per run.
 
 ### Why we only use name-hashed intents
 
@@ -515,13 +516,16 @@ at the addresses given.
 
 **Track 1 — miner.** Registration 280, `amanat-weather-risk`, id `20260821`,
 active on `WEATHER_FORECAST`, `WEATHER_CHECK` and `STORM_ALERT`, served from
-https://amanat-miner.vercel.app. **398 requests served, the most of any miner on
-this network** — the next busiest, `onlookout-weather`, has served 304, out of
-129 registered. At epoch 297: **8 of 10** on `WEATHER_CHECK` at 0.012022,
-**7 of 14** on `WEATHER_FORECAST` at 0.005138, **7 of 7** on `STORM_ALERT` at
-0.005261. Normalized, that is 0.769, 0.584 and 0.476 — a total of **1.829,
-15th of 128**, or 0.610 as an average, **8th of 27** among miners on three or
-more intents.
+https://amanat-miner.vercel.app. **553 requests served, 2nd of 129 registered
+miners** — `DegenLens` passed us on 3 September and serves 1,346. At epoch 306:
+**5 of 11** on `WEATHER_CHECK` at 0.014321, **2 of 14** on `WEATHER_FORECAST` at
+0.000529, **4 of 7** on `STORM_ALERT` at 0.003607. Normalized, that is 0.912,
+0.891 and 0.314 — a total of **2.118, 9th of 129**, or 0.706 as an average,
+**3rd of 21** among miners on three or more intents.
+
+Read that ordering as noise, not standing: no miner on any of the three has
+cleared the scoring band, so the ranks move between epochs on identical code.
+`node agent/standing.mjs` reprints all of it from public reads.
 
 Where it started, at epoch 285: 3 of 4 on `STORM_ALERT` and 9 of 11 on
 `WEATHER_FORECAST`. The field on every weather intent has roughly tripled since,
