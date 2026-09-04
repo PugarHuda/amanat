@@ -239,9 +239,10 @@ test.describe("the board can go stale, and must say so @ui", () => {
     await expect(page.locator("#plotstamp")).not.toHaveClass(/stale/);
   });
 
-  // The schedule writes every twelve hours. If it stops — a missing secret, a
-  // disabled workflow — the board keeps serving the last run forever, and a
-  // storm reading from two days ago shown as current is worse than none.
+  // The schedule writes every six hours. If it stops — a missing secret, a
+  // disabled workflow, a run that pays for nothing — the board keeps serving the
+  // last run forever, and a storm reading from two days ago shown as current is
+  // worse than none.
   test("a board older than the schedule says so, in the colour that means trouble", async ({ page }) => {
     await page.route("**/api/board", (route) =>
       route.fulfill({ json: lanes(new Date(Date.now() - 48 * 3600e3).toISOString()) }));
@@ -251,6 +252,22 @@ test.describe("the board can go stale, and must say so @ui", () => {
     await expect(page.locator("#plotstamp")).toHaveClass(/stale/);
     // and it still draws the lanes: stale is not the same as absent
     expect(await page.locator("#plot .reading").count()).toBe(2);
+  });
+
+  // The boundary, because the boundary is what actually broke. The threshold
+  // was 26 hours from the twelve-hourly schedule and nothing moved it when the
+  // board went six-hourly, so four consecutive failed runs read as current.
+  // Fourteen hours is two missed runs.
+  test("two missed runs is stale, one late run is not", async ({ page }) => {
+    await page.route("**/api/board", (route) =>
+      route.fulfill({ json: lanes(new Date(Date.now() - 14 * 3600e3).toISOString()) }));
+    await page.goto(BASE);
+    await expect(page.locator("#plotstamp")).toHaveClass(/stale/);
+
+    await page.route("**/api/board", (route) =>
+      route.fulfill({ json: lanes(new Date(Date.now() - 7 * 3600e3).toISOString()) }));
+    await page.goto(BASE);
+    await expect(page.locator("#plotstamp")).not.toHaveClass(/stale/);
   });
 
   test("no board at all draws nothing and says why", async ({ page }) => {

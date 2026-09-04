@@ -44,6 +44,19 @@ const BOARD_URL = process.env.AMANAT_BOARD_URL
 const SURVEY_URL = process.env.AMANAT_SURVEY_URL
   ?? "https://raw.githubusercontent.com/PugarHuda/amanat/board/survey.json";
 
+// When a published board stops being a reading and becomes a record.
+//
+// The board runs every six hours, so one missed run is a late run and two is a
+// schedule that has stopped. This was 26 hours, left from the twelve-hourly
+// cadence, and nothing moved it when the schedule changed — which let the board
+// fall four runs behind while still presenting itself as current. The run of
+// 3 September at 20:43 made zero paid calls and neither this endpoint nor the
+// landing page said a word.
+//
+// The landing page computes the same thing against the same field; if this
+// number moves, `ageHours > 13` in miner/public/index.html moves with it.
+const STALE_AFTER_HOURS = 13;
+
 // Freshness for the three branch files is decided here, not upstream.
 //
 // `cache: "no-store"` alone did not do it. It went in when the board looked
@@ -214,9 +227,7 @@ export const server = createServer(async (req, res) => {
           ? {
               generated_at: board.generated_at,
               age_hours: Number(ageHours.toFixed(1)),
-              // The schedule runs every twelve hours, so past a day the run has
-              // stopped rather than merely been slow.
-              stale: ageHours > 26,
+              stale: ageHours > STALE_AFTER_HOURS,
               lanes: board.lanes?.length ?? 0,
             }
           : { published: false },

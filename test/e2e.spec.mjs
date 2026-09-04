@@ -797,7 +797,7 @@ test.describe("health reports what an operator needs", () => {
     } else {
       expect(Date.parse(h.board.generated_at)).not.toBeNaN();
       expect(typeof h.board.age_hours).toBe("number");
-      expect(h.board.stale).toBe(h.board.age_hours > 26);
+      expect(h.board.stale).toBe(h.board.age_hours > 13);
       expect(h.board.lanes).toBeGreaterThan(0);
     }
 

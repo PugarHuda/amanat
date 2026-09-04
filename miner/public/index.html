@@ -699,7 +699,9 @@ async function loadPlot() {
   // two of those means consecutive runs failed rather than one being late — and
   // a stale storm reading presented as current is worse than no reading at all.
   // The threshold was 26 hours, left over from the twelve-hour schedule, which
-  // let the board fall four runs behind before it admitted anything.
+  // let the board fall four runs behind before it admitted anything. /health
+  // decides the same thing on the same field: STALE_AFTER_HOURS in server.mjs
+  // is the sibling of the 13 below, and they move together.
   const ageHours = (Date.now() - Date.parse(board.generated_at)) / 3600e3;
   const when = board.generated_at.replace("T", " ").slice(0, 16) + " UTC";
   const stamp = $("plotstamp");
