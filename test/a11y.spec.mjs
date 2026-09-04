@@ -134,7 +134,7 @@ test.describe("accessibility @ui", () => {
     }
   });
 
-  test("the four-ways-in page audits as clean as the front page @ui", async ({ page }) => {
+  test("the ways-in page audits as clean as the front page @ui", async ({ page }) => {
     // It carries the same style block, but it is a page of its own now and an
     // audit of the front page says nothing about it.
     await page.goto(`${BASE}/use`);
