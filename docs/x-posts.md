@@ -85,26 +85,40 @@ video up to 2:20 and this is 1:04):
 
 ## What to post next
 
-Re-checked against the live node on 31 August. In this order:
+Re-checked against the live node on **4 September**, and reordered: Tracks 1
+and 2 are closed, so every post between now and the 7th is working for Track 3,
+where X is 25% and real users are most of the 45%. That changes the ordering —
+posts that ask for a visit or an install now outrank posts that report a
+finding, and the finding posts are the ones that make a stranger trust the
+thing enough to click.
 
-1. **31 — busiest miner on the network.** 389 requests against the runner-up's
-   304, out of 127 live miners. Requests served is an official Track 1 criterion
-   and this is the only number where we are unambiguously first.
-2. **32 — the champion scorer is near-binary.** Explains every weather score on
+The 31 August ordering led with post 31, which has since gone false. Do not
+post it; see the note there.
+
+1. **36 — routing is a coin toss.** The replacement, and the strongest thing we
+   have that nobody else is publishing: which miner the Engine actually picked,
+   measured by an application that pays for the answers. Track 3 in one post —
+   it is only sayable by someone whose app really uses the network.
+2. **12 — something you can click.** Asks for a visit rather than a read.
+   Straight at the 45%, and it should not wait behind three technical posts.
+3. **The MCP launch post** (top of this file) if it has not gone out. `npx -y
+   amanat-mcp` is the only line here that turns a reader into a user, and npm
+   downloads say the package has had no organic installs since 2 September.
+4. **30 — the contract paid claims on a field it could not name.** The Track 3
+   argument in three lines, and still true.
+5. **37 — my own board lied to me for two days.** Publishing your own failure is
+   what makes the usage numbers in the other posts believable.
+6. **32 — the champion scorer is near-binary.** Explains every weather score on
    the board at once, and anyone can reproduce it from the published `wasm_url`.
-3. **33 — the hypothesis I falsified myself.** A negative result nobody had to
+7. **33 — the hypothesis I falsified myself.** A negative result nobody had to
    publish. Rare, and it costs nothing to check: registration 2072 is on the API.
-4. **35 — an outage wearing a 400.** One concrete bug with a general lesson for
+8. **35 — an outage wearing a 400.** One concrete bug with a general lesson for
    every miner on the network, which is what makes it worth other people's time.
-5. **30 — the contract paid on a field it could not name.** Still true, and it is
-   the Track 3 argument in three lines.
-6. **12 — something you can click.** The only post that asks for a visit rather
-   than a read. Worth spacing between the technical ones.
-7. **9 — the escrow has no exit.** Still true on 31 August, still unanswered, and
-   it is a protocol finding rather than a project one.
-8. **34 — a shared stylesheet turns the design gate off.** Off the Telegraph
-   topic, so last — but it is a reproducible finding about a tool other people
-   run.
+9. **9 — the escrow has no exit.** Still unanswered, and it is a protocol
+   finding rather than a project one.
+10. **34 — a shared stylesheet turns the design gate off.** Off the Telegraph
+    topic, so last — but it is a reproducible finding about a tool other people
+    run.
 
 ---
 
@@ -423,7 +437,7 @@ Re-checked against the live node on 31 August. In this order:
 
 ---
 
-**31 — the busiest miner on the network**
+**31 — the busiest miner on the network** — ~~do not post~~, overtaken 4 Sep
 
 > `/api/miners` on @Telegraphprotoc lists 127 live miners, each with a
 > `total_requests_served`.
@@ -432,6 +446,12 @@ Re-checked against the live node on 31 August. In this order:
 >
 > One curl, no wallet, no login:
 > devnode.telegraphprotocol.com/api/miners
+
+**Dead on 4 September.** DegenLens serves 1,346 and Amanat 553, so first place
+is no longer ours and the runner-up named here is no longer the runner-up.
+Nothing rewrites into a post worth making: "second busiest" is not a claim.
+Post 36 is what replaced it — the same rail, measured where we are actually
+first, and it is a fact about the network rather than a placing.
 
 ---
 
@@ -484,6 +504,38 @@ Re-checked against the live node on 31 August. In this order:
 >
 > "No such place" and "could not reach the geocoder" are different answers. It
 > says which one now.
+
+---
+
+**36 — routing is a coin toss, and the caller pays for it**
+
+Replaces the dead post 31. Same rail, measured somewhere we are still first:
+nobody else publishes which miner the Engine picked, because nobody else was
+recording it. Checkable — the tally is in the board every six hours.
+
+> Ten shipping lanes screened through @Telegraphprotoc every six hours. 30 paid
+> calls a run, and the board names who answered each one.
+>
+> One run: all 30 routed to a single on-chain intelligence miner and every
+> answer read. The next run: not one did.
+>
+> Same question both times.
+
+---
+
+**37 — my own board lied to me for two days**
+
+The strongest thing an application can say in a week where everyone is claiming
+usage: here is ours, here is where it broke, here is the receipt. It is also
+the honest version of a number we would otherwise be quoting wrong.
+
+> My storm board published "paid rail, verified" over a run that made zero paid
+> calls.
+>
+> Thirty legs failed every six hours saying only "unread". The reason was
+> recorded the whole time — the line that publishes a leg dropped the field.
+>
+> It reports the failure now, and what it cost.
 
 ---
 
