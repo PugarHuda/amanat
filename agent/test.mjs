@@ -15,6 +15,7 @@ import { flag, has, positionals, reject } from "./args.mjs";
 import { payloadFor } from "./crosscheck.mjs";
 import { rank } from "./survey.mjs";
 import { split } from "./impact.mjs";
+import { readPaid } from "./board.mjs";
 
 const USDC = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
 const PAY_TO = "0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8";
@@ -294,3 +295,84 @@ console.log("the survey ranks intents by how winnable the slot is");
   assert.equal(split(rows, "")[0].ours, false);
 }
 console.log("impact separates the epochs our module scored from the ones it did not");
+
+// ── the board spends money per leg, so the paths that spend it are checked ──
+//
+// Every assertion here is about a run that already happened on the live rail:
+// thirty legs answered and none readable, thirty legs that never got a call at
+// all, and a board that published "paid (Telegraph Engine, verified)" over a
+// run of zero. None of it costs anything to check — the two paid calls are
+// injected.
+{
+  const fresh = (budget = 1.00) =>
+    ({ calls: 0, spent: 0, routed: 0, direct: 0, budget, answered: {}, crossDomain: 0, unreadable: 0 });
+
+  const answer = (name, result) => async () => ({ miner_name: name, result, cost_usd: 0.01 });
+  const readable = { risk: 0.42, condition: "squalls" };
+  const unreadable = { confidence: 0.96, summary: "no number this board acts on" };
+  const never = async () => { throw new Error("direct call should not have happened"); };
+
+  // One readable answer is one call. Nothing retries, nothing falls back.
+  {
+    const ledger = fresh();
+    const read = readPaid(null, ledger, { engine: answer("ChainSight", readable), direct: never });
+    const out = await read({ lat: 1, lon: 103, hours: 0 });
+    assert.equal(out.risk, 0.42);
+    assert.equal(out.miner, "ChainSight");
+    assert.deepEqual([ledger.calls, ledger.routed, ledger.unreadable, ledger.direct], [1, 1, 0, 0]);
+  }
+
+  // The retry is the point: an unreadable first answer asks the Engine again
+  // rather than paying our own miner, and the second one lands. Two routed
+  // calls, no schema fallback — this is the case that used to cost the same
+  // money and buy a direct call the network never sees.
+  {
+    const ledger = fresh();
+    let n = 0;
+    const engine = async () => (++n === 1
+      ? { miner_name: "SkyWire", result: unreadable, cost_usd: 0.01 }
+      : { miner_name: "ChainSight", result: readable, cost_usd: 0.01 });
+    const out = await readPaid(null, ledger, { engine, direct: never })({ lat: 1, lon: 103, hours: 6 });
+    assert.equal(out.risk, 0.42);
+    assert.deepEqual([ledger.calls, ledger.routed, ledger.unreadable, ledger.direct], [2, 1, 1, 0]);
+    // Both miners are named, including the one whose answer could not be used.
+    // Recording only the readable path is what published `answered_by: {}` on a
+    // run where thirty answers were bought and paid for.
+    assert.deepEqual(ledger.answered, { SkyWire: 1, ChainSight: 1 });
+  }
+
+  // Two unreadable answers, then the schema miner. Three calls, and the reason
+  // the fallback happened is carried into the miner label rather than lost.
+  {
+    const ledger = fresh();
+    const direct = async () => ({ result: { risk: 0.1 }, cost_usd: 0.01 });
+    const read = readPaid(null, ledger, { engine: answer("SkyWire", unreadable), direct });
+    const out = await read({ lat: 1, lon: 103, hours: 6 });
+    assert.equal(out.risk, 0.1);
+    assert.match(out.miner, /^schema fallback \(SkyWire stated no readable risk\)$/);
+    assert.deepEqual([ledger.calls, ledger.routed, ledger.unreadable, ledger.direct], [3, 0, 2, 1]);
+  }
+
+  // An Engine that throws is a routing failure, not an unreadable answer, and
+  // it must not be billed: the run of 3 September logged zero calls precisely
+  // because nothing came back to charge for.
+  {
+    const ledger = fresh();
+    const engine = async () => { throw new Error("socket hang up"); };
+    const direct = async () => ({ result: { risk: 0.1 }, cost_usd: 0.01 });
+    const out = await readPaid(null, ledger, { engine, direct })({ lat: 1, lon: 103, hours: 0 });
+    assert.match(out.miner, /routing failed: socket hang up/);
+    assert.deepEqual([ledger.calls, ledger.spent, ledger.unreadable], [1, 0.01, 0]);
+  }
+
+  // The cap is checked before each call, so a budget with one call left buys
+  // one call and then stops — it never discovers the overspend afterwards.
+  {
+    const ledger = fresh(0.01);
+    const read = readPaid(null, ledger, { engine: answer("SkyWire", unreadable), direct: never });
+    await assert.rejects(read({ lat: 1, lon: 103, hours: 0 }), /run budget reached/);
+    assert.equal(ledger.calls, 1);
+    assert.ok(ledger.spent <= ledger.budget, `spent ${ledger.spent} over budget ${ledger.budget}`);
+  }
+}
+console.log("the board retries the Engine before paying itself, and bills only what answered");

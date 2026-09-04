@@ -28,7 +28,7 @@ on:
     inputs:
       budget:
         description: "Hard spend cap for this run, in USD"
-        default: "0.70"
+        default: "1.00"
       legs:
         description: "Waypoints per lane (2-12)"
         default: "3"
@@ -92,7 +92,7 @@ jobs:
         run: |
           node agent/board.mjs \
             --legs "${{ inputs.legs || '3' }}" \
-            --budget "${{ inputs.budget || '0.70' }}"
+            --budget "${{ inputs.budget || '1.00' }}"
 
       - name: Survey the scoring board
         # Public reads only, so this costs nothing and rides the board's

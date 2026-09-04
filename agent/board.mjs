@@ -15,6 +15,7 @@
 // per leg. Nothing here asks a question it does not publish the answer to.
 
 import { writeFile } from "node:fs/promises";
+import { pathToFileURL } from "node:url";
 import { NODE, wallet, provider, usdc, ask, askDirect, readRisk } from "./telegraph.mjs";
 import { assessRoute } from "../miner/lib/route.mjs";
 import { flag, has, reject } from "./args.mjs";
@@ -76,48 +77,74 @@ const readFree = async ({ lat, lon, hours }) => {
  * The cap is checked before each call rather than after, because a run that
  * notices it overspent has already overspent. A lane cut short is reported as
  * cut short — the board says how much it could not see.
+ *
+ * `engine` and `direct` are the two paid calls, injectable so the retry and the
+ * spend accounting can be checked without buying thirty answers to find out.
  */
-function readPaid(signer, ledger) {
-  return async ({ lat, lon, hours }) => {
+export function readPaid(signer, ledger, { engine = ask, direct = askDirect } = {}) {
+  /**
+   * One paid attempt at the Engine. Returns either a reading or the reason it
+   * could not be used; the only thing it throws for is the budget.
+   */
+  const askEngine = async ({ lat, lon, when }) => {
     if (ledger.spent + 0.01 > ledger.budget) throw new Error("run budget reached");
 
-    const when = hours === 0 ? "right now" : `in ${hours} hours`;
     let answer;
-    let why;
     try {
-      answer = await ask(
+      answer = await engine(
         `What is the storm risk at latitude ${lat}, longitude ${lon} ${when}? ` +
         `Report wind speed, gusts, precipitation and an overall risk between 0 and 1.`,
         { signer },
       );
-      ledger.calls++;
-      ledger.spent += Number(answer.cost_usd ?? 0.01);
-
-      const risk = readRisk(answer.result);
-      if (risk !== null) {
-        ledger.routed++;
-        const who = answer.miner_name ?? answer.miner_slug ?? "unnamed";
-        ledger.answered[who] = (ledger.answered[who] ?? 0) + 1;
-        return { ...answer.result, risk, signal_hash: answer.signal_hash, miner: who };
-      }
-      // Routed, answered, paid for — and the answer states no risk this board
-      // can act on. That is not a routing failure and recording it as one made
-      // `routed: 0` on a run where all thirty legs routed perfectly.
-      //
-      // It is usually not the miner's fault either. SkyWire publishes a field
-      // called `risk` whose own schema calls it "confidence in the assessment",
-      // and declares `confidence_field: risk` in its signal mapping. readRisk
-      // refuses it on purpose: reading a confidence as a risk is what makes a
-      // contract pay a claim that was never reported.
-      ledger.unreadable++;
-      why = `${answer.miner_name} stated no readable risk`;
     } catch (e) {
-      if (e.message === "run budget reached") throw e;
-      why = `routing failed: ${e.message.slice(0, 80)}`;
+      return { why: `routing failed: ${e.message.slice(0, 80)}` };
+    }
+    ledger.calls++;
+    ledger.spent += Number(answer.cost_usd ?? 0.01);
+
+    // Who answered is recorded whether or not the answer could be read. It used
+    // to be recorded only on the readable path, and that is why a run where all
+    // thirty legs were answered and none could be read published `answered_by`
+    // as empty — discarding the one fact that says which miner took the money.
+    const who = answer.miner_name ?? answer.miner_slug ?? "unnamed";
+    ledger.answered[who] = (ledger.answered[who] ?? 0) + 1;
+
+    const risk = readRisk(answer.result);
+    if (risk !== null) {
+      ledger.routed++;
+      return { reading: { ...answer.result, risk, signal_hash: answer.signal_hash, miner: who } };
+    }
+    // Routed, answered, paid for — and the answer states no risk this board
+    // can act on. That is not a routing failure and recording it as one made
+    // `routed: 0` on a run where all thirty legs routed perfectly.
+    //
+    // It is usually not the miner's fault either. SkyWire publishes a field
+    // called `risk` whose own schema calls it "confidence in the assessment",
+    // and declares `confidence_field: risk` in its signal mapping. readRisk
+    // refuses it on purpose: reading a confidence as a risk is what makes a
+    // contract pay a claim that was never reported.
+    ledger.unreadable++;
+    return { why: `${who} stated no readable risk` };
+  };
+
+  return async ({ lat, lon, hours }) => {
+    const when = hours === 0 ? "right now" : `in ${hours} hours`;
+
+    // Two attempts at the Engine before paying our own miner, because routing
+    // is probabilistic and the spread is not subtle: one run sent all thirty
+    // legs to ChainSight and every answer read, the next sent them somewhere
+    // the risk could not be read at all. A second ask costs exactly what the
+    // fallback below costs, and unlike the fallback it is a routed call — the
+    // network sees it, and it is not this board paying itself.
+    let why;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const out = await askEngine({ lat, lon, when });
+      if (out.reading) return out.reading;
+      why = out.why;
     }
 
     if (ledger.spent + 0.01 > ledger.budget) throw new Error("run budget reached");
-    const fallback = await askDirect(SCHEMA_MINER, { endpoint: "/forecast", payload: { lat, lon, hours }, signer });
+    const fallback = await direct(SCHEMA_MINER, { endpoint: "/forecast", payload: { lat, lon, hours }, signer });
     ledger.calls++;
     ledger.spent += Number(fallback.cost_usd ?? 0.01);
     ledger.direct++;
@@ -191,10 +218,12 @@ async function main() {
   reject(process.argv.slice(2), ["--dry", "--budget", "--legs"]);
   const dry = has(process.argv, "--dry");
   const legs = Number(flag(process.argv, "--legs", 3));
-  // Ten lanes at three legs is 30 calls, $0.30, and a lane that has to fall
-  // back to the schema miner spends twice. $0.70 covers a run where a third of
-  // them do.
-  const budget = Number(flag(process.argv, "--budget", 0.70));
+  // Ten lanes at three legs is 30 calls, $0.30 — what a run costs when the
+  // first ask reads. A leg the Engine answers unusably asks once more and then
+  // pays the schema miner, so its worst case is three calls; thirty of those
+  // plus the cross-domain question is $0.91. $1.00 covers the worst run
+  // outright rather than cutting it short at the twenty-third leg.
+  const budget = Number(flag(process.argv, "--budget", 1.00));
 
   const signer = dry ? null : wallet();
   // `answered` tallies which miner the node actually chose, per routed call.
@@ -223,6 +252,10 @@ async function main() {
 
   const read = dry ? readFree : readPaid(signer, ledger);
   const lanes = [];
+  // Distinct reasons legs went unread this run, with counts. Thirty identical
+  // failures are one line, not thirty, and the run summary is where a person
+  // actually looks.
+  const unreadReasons = {};
 
   for (const lane of LANES) {
     try {
@@ -244,8 +277,15 @@ async function main() {
           // Who the node routed this leg to. Null on the free rail, where
           // nothing was routed and nobody was paid.
           miner: l.miner ?? null,
+          // Why a leg has no risk. assessRoute has always recorded this and
+          // this map has always dropped it, which is how thirty legs failed
+          // every six hours for two days saying only "unread".
+          error: l.error ?? null,
         })),
       });
+      for (const l of route.legs) {
+        if (l.error) unreadReasons[l.error] = (unreadReasons[l.error] ?? 0) + 1;
+      }
       const worst = route.worst ? route.worst.risk.toFixed(3) : "unread";
       console.log(`  ${lane.name.padEnd(28)} ${route.distance_km} km  worst ${worst}${route.unread ? `  (${route.unread} legs unread)` : ""}`);
     } catch (e) {
@@ -269,7 +309,12 @@ async function main() {
 
   const board = {
     generated_at: new Date().toISOString(),
-    rail: dry ? "free (miner HTTP, unverified)" : "paid (Telegraph Engine, verified)",
+    // A run that paid for nothing must not claim a verified paid rail. The
+    // board published `paid (Telegraph Engine, verified)` on a run of zero
+    // calls, which is the one thing a board like this cannot say.
+    rail: dry ? "free (miner HTTP, unverified)"
+      : ledger.calls ? "paid (Telegraph Engine, verified)"
+      : "unpaid — every call failed this run",
     trigger: 0.75,
     lanes,
     disruption,
@@ -284,10 +329,13 @@ async function main() {
       routed_unreadable: ledger.unreadable,
       schema_fallback: ledger.direct,
       cross_domain_calls: ledger.crossDomain,
-      // Miner name -> routed calls it answered this run, most first.
+      // Miner name -> routed calls it answered this run, most first. Counts
+      // every answer the node returned, readable or not.
       answered_by: Object.fromEntries(
         Object.entries(ledger.answered).sort((a, b) => b[1] - a[1]),
       ),
+      // Reason -> legs that failed for it. Empty on a clean run.
+      unread_reasons: unreadReasons,
     },
   };
 
@@ -302,7 +350,14 @@ async function main() {
     if (answered.length) {
       console.log(`routed to  ${answered.map(([who, n]) => `${who} ${n}`).join(", ")}`);
     }
+    for (const [reason, n] of Object.entries(unreadReasons).sort((a, b) => b[1] - a[1])) {
+      console.log(`unread     ${String(n).padStart(3)} legs — ${reason}`);
+    }
   }
 }
 
-main().catch((e) => { console.error(e.shortMessage ?? e.message); process.exit(1); });
+// Importing this module must never start screening lanes: every leg of a run
+// is a paid call, so an accidental import would spend real USDC.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((e) => { console.error(e.shortMessage ?? e.message); process.exit(1); });
+}
