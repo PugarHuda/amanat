@@ -1,0 +1,737 @@
+{
+  "read_at": "2026-09-05T14:55:11.677Z",
+  "node": "https://devnode.telegraphprotocol.com",
+  "registrations": 2417,
+  "held": [
+    [
+      "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287",
+      42
+    ],
+    [
+      "0xdad201ef02f5c1fbb8f9e931ae9b7c1bf493a39e",
+      3
+    ]
+  ],
+  "rows": [
+    {
+      "intent": "LANGUAGE_GENERATION",
+      "champion": {
+        "eval": 0.9985639,
+        "bar": 0.40419734,
+        "barAt": "2026-09-02",
+        "attempts": 100,
+        "registration": 2010,
+        "author": "0xdad201ef02f5c1fbb8f9e931ae9b7c1bf493a39e"
+      },
+      "live": {
+        "scored": 12,
+        "nonzero": 11,
+        "best": 0.9988083
+      }
+    },
+    {
+      "intent": "LANGUAGE_TRANSLATION",
+      "champion": {
+        "eval": 0.93333286,
+        "bar": 0.4666657,
+        "barAt": "2026-09-01",
+        "attempts": 93,
+        "registration": 2296,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 4,
+        "nonzero": 4,
+        "best": 5.3113947e-10
+      }
+    },
+    {
+      "intent": "RESEARCH_SYNTHESIS",
+      "champion": {
+        "eval": 0.99235225,
+        "bar": 0.4954328,
+        "barAt": "2026-09-01",
+        "attempts": 9,
+        "registration": 627,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 4,
+        "nonzero": 3,
+        "best": 0.01177353
+      }
+    },
+    {
+      "intent": "GAME_RESULT",
+      "champion": {
+        "eval": 0.7150477,
+        "bar": 0.51147926,
+        "barAt": "2026-09-01",
+        "attempts": 36,
+        "registration": 1265,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 3,
+        "nonzero": 2,
+        "best": 0.0000119781125
+      }
+    },
+    {
+      "intent": "ACADEMIC_SEARCH",
+      "champion": {
+        "eval": 0.68037784,
+        "bar": 0.7098973,
+        "barAt": "2026-08-31",
+        "attempts": 90,
+        "registration": 688,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 6,
+        "nonzero": 4,
+        "best": 0.011685171
+      }
+    },
+    {
+      "intent": "NEWS_SEARCH",
+      "champion": {
+        "eval": 0.71269304,
+        "bar": 0.7123305,
+        "barAt": "2026-09-02",
+        "attempts": 24,
+        "registration": 3165,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 5,
+        "nonzero": 4,
+        "best": 0.99971735
+      }
+    },
+    {
+      "intent": "STOCK_PRICE",
+      "champion": {
+        "eval": 0.7333328,
+        "bar": 0.7333228,
+        "barAt": "2026-09-02",
+        "attempts": 100,
+        "registration": 3166,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 5,
+        "nonzero": 5,
+        "best": 5.3243635e-13
+      }
+    },
+    {
+      "intent": "CURRENCY_EXCHANGE",
+      "champion": {
+        "eval": 0.93331856,
+        "bar": 0.7333239,
+        "barAt": "2026-09-02",
+        "attempts": 100,
+        "registration": 2945,
+        "author": "0xdad201ef02f5c1fbb8f9e931ae9b7c1bf493a39e"
+      },
+      "live": {
+        "scored": 7,
+        "nonzero": 5,
+        "best": 8.759674e-7
+      }
+    },
+    {
+      "intent": "WALLET_BALANCE_CHECK",
+      "champion": {
+        "eval": 0.6923076,
+        "bar": 0.7333332,
+        "barAt": "2026-09-01",
+        "attempts": 90,
+        "registration": 3022,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 10,
+        "nonzero": 9,
+        "best": 2.676368e-13
+      }
+    },
+    {
+      "intent": "TVL_LOOKUP",
+      "champion": {
+        "eval": 0.79607064,
+        "bar": 0.74873316,
+        "barAt": "2026-09-01",
+        "attempts": 100,
+        "registration": 49,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 10,
+        "nonzero": 9,
+        "best": 0.14797147
+      }
+    },
+    {
+      "intent": "ONCHAIN_TX_LOOKUP",
+      "champion": {
+        "eval": 0.7922707,
+        "bar": 0.79590905,
+        "barAt": "2026-09-01",
+        "attempts": 100,
+        "registration": 642,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 12,
+        "nonzero": 5,
+        "best": 0.010863748
+      }
+    },
+    {
+      "intent": "CRYPTO_PRICE",
+      "champion": {
+        "eval": 0.79999703,
+        "bar": 0.79997635,
+        "barAt": "2026-09-02",
+        "attempts": 100,
+        "registration": 3170,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 14,
+        "nonzero": 11,
+        "best": 4.4784447e-21
+      }
+    },
+    {
+      "intent": "SPORTS_SCORE",
+      "champion": {
+        "eval": 0.8666645,
+        "bar": 0.7999973,
+        "barAt": "2026-09-02",
+        "attempts": 53,
+        "registration": 3045,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 3,
+        "nonzero": 2,
+        "best": 4.328877e-12
+      }
+    },
+    {
+      "intent": "URL_SCAN",
+      "champion": {
+        "eval": 0.9478501,
+        "bar": 0.8538007,
+        "barAt": "2026-09-01",
+        "attempts": 35,
+        "registration": 220,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 10,
+        "nonzero": 7,
+        "best": 0.9755491
+      }
+    },
+    {
+      "intent": "STORM_ALERT",
+      "champion": {
+        "eval": 0.99000794,
+        "bar": 0.85635775,
+        "barAt": "2026-08-31",
+        "attempts": 15,
+        "registration": 453,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 7,
+        "nonzero": 7,
+        "best": 0.1537896
+      }
+    },
+    {
+      "intent": "WEATHER_FORECAST",
+      "champion": {
+        "eval": 0.8568193,
+        "bar": 0.8568193,
+        "barAt": "2026-09-02",
+        "attempts": 100,
+        "registration": 3173,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 14,
+        "nonzero": 11,
+        "best": 0.00048250356
+      }
+    },
+    {
+      "intent": "WEB_SEARCH",
+      "champion": {
+        "eval": 0.8002296,
+        "bar": 0.8570927,
+        "barAt": "2026-09-01",
+        "attempts": 85,
+        "registration": 2789,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 10,
+        "nonzero": 9,
+        "best": 0.999873
+      }
+    },
+    {
+      "intent": "FINANCIAL_DATA",
+      "champion": {
+        "eval": 0.86666644,
+        "bar": 0.86666644,
+        "barAt": "2026-09-01",
+        "attempts": 47,
+        "registration": 3029,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 8,
+        "nonzero": 6,
+        "best": 5.968124e-25
+      }
+    },
+    {
+      "intent": "CONTENT_MODERATION",
+      "champion": {
+        "eval": 0.8,
+        "bar": 0.8666667,
+        "barAt": "2026-09-01",
+        "attempts": 13,
+        "registration": 2055,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 1,
+        "nonzero": 1,
+        "best": 4.3537517e-12
+      }
+    },
+    {
+      "intent": "CHAT_COMPLETION",
+      "champion": {
+        "eval": 0.8667724,
+        "bar": 0.8667724,
+        "barAt": "2026-09-02",
+        "attempts": 100,
+        "registration": 2810,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 10,
+        "nonzero": 8,
+        "best": 1.9849389e-10
+      }
+    },
+    {
+      "intent": "NEWS_HEADLINES",
+      "champion": {
+        "eval": 0.9935922,
+        "bar": 0.8684743,
+        "barAt": "2026-09-01",
+        "attempts": 7,
+        "registration": 635,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 3,
+        "nonzero": 3,
+        "best": 0.0060574054
+      }
+    },
+    {
+      "intent": "WEATHER_CHECK",
+      "champion": {
+        "eval": 0.98340964,
+        "bar": 0.8750063,
+        "barAt": "2026-08-31",
+        "attempts": 59,
+        "registration": 510,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 11,
+        "nonzero": 8,
+        "best": 0.9293413
+      }
+    },
+    {
+      "intent": "SSL_VERIFICATION",
+      "champion": {
+        "eval": 0.89942956,
+        "bar": 0.88055015,
+        "barAt": "2026-08-30",
+        "attempts": 14,
+        "registration": 631,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 6,
+        "nonzero": 5,
+        "best": 0.9919603
+      }
+    },
+    {
+      "intent": "AGENT_TASK",
+      "champion": {
+        "eval": 0.88793105,
+        "bar": 0.88793105,
+        "barAt": "2026-09-01",
+        "attempts": 36,
+        "registration": 295,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "CVE_LOOKUP",
+      "champion": {
+        "eval": 1,
+        "bar": 0.90909094,
+        "barAt": "2026-09-01",
+        "attempts": 100,
+        "registration": 3030,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 5,
+        "nonzero": 4,
+        "best": 1.1847875e-11
+      }
+    },
+    {
+      "intent": "IP_GEOLOCATION",
+      "champion": {
+        "eval": 0.85738987,
+        "bar": 0.9227274,
+        "barAt": "2026-08-31",
+        "attempts": 41,
+        "registration": 630,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 5,
+        "nonzero": 5,
+        "best": 0.99409235
+      }
+    },
+    {
+      "intent": "TOKEN_HOLDER_COUNT",
+      "champion": {
+        "eval": 0.85714287,
+        "bar": 0.9230769,
+        "barAt": "2026-09-01",
+        "attempts": 11,
+        "registration": 2057,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 5,
+        "nonzero": 5,
+        "best": 1.1504537e-11
+      }
+    },
+    {
+      "intent": "FACT_CHECK",
+      "champion": {
+        "eval": 0.93333334,
+        "bar": 0.9285714,
+        "barAt": "2026-09-01",
+        "attempts": 100,
+        "registration": 1582,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 4,
+        "nonzero": 3,
+        "best": 6.7499994e-10
+      }
+    },
+    {
+      "intent": "GAS_PRICE",
+      "champion": {
+        "eval": 0.9333227,
+        "bar": 0.9333232,
+        "barAt": "2026-09-01",
+        "attempts": 100,
+        "registration": 3119,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 9,
+        "nonzero": 8,
+        "best": 2.0264788e-11
+      }
+    },
+    {
+      "intent": "FRAUD_DETECTION",
+      "champion": {
+        "eval": 1,
+        "bar": 0.93333334,
+        "barAt": "2026-09-01",
+        "attempts": 100,
+        "registration": 2793,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 15,
+        "nonzero": 5,
+        "best": 1.0370009e-13
+      }
+    },
+    {
+      "intent": "RESEARCH_QUERY",
+      "champion": {
+        "eval": 0.99000794,
+        "bar": 0.988064,
+        "barAt": "2026-09-02",
+        "attempts": 13,
+        "registration": 452,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 7,
+        "nonzero": 5,
+        "best": 0.016885864
+      }
+    },
+    {
+      "intent": "CONTENT_VERIFICATION",
+      "champion": {
+        "eval": 1,
+        "bar": 0.990414,
+        "barAt": "2026-08-30",
+        "attempts": 6,
+        "registration": 2062,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 1,
+        "nonzero": 0,
+        "best": 0
+      }
+    },
+    {
+      "intent": "TWITTER_SEARCH",
+      "champion": {
+        "eval": 1,
+        "bar": 0.9984705,
+        "barAt": "2026-08-30",
+        "attempts": 8,
+        "registration": 2061,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "MEDIA_AUTHENTICITY_CHECK",
+      "champion": {
+        "eval": 0.99999076,
+        "bar": 0.9998718,
+        "barAt": "2026-09-02",
+        "attempts": 29,
+        "registration": 3164,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 1,
+        "nonzero": 1,
+        "best": 9.971618e-12
+      }
+    },
+    {
+      "intent": "TEXT_GENERATION",
+      "champion": {
+        "eval": 0.99996686,
+        "bar": 0.99996686,
+        "barAt": "2026-08-31",
+        "attempts": 23,
+        "registration": 2287,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 4,
+        "nonzero": 3,
+        "best": 0.99993956
+      }
+    },
+    {
+      "intent": "TASK_COMPLETION",
+      "champion": {
+        "eval": 0.9999975,
+        "bar": 0.99998283,
+        "barAt": "2026-09-01",
+        "attempts": 68,
+        "registration": 3046,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 2,
+        "nonzero": 1,
+        "best": 1.2402494e-7
+      }
+    },
+    {
+      "intent": "TEXT_AUTHENTICITY_CHECK",
+      "champion": {
+        "eval": 0.66666603,
+        "bar": 0.9999992,
+        "barAt": "2026-09-02",
+        "attempts": 100,
+        "registration": 1882,
+        "author": "0xdad201ef02f5c1fbb8f9e931ae9b7c1bf493a39e"
+      },
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "TELEGRAPH_KNOWLEDGE",
+      "champion": {
+        "eval": 1,
+        "bar": 0.99999994,
+        "barAt": "2026-08-30",
+        "attempts": 14,
+        "registration": 2104,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 2,
+        "nonzero": 2,
+        "best": 1
+      }
+    },
+    {
+      "intent": "AI_TEXT_DETECTION",
+      "champion": {
+        "eval": 1,
+        "bar": 1,
+        "barAt": "2026-08-27",
+        "attempts": 50,
+        "registration": 1286,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 4,
+        "nonzero": 4,
+        "best": 3.23741e-10
+      }
+    },
+    {
+      "intent": "CONTENT_EXTRACTION",
+      "champion": {
+        "eval": 1,
+        "bar": 1,
+        "barAt": "2026-08-25",
+        "attempts": 100,
+        "registration": 935,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 3,
+        "nonzero": 0,
+        "best": 0
+      }
+    },
+    {
+      "intent": "DEEPFAKE_DETECTION",
+      "champion": {
+        "eval": 1,
+        "bar": 1,
+        "barAt": "2026-08-30",
+        "attempts": 6,
+        "registration": 645,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 1,
+        "nonzero": 0,
+        "best": 0
+      }
+    },
+    {
+      "intent": "IMAGE_VERIFICATION",
+      "champion": {
+        "eval": 1,
+        "bar": 1,
+        "barAt": "2026-08-30",
+        "attempts": 15,
+        "registration": 2101,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 2,
+        "nonzero": 2,
+        "best": 1.0248156e-11
+      }
+    },
+    {
+      "intent": "SENTIMENT_ANALYSIS",
+      "champion": {
+        "eval": 1,
+        "bar": 1,
+        "barAt": "2026-08-30",
+        "attempts": 8,
+        "registration": 646,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 2,
+        "nonzero": 0,
+        "best": 0
+      }
+    },
+    {
+      "intent": "TEXT_CLASSIFICATION",
+      "champion": {
+        "eval": 1,
+        "bar": 1,
+        "barAt": "2026-08-24",
+        "attempts": 8,
+        "registration": 687,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 3,
+        "nonzero": 1,
+        "best": 1
+      }
+    },
+    {
+      "intent": "VIDEO_VERIFICATION",
+      "champion": {
+        "eval": 1,
+        "bar": 1,
+        "barAt": "2026-09-01",
+        "attempts": 11,
+        "registration": 3085,
+        "author": "0x8b224783fe5b3c52b7db0cb9b1754f8812b75287"
+      },
+      "live": {
+        "scored": 1,
+        "nonzero": 0,
+        "best": 0
+      }
+    }
+  ]
+}

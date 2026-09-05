@@ -1,0 +1,2090 @@
+{
+  "read_at": "2026-09-05T14:55:37.675Z",
+  "scored_name_hashed_intents": 15,
+  "closed": [
+    {
+      "intent": "AI_TEXT_DETECTION",
+      "rank1": "veritarach-ai-text-detector",
+      "endpoints": 1,
+      "declares_on_chain_request": false,
+      "evidence": "registration YAML fetched; it declares no on_chain.request block"
+    },
+    {
+      "intent": "STORM_ALERT",
+      "rank1": "txlens",
+      "endpoints": 16,
+      "declares_on_chain_request": false,
+      "evidence": "registration YAML fetched; it declares no on_chain.request block"
+    },
+    {
+      "intent": "TASK_COMPLETION",
+      "rank1": "bayern-elo-miner-v1",
+      "endpoints": 1,
+      "declares_on_chain_request": false,
+      "evidence": "registration YAML fetched; it declares no on_chain.request block"
+    },
+    {
+      "intent": "WEATHER_CHECK",
+      "rank1": "livecert",
+      "endpoints": 12,
+      "declares_on_chain_request": false,
+      "evidence": "registration YAML fetched; it declares no on_chain.request block"
+    },
+    {
+      "intent": "WEATHER_FORECAST",
+      "rank1": "weathertop-v3",
+      "endpoints": 1,
+      "declares_on_chain_request": false,
+      "evidence": "registration YAML fetched; it declares no on_chain.request block"
+    }
+  ],
+  "unknown": [
+    {
+      "intent": "CHAT_COMPLETION",
+      "rank1": "bedrock-voxtral",
+      "endpoints": 1,
+      "declares_on_chain_request": null,
+      "evidence": "registration YAML could not be fetched from outside the node host"
+    },
+    {
+      "intent": "CONTENT_VERIFICATION",
+      "rank1": "faceplus",
+      "endpoints": 1,
+      "declares_on_chain_request": null,
+      "evidence": "registration YAML could not be fetched from outside the node host"
+    },
+    {
+      "intent": "DEEPFAKE_DETECTION",
+      "rank1": "bittensor-sn34-bitmind",
+      "endpoints": 4,
+      "declares_on_chain_request": null,
+      "evidence": "registration YAML could not be fetched from outside the node host"
+    },
+    {
+      "intent": "IMAGE_VERIFICATION",
+      "rank1": "bittensor-sn34-bitmind",
+      "endpoints": 4,
+      "declares_on_chain_request": null,
+      "evidence": "registration YAML could not be fetched from outside the node host"
+    },
+    {
+      "intent": "LANGUAGE_GENERATION",
+      "rank1": "bedrock-nova-2-lite",
+      "endpoints": 1,
+      "declares_on_chain_request": null,
+      "evidence": "registration YAML could not be fetched from outside the node host"
+    },
+    {
+      "intent": "MEDIA_AUTHENTICITY_CHECK",
+      "rank1": "bittensor-sn34-bitmind",
+      "endpoints": 4,
+      "declares_on_chain_request": null,
+      "evidence": "registration YAML could not be fetched from outside the node host"
+    },
+    {
+      "intent": "NEWS_SEARCH",
+      "rank1": "tavily",
+      "endpoints": 2,
+      "declares_on_chain_request": null,
+      "evidence": "registration YAML could not be fetched from outside the node host"
+    },
+    {
+      "intent": "VIDEO_VERIFICATION",
+      "rank1": "bittensor-sn34-bitmind",
+      "endpoints": 4,
+      "declares_on_chain_request": null,
+      "evidence": "registration YAML could not be fetched from outside the node host"
+    },
+    {
+      "intent": "WEB_SEARCH",
+      "rank1": "bedrock-nova-2-lite",
+      "endpoints": 1,
+      "declares_on_chain_request": null,
+      "evidence": "registration YAML could not be fetched from outside the node host"
+    }
+  ],
+  "jobable_by_intent": {
+    "AI_TEXT_DETECTION": [
+      "bittensor-sn32-itsai"
+    ],
+    "CHAT_COMPLETION": [
+      "groq-llama31-instant-miner"
+    ],
+    "CONTENT_VERIFICATION": [],
+    "DEEPFAKE_DETECTION": [],
+    "FACT_CHECK": [
+      "qarinah-proofpack"
+    ],
+    "IMAGE_VERIFICATION": [],
+    "LANGUAGE_GENERATION": [
+      "groq-llama31-instant-miner",
+      "telegraph-ai-miner-node"
+    ],
+    "MEDIA_AUTHENTICITY_CHECK": [],
+    "NEWS_SEARCH": [],
+    "STORM_ALERT": [
+      "skywire-storm-alert",
+      "amanat-weather-risk"
+    ],
+    "TASK_COMPLETION": [],
+    "VIDEO_VERIFICATION": [],
+    "WEATHER_CHECK": [
+      "amanat-weather-risk"
+    ],
+    "WEATHER_FORECAST": [
+      "onlookout-weather",
+      "skywire-forecast",
+      "amanat-weather-risk"
+    ],
+    "WEB_SEARCH": [
+      "kriterion-pramagraph",
+      "telegraph-ai-miner-node"
+    ]
+  },
+  "miners": [
+    {
+      "id": "0",
+      "slug": "lacre-meteo",
+      "intents": [
+        "WEATHER_FORECAST",
+        "WEATHER_CHECK"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmWBWpfmxnZyUxKex1FaNWdGq3jeWFfnSYs6KbMgegyJgG",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "1",
+      "slug": "fourcast-sports-intelligence",
+      "intents": [
+        "SPORTS_SCORE",
+        "GAME_RESULT"
+      ],
+      "yaml_url": "https://raw.githubusercontent.com/thisyearnofear/fourcast/main/telegraph-miner/telegraph.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": false
+    },
+    {
+      "id": "10",
+      "slug": "certspotter-cert-verification",
+      "intents": [
+        "SSL_VERIFICATION"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmRMT6AaYSkKN8Zbb1LezowKdZ7ABs7uX9s3nEaCK6pHg2",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": false,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": false
+    },
+    {
+      "id": "11",
+      "slug": "url-scan-urlhaus",
+      "intents": [
+        "URL_SCAN"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmUBtyBja89z9KwJnDnSqQWxZSacvky5H7rRuHq8d4ZsBT",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": false
+    },
+    {
+      "id": "12",
+      "slug": "microlink-url-extraction",
+      "intents": [
+        "CONTENT_EXTRACTION"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmTywqr1qSNzMPUC9cVbs1ZqoWBCfbxq2DZWWiySAAm77t",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "18",
+      "slug": "bittensor-sn18-zeus",
+      "intents": [
+        "WEATHER_CHECK",
+        "STORM_ALERT",
+        "WEATHER_FORECAST"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/bittensor-sn18-zeus.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "23",
+      "slug": "community-memory",
+      "intents": [
+        "RESEARCH_QUERY"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmTD8qNzEtrf5pr4nTdFi9FrHLK7A54UzZnQA9E12m6TPj",
+      "yaml_reachable": true,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "26",
+      "slug": "telegraph-defi-miner",
+      "intents": [
+        "TVL_LOOKUP"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmeDa87CMTVp23JqkGj8aHN3ggihhhG6Z3wXagB4eJUtLy",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "32",
+      "slug": "bittensor-sn32-itsai",
+      "intents": [
+        "AI_TEXT_DETECTION"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/Qmcq2f5DhqvhvC3M8umLLPjh692BfJuQWzoZa7EQiGFh5E",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": true
+    },
+    {
+      "id": "34",
+      "slug": "bittensor-sn34-bitmind",
+      "intents": [
+        "DEEPFAKE_DETECTION",
+        "MEDIA_AUTHENTICITY_CHECK",
+        "IMAGE_VERIFICATION",
+        "VIDEO_VERIFICATION"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/bittensor-sn34-bitmind.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "42",
+      "slug": "koinmix-crypto-price",
+      "intents": [
+        "CRYPTO_PRICE"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmZ2xmBXaxAY8vFJWAXvG4TCJ3wnLcPqMos1o7ps8pyyXq",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "49",
+      "slug": "anchor",
+      "intents": [
+        "FRAUD_DETECTION"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmYQrvTDePcPToADsWdvEZzqmpFmGk9EqDKKjUpYPpMDKF",
+      "yaml_reachable": true,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "101",
+      "slug": "bayern-elo-miner-v1",
+      "intents": [
+        "TASK_COMPLETION"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmbEPdcEcqDf19EpLxTSEF5BK8AQLJ7UizhRnpJ9Ku1kg2",
+      "yaml_reachable": true,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "104",
+      "slug": "litellm",
+      "intents": [
+        "CHAT_COMPLETION",
+        "LANGUAGE_GENERATION",
+        "TASK_COMPLETION",
+        "AGENT_TASK",
+        "WEB_SEARCH"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/litellm.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "109",
+      "slug": "gemini",
+      "intents": [
+        "CHAT_COMPLETION",
+        "LANGUAGE_GENERATION",
+        "TASK_COMPLETION"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/gemini.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "110",
+      "slug": "openrouter",
+      "intents": [
+        "CHAT_COMPLETION",
+        "LANGUAGE_GENERATION",
+        "TASK_COMPLETION",
+        "AGENT_TASK"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/openrouter.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "112",
+      "slug": "faceplus",
+      "intents": [
+        "IMAGE_VERIFICATION",
+        "CONTENT_VERIFICATION"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/faceplus.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "114",
+      "slug": "bedrock-nova-2-lite",
+      "intents": [
+        "WEB_SEARCH",
+        "CHAT_COMPLETION",
+        "LANGUAGE_GENERATION",
+        "TASK_COMPLETION",
+        "AGENT_TASK"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/bedrock-nova-2-lite.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "115",
+      "slug": "bedrock-deepseek",
+      "intents": [
+        "CHAT_COMPLETION",
+        "LANGUAGE_GENERATION",
+        "TASK_COMPLETION",
+        "AGENT_TASK"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/bedrock-deepseek.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "116",
+      "slug": "bedrock-voxtral",
+      "intents": [
+        "CHAT_COMPLETION",
+        "LANGUAGE_GENERATION",
+        "TASK_COMPLETION"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/bedrock-voxtral.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "117",
+      "slug": "bedrock-qwen",
+      "intents": [
+        "CHAT_COMPLETION",
+        "LANGUAGE_GENERATION",
+        "TASK_COMPLETION",
+        "AGENT_TASK"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/bedrock-qwen.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "118",
+      "slug": "bedrock-kimi",
+      "intents": [
+        "CHAT_COMPLETION",
+        "LANGUAGE_GENERATION",
+        "TASK_COMPLETION",
+        "AGENT_TASK"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/bedrock-kimi.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "152",
+      "slug": "kriterion-pramagraph",
+      "intents": [
+        "WEB_SEARCH",
+        "RESEARCH_QUERY",
+        "FINANCIAL_DATA",
+        "CRYPTO_PRICE",
+        "CURRENCY_EXCHANGE",
+        "STOCK_PRICE",
+        "GAS_PRICE",
+        "TVL_LOOKUP",
+        "TOKEN_HOLDER_COUNT",
+        "URL_SCAN"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/bafkreiefa6uqjfr74poujlou46douqc4njwu2cnvrku2qvlrksjnfralzm",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": true
+    },
+    {
+      "id": "200",
+      "slug": "telegraph-chatbot",
+      "intents": [
+        "CHAT_COMPLETION",
+        "LANGUAGE_GENERATION",
+        "TASK_COMPLETION",
+        "AGENT_TASK",
+        "WEB_SEARCH",
+        "TELEGRAPH_KNOWLEDGE"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/telegraph-chatbot.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "202",
+      "slug": "tavily",
+      "intents": [
+        "WEB_SEARCH",
+        "RESEARCH_QUERY",
+        "FACT_CHECK",
+        "NEWS_SEARCH"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/tavily.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "203",
+      "slug": "virustotal",
+      "intents": [
+        "URL_SCAN"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/virustotal.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "204",
+      "slug": "iplocate",
+      "intents": [
+        "IP_GEOLOCATION",
+        "FRAUD_DETECTION"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/iplocate.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "205",
+      "slug": "sentinelvault-cve",
+      "intents": [
+        "CVE_LOOKUP"
+      ],
+      "yaml_url": "https://raw.githubusercontent.com/norbert351/sentinelvault/master/miner.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": false,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": false
+    },
+    {
+      "id": "206",
+      "slug": "exchangerate",
+      "intents": [
+        "CURRENCY_EXCHANGE"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/exchangerate.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "207",
+      "slug": "coingecko",
+      "intents": [
+        "CRYPTO_PRICE",
+        "FINANCIAL_DATA"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/coingecko.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "208",
+      "slug": "alphavantage",
+      "intents": [
+        "STOCK_PRICE",
+        "FINANCIAL_DATA"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/alphavantage.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "209",
+      "slug": "newsapi",
+      "intents": [
+        "NEWS_SEARCH",
+        "NEWS_HEADLINES"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/newsapi.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "210",
+      "slug": "gnews",
+      "intents": [
+        "NEWS_SEARCH"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/gnews.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "211",
+      "slug": "openweathermap",
+      "intents": [
+        "WEATHER_CHECK",
+        "WEATHER_FORECAST"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/openweathermap.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "212",
+      "slug": "weatherapi",
+      "intents": [
+        "WEATHER_CHECK",
+        "WEATHER_FORECAST"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/weatherapi.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "221",
+      "slug": "emailrep",
+      "intents": [
+        "FRAUD_DETECTION"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/emailrep.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "222",
+      "slug": "phishtank",
+      "intents": [
+        "URL_SCAN"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/phishtank.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "223",
+      "slug": "urlscan",
+      "intents": [
+        "URL_SCAN"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/urlscan.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "224",
+      "slug": "nvd",
+      "intents": [
+        "CVE_LOOKUP"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/nvd.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "225",
+      "slug": "semanticscholar",
+      "intents": [
+        "RESEARCH_QUERY",
+        "ACADEMIC_SEARCH"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/semanticscholar.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "227",
+      "slug": "ssllabs",
+      "intents": [
+        "SSL_VERIFICATION"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/ssllabs.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "229",
+      "slug": "openalex",
+      "intents": [
+        "RESEARCH_QUERY",
+        "ACADEMIC_SEARCH"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/openalex.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "230",
+      "slug": "textprocessing-sentiment",
+      "intents": [
+        "SENTIMENT_ANALYSIS",
+        "TEXT_CLASSIFICATION"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/textprocessing-sentiment.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "231",
+      "slug": "mymemory-translate",
+      "intents": [
+        "LANGUAGE_TRANSLATION"
+      ],
+      "yaml_url": "http://127.0.0.1:8099/mymemory-translate.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "232",
+      "slug": "eviplan-evidence-firewall",
+      "intents": [
+        "FRAUD_DETECTION"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmaCeVx3fj4wLMzEmPGxQS3mLiTHUeCkDVosySSDhKoAUG",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "251",
+      "slug": "sigvora",
+      "intents": [
+        "FRAUD_DETECTION"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/bafkreiflfowya2f72ux6s7cxrdpq4kijjjnrtsv2pq7zut7kjrizkpuace",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "300",
+      "slug": "scorewire-oracle",
+      "intents": [
+        "SPORTS_SCORE",
+        "GAME_RESULT"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmexADpQ9j8L2UfGNWyW5vXEuTbkoDdLi92FqPMxr5f7NS",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "301",
+      "slug": "tvlwire-oracle",
+      "intents": [
+        "TVL_LOOKUP"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmUhf8WNzQUjivh5hkKdFiPHm5iuxntEcEcTjtYe5RLhHq",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": false
+    },
+    {
+      "id": "302",
+      "slug": "chainsight-oracle",
+      "intents": [
+        "CRYPTO_PRICE",
+        "FINANCIAL_DATA",
+        "TVL_LOOKUP",
+        "CURRENCY_EXCHANGE",
+        "GAS_PRICE",
+        "WALLET_BALANCE_CHECK",
+        "ONCHAIN_TX_LOOKUP",
+        "TOKEN_HOLDER_COUNT",
+        "STOCK_PRICE",
+        "FRAUD_DETECTION",
+        "URL_SCAN",
+        "WEATHER_FORECAST",
+        "WEATHER_CHECK",
+        "STORM_ALERT"
+      ],
+      "yaml_url": "https://hub.shadrakbessanh.me/miner.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": false,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": true
+    },
+    {
+      "id": "402",
+      "slug": "agentfeed-crypto-markets",
+      "intents": [
+        "FINANCIAL_DATA",
+        "FRAUD_DETECTION"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmPHQYQt2JrwUHVmNJUDHf2deLFkq3awQfWuCNE38hwB6j",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "501",
+      "slug": "sentinel-risk-oracle",
+      "intents": [
+        "CRYPTO_PRICE",
+        "TVL_LOOKUP",
+        "WEB_SEARCH"
+      ],
+      "yaml_url": "https://raw.githubusercontent.com/peterkehinde673/telegraph-sentinel/main/docs/sentinel-miner.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "900",
+      "slug": "onchain-intel-miner",
+      "intents": [
+        "GAS_PRICE",
+        "WALLET_BALANCE_CHECK",
+        "TOKEN_HOLDER_COUNT",
+        "TVL_LOOKUP",
+        "ONCHAIN_TX_LOOKUP",
+        "CRYPTO_PRICE"
+      ],
+      "yaml_url": "https://raw.githubusercontent.com/arkade-01/telegraph-onchain-miner/master/telegraph-miner.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": false
+    },
+    {
+      "id": "901",
+      "slug": "groq-llama31-instant-miner",
+      "intents": [
+        "CHAT_COMPLETION",
+        "LANGUAGE_GENERATION",
+        "TEXT_GENERATION"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmRzs5pMVwKrefrJQrJg1Fzvb5LfCeDLJPiEv6y6eo3esn",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": true
+    },
+    {
+      "id": "910",
+      "slug": "onlookout-weather",
+      "intents": [
+        "WEATHER_FORECAST"
+      ],
+      "yaml_url": "https://onlookout.fly.dev/miner.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": true
+    },
+    {
+      "id": "951",
+      "slug": "test-mymemory-translate",
+      "intents": [
+        "LANGUAGE_TRANSLATION"
+      ],
+      "yaml_url": "https://raw.githubusercontent.com/telegraphprotocol/telegraph-examples/test/miner-registration-suite/test-miners/test-mymemory-translate.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": false
+    },
+    {
+      "id": "1001",
+      "slug": "veridex-contract-risk-miner",
+      "intents": [
+        "FRAUD_DETECTION"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmeqUzB55AMfeQJM2CsGGSwXmRdZ8HaS2gZJRofdHKgMMW",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "1188",
+      "slug": "assay-miner",
+      "intents": [
+        "FACT_CHECK"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmWGADymD3AM4uU2kadK19jVtuaZo48wp6qqCH4mryfhri",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "2847",
+      "slug": "arcadian-defi-risk",
+      "intents": [
+        "TASK_COMPLETION"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmUBTdRLxC1V3GaxHTr7igHskQoxN9ChLAJRFGSqNac5AW",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "4383",
+      "slug": "patchsignal-cve",
+      "intents": [
+        "CVE_LOOKUP"
+      ],
+      "yaml_url": "https://169.58.206.25.sslip.io/telegraph/patchsignal-cve-fixed.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "4433",
+      "slug": "livecert",
+      "intents": [
+        "SSL_VERIFICATION",
+        "STORM_ALERT",
+        "WEATHER_FORECAST",
+        "IP_GEOLOCATION",
+        "LANGUAGE_TRANSLATION",
+        "ACADEMIC_SEARCH",
+        "AI_TEXT_DETECTION",
+        "CONTENT_EXTRACTION",
+        "NEWS_HEADLINES",
+        "WALLET_BALANCE_CHECK",
+        "WEATHER_CHECK",
+        "FACT_CHECK",
+        "TELEGRAPH_KNOWLEDGE"
+      ],
+      "yaml_url": "https://raw.githubusercontent.com/Harshyadav442277/miner/6b0d176048313cc6fec2788d18cb9ae24f3e2adc/track1-miner/miner.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "5001",
+      "slug": "url-sentinel",
+      "intents": [
+        "URL_SCAN"
+      ],
+      "yaml_url": "https://raw.githubusercontent.com/egbujor-emmanuel/telegraph-url-scan-miner/24e037a/config/miner.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "7001",
+      "slug": "solar-depin-miner",
+      "intents": [
+        "WEATHER_CHECK"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmaRi9gdvUq54XTU1GcwBPen74wNam8QCfijo71jCXpc9A",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "7301",
+      "slug": "gaswire-evm-fees",
+      "intents": [
+        "GAS_PRICE"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmZNFnjYdSE5epr3BrihfZZr8yXftNuAfJAtzVLWXxBqF5",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "7302",
+      "slug": "chainwire-holder-count",
+      "intents": [
+        "TOKEN_HOLDER_COUNT"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmSMRS9w3Ypi9D7aSFBmHr8s4xgNoNEVctQto7LjKtEW2Z",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": false
+    },
+    {
+      "id": "7303",
+      "slug": "chainwire-wallet-balance",
+      "intents": [
+        "WALLET_BALANCE_CHECK"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/Qmb9cTohJVWBSMCe2WpkJh1gv9mGcqcmvFGRi8r7qrSQF8",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": false
+    },
+    {
+      "id": "7304",
+      "slug": "skywire-weather-check",
+      "intents": [
+        "WEATHER_CHECK"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmWfoDFQc8fYtafAuSFMxWJLZUrozowMuYTU2REg2aZiNe",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "7305",
+      "slug": "skywire-forecast",
+      "intents": [
+        "WEATHER_FORECAST"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmYZeAdPcvAakpUSogR575i9RFz3mvS1JsZuj6ArNt37Es",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": true
+    },
+    {
+      "id": "7306",
+      "slug": "skywire-storm-alert",
+      "intents": [
+        "STORM_ALERT"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/Qmb2tWGYXzJzMvT1aJXQmtHYxWM9cNpPwc1MmTSczGv3yu",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": true
+    },
+    {
+      "id": "7307",
+      "slug": "chainwire-tx-lookup",
+      "intents": [
+        "ONCHAIN_TX_LOOKUP"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmRaoQEdSxfu6GgZco3rynUat4yiaToD4F1TmqHaJftxk4",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "7311",
+      "slug": "optivis-crypto-price",
+      "intents": [
+        "CRYPTO_PRICE",
+        "CURRENCY_EXCHANGE",
+        "FINANCIAL_DATA"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmNQ1vzPgttbooXU6bJZqJB5DcVVvupFAf4pvjv6SaV465",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": false
+    },
+    {
+      "id": "7312",
+      "slug": "optivis-tvl",
+      "intents": [
+        "TVL_LOOKUP"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmQ1XRoBdLgP1i8867RUJYv21xtZwZ9z7JWFR9hDCh9S1H",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": false
+    },
+    {
+      "id": "7313",
+      "slug": "optivis-gas",
+      "intents": [
+        "GAS_PRICE"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmZ4eYJ8pP5SqtM6Dd4y86wMCiqcCJfY2fxJMQ9SxVzTiU",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": false,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": false
+    },
+    {
+      "id": "7320",
+      "slug": "finwire-crypto-price",
+      "intents": [
+        "CRYPTO_PRICE"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmWMDL14kdw6j57WAw6ZMF8bmygDrbXSBaz7cdnUPvTJv4",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "7321",
+      "slug": "finwire-currency-exchange",
+      "intents": [
+        "CURRENCY_EXCHANGE"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmRzSJYA7SPySY3uqf3fUJh6ySRQkU1L3oHhf1vcN5M7Uh",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "7322",
+      "slug": "finwire-tvl",
+      "intents": [
+        "TVL_LOOKUP"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmWme6iT2a2p5ZxXMpDFD97h9oGtPc5gF59bwmpTxcX3Uw",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": false
+    },
+    {
+      "id": "7323",
+      "slug": "finwire-stock-price",
+      "intents": [
+        "STOCK_PRICE"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmeRGkSbHMmrBfbUtHdgGF8aBvGhps1CSTiUFEQGLa4cbo",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "7324",
+      "slug": "finwire-financial-data",
+      "intents": [
+        "FINANCIAL_DATA"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmQa9ntHyPMPvDac8PVTeXh4wRJHNzwuA1zRap5bmuxAL1",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "7325",
+      "slug": "scholarwire-academic-search",
+      "intents": [
+        "ACADEMIC_SEARCH"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmZxVPZBdQ1p9DWf9cFTU3X5rVBrtbpf2JN6umvX8H6Vd1",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "7326",
+      "slug": "scholarwire-research-query",
+      "intents": [
+        "RESEARCH_QUERY"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmZWrKfZ5vE68R6XHGVtoWJL5pVC7J5YamwQ6C1ccjykHd",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "7327",
+      "slug": "scholarwire-research-synthesis",
+      "intents": [
+        "RESEARCH_SYNTHESIS"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmWuRHFgUvqteJnWQH4yLRTsfmkZQTE8DUV5oSQg29sPuF",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "7328",
+      "slug": "newswire-headlines",
+      "intents": [
+        "NEWS_HEADLINES"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmSk7zVaQ91f3XfXcpJt1kuRfp6pK8eime2R4XEEEcfihg",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "7329",
+      "slug": "newswire-search",
+      "intents": [
+        "NEWS_SEARCH"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmcjxUbBsAWQ35DtPHbPpgD6bMF7TsUxQPxG45FYnMFkvA",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "7330",
+      "slug": "sportwire-score",
+      "intents": [
+        "SPORTS_SCORE"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmPsgSqXpgYc6FmXMi31rpo3KR21Es8vy4RQ8Y7GDAaDsF",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "7331",
+      "slug": "sportwire-game-result",
+      "intents": [
+        "GAME_RESULT"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmSGQ4hze51s8Ci8ph4BtKrqsN2NzSsSpTMSBUd2cuvxQ1",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": false
+    },
+    {
+      "id": "7332",
+      "slug": "netwire-ssl",
+      "intents": [
+        "SSL_VERIFICATION"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmYU7H3mavQp5S7wcqrkKoS2jRRG6KSrCPnLpSqe6N4txP",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "7333",
+      "slug": "netwire-ip-geolocation",
+      "intents": [
+        "IP_GEOLOCATION"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmbNPYPNUhK4q6v5d7FjBPXaFHb5bBbiVvFnrsBY7r9HHM",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": false
+    },
+    {
+      "id": "7334",
+      "slug": "netwire-url-scan",
+      "intents": [
+        "URL_SCAN"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmQqQ3BFbB71pqXXaW39NFtGeYbykmqmqRCxhknytn5HGX",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": false
+    },
+    {
+      "id": "7335",
+      "slug": "netwire-content-extraction",
+      "intents": [
+        "CONTENT_EXTRACTION"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmXPhn8vPotetkHUx4GKcvGCCrtaeaVzxocasX6W96zCUY",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": false
+    },
+    {
+      "id": "7336",
+      "slug": "secwire-cve-lookup",
+      "intents": [
+        "CVE_LOOKUP"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmcRxL6Gmcwxrh8nDNPikN8GVSdmVoPPFU6V4Q9U4VwYM4",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "7337",
+      "slug": "langwire-translation",
+      "intents": [
+        "LANGUAGE_TRANSLATION"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/Qmbycq1ufnyTrDsA135Wx85x2Yt726qjA6xu5iKJV66fVL",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "7402",
+      "slug": "proofgate-url-intelligence",
+      "intents": [
+        "URL_SCAN"
+      ],
+      "yaml_url": "https://proofgate-six.vercel.app/miner.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": false
+    },
+    {
+      "id": "7777",
+      "slug": "tele",
+      "intents": [
+        "FRAUD_DETECTION"
+      ],
+      "yaml_url": "https://consumer-buck-signed-long.trycloudflare.com/miner.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "8402",
+      "slug": "legwork-job-hunter",
+      "intents": [
+        "WEB_SEARCH",
+        "RESEARCH_SYNTHESIS",
+        "TEXT_GENERATION"
+      ],
+      "yaml_url": "https://legwork-production-88e5.up.railway.app/miner.yaml",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "8420",
+      "slug": "trustgate-wallet-balance",
+      "intents": [
+        "WALLET_BALANCE_CHECK"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmT5Q8Bm35aYUVYmHErNZjdXpmTtsVpw5Q78Htm7j34Qyr",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "8421",
+      "slug": "trustgate-fraud-detection",
+      "intents": [
+        "FRAUD_DETECTION"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmYfMHKVKG8eKFdiboBEPz9CHctWnJbg96rpdET2GDnzTJ",
+      "yaml_reachable": true,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "8453",
+      "slug": "truvian-onchain-truth",
+      "intents": [
+        "ONCHAIN_TX_LOOKUP",
+        "GAS_PRICE"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmYct6xHWWwUdvYfm1vr6VhpUPqB8eYb3wVFJmZ2QM6qoA",
+      "yaml_reachable": true,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "8848",
+      "slug": "elcaro-ipi-detection",
+      "intents": [
+        "CONTENT_MODERATION",
+        "TEXT_CLASSIFICATION"
+      ],
+      "yaml_url": "https://api.elcaro.trustfall.xyz/telegraph.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": false
+    },
+    {
+      "id": "9001",
+      "slug": "verity-onchain-lookup",
+      "intents": [
+        "ONCHAIN_TX_LOOKUP"
+      ],
+      "yaml_url": "https://raw.githubusercontent.com/nftkingiii/Verity/9a786d004e2b31b649084b414e8ee25ea3a509bb/verity-miner.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "9002",
+      "slug": "txlens",
+      "intents": [
+        "ONCHAIN_TX_LOOKUP",
+        "GAS_PRICE",
+        "WALLET_BALANCE_CHECK",
+        "TOKEN_HOLDER_COUNT",
+        "TVL_LOOKUP",
+        "CRYPTO_PRICE",
+        "STOCK_PRICE",
+        "SSL_VERIFICATION",
+        "WEATHER_FORECAST",
+        "STORM_ALERT",
+        "IP_GEOLOCATION",
+        "ACADEMIC_SEARCH",
+        "FRAUD_DETECTION",
+        "WEB_SEARCH"
+      ],
+      "yaml_url": "https://raw.githubusercontent.com/Sireadell/onchain-tx/e4a7b74abb988754d9b99323b3ce19e24094b967/miner.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "9003",
+      "slug": "verity-weather-forecast",
+      "intents": [
+        "WEATHER_FORECAST"
+      ],
+      "yaml_url": "https://raw.githubusercontent.com/nftkingiii/Verity/9a786d004e2b31b649084b414e8ee25ea3a509bb/verity-weather-forecast-miner.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "9004",
+      "slug": "verity-news-search",
+      "intents": [
+        "NEWS_SEARCH"
+      ],
+      "yaml_url": "https://raw.githubusercontent.com/nftkingiii/Verity/9a786d004e2b31b649084b414e8ee25ea3a509bb/verity-news-search-miner.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "9005",
+      "slug": "veyctum",
+      "intents": [
+        "ONCHAIN_TX_LOOKUP"
+      ],
+      "yaml_url": "https://veyctum.splitpot.xyz/veyctum.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "9006",
+      "slug": "verity-current-weather",
+      "intents": [
+        "WEATHER_CHECK"
+      ],
+      "yaml_url": "https://raw.githubusercontent.com/nftkingiii/Verity/9a786d004e2b31b649084b414e8ee25ea3a509bb/verity-weather-miner.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "9007",
+      "slug": "interlock-onchain-tx-lookup",
+      "intents": [
+        "ONCHAIN_TX_LOOKUP"
+      ],
+      "yaml_url": "https://cdn.jsdelivr.net/gh/xyzbutworse/interlock-telegraph-wasm@82ccea8a11047155abe644cf5d0adcc3c05cd45e/interlock_miner_v2.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "9010",
+      "slug": "sigil-onchain-lookup",
+      "intents": [
+        "ONCHAIN_TX_LOOKUP"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmRdAbr6ZSjHUMsWvqxWjyuM8draL5frd3pdoH7mLtaiRe",
+      "yaml_reachable": true,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "9107",
+      "slug": "cryptopulse-multisource-price",
+      "intents": [
+        "CRYPTO_PRICE"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/Qmdrf2NUrDVh9mCoFzHrRnBphyR3VjRAUyfT4qSUq3pfJX",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "10001",
+      "slug": "vulnfeed-onchain-security",
+      "intents": [
+        "ONCHAIN_TX_LOOKUP"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmRNUfwm6K9AA3nm82WrQY5ydtXVJ2ei74UsZPeGQuGBf4",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "10002",
+      "slug": "degenlens-onchain",
+      "intents": [
+        "ONCHAIN_TX_LOOKUP",
+        "WALLET_BALANCE_CHECK",
+        "FRAUD_DETECTION"
+      ],
+      "yaml_url": "https://degenlensv1.up.railway.app/miner.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "64173",
+      "slug": "oathcast-weather",
+      "intents": [
+        "WEATHER_FORECAST"
+      ],
+      "yaml_url": "https://raw.githubusercontent.com/fexx301/oathcast/main/miners/candidates/oathcast-weather-window-v3.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "91001",
+      "slug": "sarzops-transaction-risk",
+      "intents": [
+        "FRAUD_DETECTION",
+        "RESEARCH_QUERY"
+      ],
+      "yaml_url": "ipfs://bafkreid2ceaib7bff3auo3zyxgycfdwhnfux2emu3coceuneszc4sc4aby",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": false,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": false
+    },
+    {
+      "id": "121262",
+      "slug": "telegraph-ai-miner-node",
+      "intents": [
+        "TEXT_GENERATION",
+        "LANGUAGE_GENERATION",
+        "SENTIMENT_ANALYSIS",
+        "TEXT_CLASSIFICATION",
+        "WEB_SEARCH"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmNxX8xiiwjHgC68DcGWaBmG5CyQPphwsL7a2PSXNokgys",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": true
+    },
+    {
+      "id": "147115",
+      "slug": "gaspulse-evm-fees",
+      "intents": [
+        "GAS_PRICE"
+      ],
+      "yaml_url": "https://gas.178-104-147-115.sslip.io/miner.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": false
+    },
+    {
+      "id": "147116",
+      "slug": "balancepulse-evm-balance",
+      "intents": [
+        "WALLET_BALANCE_CHECK"
+      ],
+      "yaml_url": "https://balance.178-104-147-115.sslip.io/miner.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": false
+    },
+    {
+      "id": "147117",
+      "slug": "pricepulse-crypto-consensus",
+      "intents": [
+        "CRYPTO_PRICE"
+      ],
+      "yaml_url": "https://price.178-104-147-115.sslip.io/miner.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": false
+    },
+    {
+      "id": "708425",
+      "slug": "veritarach-ai-text-detector",
+      "intents": [
+        "AI_TEXT_DETECTION"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmStgms5GJXxTpd1gqsgQAKYwm4KZWfBe5fwYcpECLjMBB",
+      "yaml_reachable": true,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "717190",
+      "slug": "qarinah-proofpack",
+      "intents": [
+        "FACT_CHECK",
+        "RESEARCH_SYNTHESIS"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmU9abRW2h7YW8quPDCoupTuoQ52ARmbNx7Xp6fHDFMAJx",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": true
+    },
+    {
+      "id": "5893375",
+      "slug": "weerakorn-miner",
+      "intents": [
+        "TEXT_GENERATION",
+        "LANGUAGE_GENERATION",
+        "WEB_SEARCH",
+        "RESEARCH_SYNTHESIS"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmcF3mMpkiPW3KJTVWsedG9NQPDLfKNpJWJRowceHWULmK",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "8262601",
+      "slug": "tempest-storm-intelligence",
+      "intents": [
+        "STORM_ALERT"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmRwocwd3Wbq7DEonCyGb1121RRZjALkMh5T6TxZ6iB5k3",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": false,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": true
+    },
+    {
+      "id": "20260821",
+      "slug": "amanat-weather-risk",
+      "intents": [
+        "WEATHER_FORECAST",
+        "WEATHER_CHECK",
+        "STORM_ALERT"
+      ],
+      "yaml_url": "https://raw.githubusercontent.com/PugarHuda/amanat/f38069e82ead79f4c0ccabe10ec4bc49182506f9/miner/amanat-miner.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": true,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": true
+    },
+    {
+      "id": "20260826",
+      "slug": "isobar-weather",
+      "intents": [
+        "WEATHER_CHECK",
+        "WEATHER_FORECAST"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmYmTZGvkxhLDUJFc1HtadXX77VziX3PgL1FZ8AGeH46jt",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "20260827",
+      "slug": "fx-rate-mirror",
+      "intents": [
+        "CURRENCY_EXCHANGE"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/Qmey7nCwKQXL4a9xF5Jms63EZSMqVJHtG1xjbmzFmCgwgB",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": false,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": false
+    },
+    {
+      "id": "20260828",
+      "slug": "preflight-ssl-verification",
+      "intents": [
+        "SSL_VERIFICATION",
+        "URL_SCAN",
+        "WALLET_BALANCE_CHECK",
+        "ONCHAIN_TX_LOOKUP",
+        "TVL_LOOKUP",
+        "CRYPTO_PRICE",
+        "CURRENCY_EXCHANGE",
+        "IP_GEOLOCATION",
+        "ACADEMIC_SEARCH",
+        "CVE_LOOKUP"
+      ],
+      "yaml_url": "https://raw.githubusercontent.com/shreshth006/Preflight/47372bbf5855b84c9e97b94f2a6f91986b225ae9/telegraph/miner.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "20260829",
+      "slug": "agentfeed-base-crypto",
+      "intents": [
+        "CRYPTO_PRICE",
+        "GAS_PRICE",
+        "WALLET_BALANCE_CHECK"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmeyHtN8GscjP48LkFwgJzbezsGjTpD48H9oeeFc1xQDJt",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "20260830",
+      "slug": "caliber-truthport-text-auth",
+      "intents": [
+        "AI_TEXT_DETECTION"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmVTkdLFe6sxJpXqBkPeHzBGwy392q9ezDRP7WgEobxYS6",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "55240794",
+      "slug": "cinder-signal-financial-data",
+      "intents": [
+        "FINANCIAL_DATA"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmbAbQbuxFS8H3r7X5m2keEUmUwjuzMRZY7KQwxbXAp53P",
+      "yaml_reachable": false,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "82920263",
+      "slug": "weathertop-v3",
+      "intents": [
+        "WEATHER_FORECAST"
+      ],
+      "yaml_url": "https://169.58.206.25.sslip.io/telegraph/weathertop-v3-miner.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": true
+    },
+    {
+      "id": "94217603",
+      "slug": "telegraph-sentinel",
+      "intents": [
+        "FRAUD_DETECTION"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmPn3ocq3LBRKJfai8t3Y45UWLmhtpVvx8jNzE5N4ArYmN",
+      "yaml_reachable": true,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "94217604",
+      "slug": "provenance-price",
+      "intents": [
+        "CRYPTO_PRICE"
+      ],
+      "yaml_url": "https://api.prophetpool.site/miner.yaml",
+      "yaml_reachable": true,
+      "has_on_chain": false,
+      "has_request": false,
+      "has_fields": false,
+      "transform": null,
+      "routable_by_name": false
+    },
+    {
+      "id": "95822412",
+      "slug": "refut-onchain-risk",
+      "intents": [
+        "FRAUD_DETECTION"
+      ],
+      "yaml_url": "https://gateway.pinata.cloud/ipfs/QmNd1d6cBeikc84eK64VbuKWgDM6NJ9FnHPxzHsY5bwyrF",
+      "yaml_reachable": true,
+      "has_on_chain": true,
+      "has_request": false,
+      "has_fields": true,
+      "transform": "direct",
+      "routable_by_name": false
+    }
+  ]
+}

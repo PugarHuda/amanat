@@ -1,0 +1,533 @@
+{
+  "generated_at": "2026-09-05T14:55:10.221Z",
+  "rail": "paid (Telegraph Engine, verified)",
+  "trigger": 0.75,
+  "lanes": [
+    {
+      "name": "Singapore → Jakarta",
+      "from": "Singapore, Singapore",
+      "to": "Jakarta, Jakarta Special Capital Region, Indonesia",
+      "distance_km": 898,
+      "duration_hours": 24,
+      "worst": {
+        "risk": 0.424,
+        "eta_hours": 0,
+        "lat": 1.2897,
+        "lon": 103.8501
+      },
+      "breach": false,
+      "verdict": "Low: worst leg is 0.424 at 1.2897, 103.8501 at hour 0.",
+      "unread": 0,
+      "legs": [
+        {
+          "km_from_start": 0,
+          "eta_hours": 0,
+          "lat": 1.2897,
+          "lon": 103.8501,
+          "risk": 0.424,
+          "condition": "Clear sky",
+          "signal_hash": "0xe8768f5b43c234ff757ccb03c8a0ef46fd9661fbd27af911139ad2124eb13260",
+          "miner": "schema fallback (SkyWire Storm Alert stated no readable risk)",
+          "error": null
+        },
+        {
+          "km_from_start": 449,
+          "eta_hours": 12,
+          "lat": -2.4633,
+          "lon": 105.3434,
+          "risk": 0.1,
+          "condition": null,
+          "signal_hash": "0x018af1cd8c1a19059e8298817f82e0628d0d4474399176ff85ba97d1a220fe1d",
+          "miner": "Tempest Storm Intelligence",
+          "error": null
+        },
+        {
+          "km_from_start": 898,
+          "eta_hours": 24,
+          "lat": -6.2146,
+          "lon": 106.8451,
+          "risk": 0.144,
+          "condition": "Mainly clear",
+          "signal_hash": "0xfcd103d6196f3f117ecf5d4f2a98a812524a84909497a128e3e89435cbeddd2a",
+          "miner": "schema fallback (SkyWire Storm Alert stated no readable risk)",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "Cebu → Manila",
+      "from": "Cebu, Central Visayas, Philippines",
+      "to": "Manila, National Capital Region, Philippines",
+      "distance_km": 562,
+      "duration_hours": 15,
+      "worst": {
+        "risk": 0.556,
+        "eta_hours": 15,
+        "lat": 14.6042,
+        "lon": 120.9822
+      },
+      "breach": false,
+      "verdict": "Elevated: risk 0.556 at 14.6042, 120.9822 at hour 15. Worth covering, below the trigger.",
+      "unread": 0,
+      "legs": [
+        {
+          "km_from_start": 0,
+          "eta_hours": 0,
+          "lat": 10.3333,
+          "lon": 123.75,
+          "risk": 0.15,
+          "condition": null,
+          "signal_hash": "0x2d9f1815a9750b4cc92545132efd3865d68b35726a1077aedb27c356e16e2ddf",
+          "miner": "Tempest Storm Intelligence",
+          "error": null
+        },
+        {
+          "km_from_start": 281,
+          "eta_hours": 8,
+          "lat": 12.4723,
+          "lon": 122.3775,
+          "risk": 0.548,
+          "condition": "Light drizzle",
+          "signal_hash": "0x9cd9652e035492672907d211e0e846f0c7ddc392dc563e14646ad60f8f9422ed",
+          "miner": "schema fallback (SkyWire Storm Alert stated no readable risk)",
+          "error": null
+        },
+        {
+          "km_from_start": 562,
+          "eta_hours": 15,
+          "lat": 14.6042,
+          "lon": 120.9822,
+          "risk": 0.556,
+          "condition": "Light drizzle",
+          "signal_hash": "0x14d3d996fc61abf175cca32fbdd011bee1774df650151a4ea565c75b6cd92c2a",
+          "miner": "schema fallback (SkyWire Storm Alert stated no readable risk)",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "Hong Kong → Kaohsiung",
+      "from": "Hong Kong",
+      "to": "Kaohsiung City, Kaohsiung, Taiwan",
+      "distance_km": 632,
+      "duration_hours": 17,
+      "worst": {
+        "risk": 0.616,
+        "eta_hours": 17,
+        "lat": 22.6163,
+        "lon": 120.3133
+      },
+      "breach": false,
+      "verdict": "Elevated: risk 0.616 at 22.6163, 120.3133 at hour 17. Worth covering, below the trigger.",
+      "unread": 0,
+      "legs": [
+        {
+          "km_from_start": 0,
+          "eta_hours": 0,
+          "lat": 22.2783,
+          "lon": 114.1747,
+          "risk": 0.128,
+          "condition": "Overcast",
+          "signal_hash": "0xb88a6fb08ae5395189752e87a7768b530b88f98ea49f89bc97cf1032c11d32a7",
+          "miner": "schema fallback (SkyWire Storm Alert stated no readable risk)",
+          "error": null
+        },
+        {
+          "km_from_start": 316,
+          "eta_hours": 9,
+          "lat": 22.4763,
+          "lon": 117.2403,
+          "risk": 0.21,
+          "condition": "Light drizzle",
+          "signal_hash": "0x24d5bd667dbb1add94f2a91b828849b5f9ab7c811d8b805dbec2a0b3abe7cb48",
+          "miner": "schema fallback (SkyWire Storm Alert stated no readable risk)",
+          "error": null
+        },
+        {
+          "km_from_start": 632,
+          "eta_hours": 17,
+          "lat": 22.6163,
+          "lon": 120.3133,
+          "risk": 0.616,
+          "condition": "Partly cloudy",
+          "signal_hash": "0xd5be55650cd0354d7fab6adb4a010a16c0d6926e7679586547d612161b095860",
+          "miner": "schema fallback (SkyWire Storm Alert stated no readable risk)",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "Surabaya → Makassar",
+      "from": "Surabaya, East Java, Indonesia",
+      "to": "Makassar, South Sulawesi, Indonesia",
+      "distance_km": 775,
+      "duration_hours": 21,
+      "worst": {
+        "risk": 0.452,
+        "eta_hours": 0,
+        "lat": -7.2492,
+        "lon": 112.7508
+      },
+      "breach": false,
+      "verdict": "Elevated: risk 0.452 at -7.2492, 112.7508 at hour 0. Worth covering, below the trigger.",
+      "unread": 0,
+      "legs": [
+        {
+          "km_from_start": 0,
+          "eta_hours": 0,
+          "lat": -7.2492,
+          "lon": 112.7508,
+          "risk": 0.452,
+          "condition": "Overcast",
+          "signal_hash": "0xb0d77d31183337d5ff06990d5c6cb6fe66868d1f2db7ab0e85398d6b5661336e",
+          "miner": "schema fallback (SkyWire Storm Alert stated no readable risk)",
+          "error": null
+        },
+        {
+          "km_from_start": 387,
+          "eta_hours": 10,
+          "lat": -6.2094,
+          "lon": 116.098,
+          "risk": 0.398,
+          "condition": "Clear sky",
+          "signal_hash": "0xecb3f6bf9b6e96411e5fa39eb11c81efc9a4ad50acee598190ea3fdd84886be3",
+          "miner": "schema fallback (SkyWire Storm Alert stated no readable risk)",
+          "error": null
+        },
+        {
+          "km_from_start": 775,
+          "eta_hours": 21,
+          "lat": -5.1486,
+          "lon": 119.4319,
+          "risk": 0.18,
+          "condition": null,
+          "signal_hash": "0x04c3d928bf68686986581012be68439de9a9a0d625adcec7279e7dbc9e96b7aa",
+          "miner": "Tempest Storm Intelligence",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "Ho Chi Minh City → Manila",
+      "from": "Ho Chi Minh City, Ho Chi Minh City (HCMC), Vietnam",
+      "to": "Manila, National Capital Region, Philippines",
+      "distance_km": 1612,
+      "duration_hours": 44,
+      "worst": {
+        "risk": 0.25,
+        "eta_hours": 22,
+        "lat": 12.8107,
+        "lon": 113.7522
+      },
+      "breach": false,
+      "verdict": "Low: worst leg is 0.250 at 12.8107, 113.7522 at hour 22.",
+      "unread": 0,
+      "legs": [
+        {
+          "km_from_start": 0,
+          "eta_hours": 0,
+          "lat": 10.823,
+          "lon": 106.6297,
+          "risk": 0.132,
+          "condition": "Overcast",
+          "signal_hash": "0xc4e8448f2a8b91da25d74cf555673fc7a0eb0047e30f91e85b65167a47c10f2c",
+          "miner": "schema fallback (routing failed: payment signed and refused: settle request failed: Post \"https://facilitator.pay)",
+          "error": null
+        },
+        {
+          "km_from_start": 806,
+          "eta_hours": 22,
+          "lat": 12.8107,
+          "lon": 113.7522,
+          "risk": 0.25,
+          "condition": null,
+          "signal_hash": "0x14dcf260b25b0749a00db12d587540212113d2e9d60146127478b2253ca16b3e",
+          "miner": "Tempest Storm Intelligence",
+          "error": null
+        },
+        {
+          "km_from_start": 1612,
+          "eta_hours": 44,
+          "lat": 14.6042,
+          "lon": 120.9822,
+          "risk": 0.22,
+          "condition": null,
+          "signal_hash": "0x97581224cf530374d78278d7e2bedc9bda21d6a41d496e40407c2f5aa6724c84",
+          "miner": "Tempest Storm Intelligence",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "Manila → Kaohsiung",
+      "from": "Manila, National Capital Region, Philippines",
+      "to": "Kaohsiung City, Kaohsiung, Taiwan",
+      "distance_km": 894,
+      "duration_hours": 24,
+      "worst": {
+        "risk": 0.576,
+        "eta_hours": 12,
+        "lat": 18.6105,
+        "lon": 120.6557
+      },
+      "breach": false,
+      "verdict": "Elevated: risk 0.576 at 18.6105, 120.6557 at hour 12. Worth covering, below the trigger.",
+      "unread": 0,
+      "legs": [
+        {
+          "km_from_start": 0,
+          "eta_hours": 0,
+          "lat": 14.6042,
+          "lon": 120.9822,
+          "risk": 0.412,
+          "condition": "Light drizzle",
+          "signal_hash": "0xd7f10c38b3288d8d9467f12bddeea3754c0830f9a83ff4560dc3b562fbd5a7d6",
+          "miner": "schema fallback (SkyWire Storm Alert stated no readable risk)",
+          "error": null
+        },
+        {
+          "km_from_start": 447,
+          "eta_hours": 12,
+          "lat": 18.6105,
+          "lon": 120.6557,
+          "risk": 0.576,
+          "condition": "Light drizzle",
+          "signal_hash": "0xffd56b585aef8ff65cde7429ad9dec604d3fba3c0f55f13b21721e9561294ca2",
+          "miner": "schema fallback (SkyWire Storm Alert stated no readable risk)",
+          "error": null
+        },
+        {
+          "km_from_start": 894,
+          "eta_hours": 24,
+          "lat": 22.6163,
+          "lon": 120.3133,
+          "risk": 0.32,
+          "condition": null,
+          "signal_hash": "0xcb158d9ab1ed75960f824ace7725dc67c1cafdb2e79ed801524b202d28a2c5c9",
+          "miner": "Tempest Storm Intelligence",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "Shanghai → Busan",
+      "from": "Shanghai, Shanghai Municipality, China",
+      "to": "Busan, Busan, South Korea",
+      "distance_km": 826,
+      "duration_hours": 22,
+      "worst": {
+        "risk": 0.588,
+        "eta_hours": 11,
+        "lat": 33.2193,
+        "lon": 125.1601
+      },
+      "breach": false,
+      "verdict": "Elevated: risk 0.588 at 33.2193, 125.1601 at hour 11. Worth covering, below the trigger.",
+      "unread": 0,
+      "legs": [
+        {
+          "km_from_start": 0,
+          "eta_hours": 0,
+          "lat": 31.2222,
+          "lon": 121.4581,
+          "risk": 0.196,
+          "condition": "Overcast",
+          "signal_hash": "0x1bb99c9dd905097ffb27c0dde2690ad4717250d1654b96c833516dec8b625fb7",
+          "miner": "schema fallback (SkyWire Storm Alert stated no readable risk)",
+          "error": null
+        },
+        {
+          "km_from_start": 413,
+          "eta_hours": 11,
+          "lat": 33.2193,
+          "lon": 125.1601,
+          "risk": 0.588,
+          "condition": "Mainly clear",
+          "signal_hash": "0x821c42db8df2508f2608918758c5f96199fcd7aff592db33b49513edbfd5222a",
+          "miner": "schema fallback (SkyWire Storm Alert stated no readable risk)",
+          "error": null
+        },
+        {
+          "km_from_start": 826,
+          "eta_hours": 22,
+          "lat": 35.1017,
+          "lon": 129.03,
+          "risk": 0.508,
+          "condition": "Partly cloudy",
+          "signal_hash": "0x3e85a2b0599d294b1679e122afe0b41ca540ad711cc89a2723756c30213a7077",
+          "miner": "schema fallback (SkyWire Storm Alert stated no readable risk)",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "Port Klang → Singapore",
+      "from": "Port Klang, Selangor, Malaysia",
+      "to": "Singapore, Singapore",
+      "distance_km": 333,
+      "duration_hours": 12,
+      "worst": {
+        "risk": 0.15,
+        "eta_hours": 12,
+        "lat": 1.2897,
+        "lon": 103.8501
+      },
+      "breach": false,
+      "verdict": "Low: worst leg is 0.150 at 1.2897, 103.8501 at hour 12.",
+      "unread": 0,
+      "legs": [
+        {
+          "km_from_start": 0,
+          "eta_hours": 0,
+          "lat": 2.9996,
+          "lon": 101.3929,
+          "risk": 0.03,
+          "condition": null,
+          "signal_hash": "0x9720a658f44873224cbf7304167027a53fc9f6dcbaabd7ccf3e73edc2447977f",
+          "miner": "Tempest Storm Intelligence",
+          "error": null
+        },
+        {
+          "km_from_start": 166,
+          "eta_hours": 6,
+          "lat": 2.1451,
+          "lon": 102.6222,
+          "risk": 0.13,
+          "condition": null,
+          "signal_hash": "0x3904508faa9a28e0d17bd0f9ac7dfee0b9347e64a9de8a0aa916a8d2600d1b5a",
+          "miner": "Tempest Storm Intelligence",
+          "error": null
+        },
+        {
+          "km_from_start": 333,
+          "eta_hours": 12,
+          "lat": 1.2897,
+          "lon": 103.8501,
+          "risk": 0.15,
+          "condition": null,
+          "signal_hash": "0x328b4e58db71e4833f92a9c41a420e1fd2e8acf8a5e9ec5180e9f0cdeb1c9340",
+          "miner": "Tempest Storm Intelligence",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "Da Nang → Hong Kong",
+      "from": "Da Nang, Da Nang City, Vietnam",
+      "to": "Hong Kong",
+      "distance_km": 931,
+      "duration_hours": 25,
+      "worst": {
+        "risk": 0.11,
+        "eta_hours": 13,
+        "lat": 19.1971,
+        "lon": 111.1416
+      },
+      "breach": false,
+      "verdict": "Low: worst leg is 0.110 at 19.1971, 111.1416 at hour 13.",
+      "unread": 0,
+      "legs": [
+        {
+          "km_from_start": 0,
+          "eta_hours": 0,
+          "lat": 16.0678,
+          "lon": 108.2208,
+          "risk": 0.06,
+          "condition": null,
+          "signal_hash": "0x1c94d0c1b5e36622ac4deabed08fedc4df2ca8f542b8206c74ce9ce2436086ce",
+          "miner": "Tempest Storm Intelligence",
+          "error": null
+        },
+        {
+          "km_from_start": 466,
+          "eta_hours": 13,
+          "lat": 19.1971,
+          "lon": 111.1416,
+          "risk": 0.11,
+          "condition": null,
+          "signal_hash": "0xed119ef8afad374be31c39e231486c153bad93ed3eb4875621139e732f77cca2",
+          "miner": "Tempest Storm Intelligence",
+          "error": null
+        },
+        {
+          "km_from_start": 931,
+          "eta_hours": 25,
+          "lat": 22.2783,
+          "lon": 114.1747,
+          "risk": 0.06,
+          "condition": "Mainly clear",
+          "signal_hash": "0x98f539196a59ee574fcf479cf7b424ac5a9ba52cfc2a0d7dcc9a9753f7661dcd",
+          "miner": "schema fallback (SkyWire Storm Alert stated no readable risk)",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "Naha → Kaohsiung",
+      "from": "Naha, Okinawa, Japan",
+      "to": "Kaohsiung City, Kaohsiung, Taiwan",
+      "distance_km": 846,
+      "duration_hours": 23,
+      "worst": {
+        "risk": 0.38,
+        "eta_hours": 11,
+        "lat": 24.4592,
+        "lon": 123.9434
+      },
+      "breach": false,
+      "verdict": "Low: worst leg is 0.380 at 24.4592, 123.9434 at hour 11.",
+      "unread": 0,
+      "legs": [
+        {
+          "km_from_start": 0,
+          "eta_hours": 0,
+          "lat": 26.213,
+          "lon": 127.6785,
+          "risk": 0.15,
+          "condition": null,
+          "signal_hash": "0x3640b61808ba567545d1e605fb8bf7423e1bedd7245c615bdf21e8fd9756cb78",
+          "miner": "Tempest Storm Intelligence",
+          "error": null
+        },
+        {
+          "km_from_start": 423,
+          "eta_hours": 11,
+          "lat": 24.4592,
+          "lon": 123.9434,
+          "risk": 0.38,
+          "condition": null,
+          "signal_hash": "0xd0dd3f23c89a2ddec5682e2868d1d82abcc255e4ea0a81f1e23b2ca5e7571087",
+          "miner": "Tempest Storm Intelligence",
+          "error": null
+        },
+        {
+          "km_from_start": 846,
+          "eta_hours": 23,
+          "lat": 22.6163,
+          "lon": 120.3133,
+          "risk": 0.32,
+          "condition": null,
+          "signal_hash": "0xd64c5058742110f8a8f128285e3e0233ca79a44b50d471e4981d2fc43b0554d3",
+          "miner": "Tempest Storm Intelligence",
+          "error": null
+        }
+      ]
+    }
+  ],
+  "disruption": {
+    "error": "engine ask 500: {\"error\":\"upstream error 400: {\\\"errors\\\":[\\\"You did not provide an API key.\\\"]}\",\"miner_tried\":\"210\",\"route_source\":\"llm_ro"
+  },
+  "telegraph": {
+    "calls": 68,
+    "spent_usd": 0.68,
+    "routed": 14,
+    "routed_unreadable": 38,
+    "schema_fallback": 16,
+    "cross_domain_calls": 0,
+    "answered_by": {
+      "SkyWire Storm Alert": 38,
+      "Tempest Storm Intelligence": 14
+    },
+    "unread_reasons": {}
+  }
+}
