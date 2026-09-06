@@ -990,6 +990,17 @@ console.log("a bulletin question is answered as a bulletin, a current one is not
   // The follow-up question is answered in the same call: the leader cannot take
   // a job, but these two miners could.
   assert.deepEqual(closed.jobable_miners, ["skywire-storm-alert", "amanat-weather-risk"]);
+  // A closure a miner author cannot act on is half a finding, so the fix ships
+  // with the diagnosis — and only with it. An intent that is open, or that
+  // nobody could check, has nothing to fix and must not be handed a remedy.
+  assert.ok(closed.fix, "a confirmed closure carries the fix");
+  const yaml = closed.fix.add_to_your_yaml;
+  assert.ok(yaml.startsWith("on_chain:"), yaml);
+  assert.ok(yaml.includes("  request:"), "the block a closed miner is missing is the request mapping");
+  assert.ok(yaml.includes("source: strings.0"), "it has to show how a job's OnChainData maps onto a body");
+  assert.equal(intentVerdict(audit, "WEB_SEARCH").fix, undefined, "an open intent needs no fix");
+  assert.equal(intentVerdict(audit, "NEWS_SEARCH").fix, undefined, "an unreadable one is not a diagnosis");
+  assert.equal(intentVerdict(audit, "CRYPTO_PRICE").fix, undefined, "an unscored one is not a diagnosis");
 
   assert.equal(intentVerdict(audit, "WEB_SEARCH").can_receive_a_job, true);
 

@@ -372,7 +372,7 @@
               "type": "string",
               "example": "STORM_ALERT"
             },
-            "description": "Answer for one intent only. Returns state (open|closed|unknown|no_leader_in_this_read|not_scored), can_receive_a_job (true, false, or null when the leader registration cannot be fetched — null is never a no), the rank-1 miner, and jobable_miners: who on that intent could receive a job whatever the leader does."
+            "description": "Answer for one intent only. Returns state (open|closed|unknown|no_leader_in_this_read|not_scored), can_receive_a_job (true, false, or null when the leader registration cannot be fetched — null is never a no), the rank-1 miner, and jobable_miners: who on that intent could receive a job whatever the leader does. A confirmed closure also carries `fix`: the on_chain.request block to add to the miner registration YAML, with a worked example."
           }
         ]
       }

@@ -148,9 +148,37 @@ export function intentVerdict(audit, want) {
     // Who could receive a job on it whatever the leader does — the follow-up
     // question, answered in the same call.
     jobable_miners: audit.jobable_by_intent?.[intent] ?? [],
+    // A diagnosis a miner author cannot act on is half a finding. This is the
+    // whole fix: eight lines in their registration YAML. Shipped here because
+    // this endpoint is where they land after reading that their intent is shut,
+    // and sending them off to reverse-engineer it from the spec is how a fix
+    // that takes two minutes does not get made.
+    ...(hit?.state === "closed" ? { fix: FIX } : {}),
     full_audit: "https://amanat-miner.vercel.app/api/jobable",
   };
 }
+
+const FIX = {
+  problem:
+    "The rank-1 miner on this intent declares no on_chain.request mapping, so the node has nothing "
+    + "to map the job's OnChainData onto and calls that miner's first endpoint with no parameters.",
+  who_fixes_it:
+    "The miner author, by adding the block below to their registration YAML — or the protocol, by "
+    + "routing on-chain jobs only among miners that declare one.",
+  add_to_your_yaml: [
+    "on_chain:",
+    "  request:",
+    "    - endpoint: forecast          # your endpoint's name in this YAML",
+    "      method: POST",
+    "      content_type: application/json",
+    "      body:",
+    "        lat:   { source: strings.0, type: float }",
+    "        lon:   { source: strings.1, type: float }",
+    "        hours: { source: numbers.0, type: int, optional: true }",
+  ].join("\n"),
+  worked_example: "https://github.com/PugarHuda/amanat/blob/main/miner/amanat-miner.yaml",
+  why_it_matters: "https://github.com/PugarHuda/amanat/blob/main/docs/bug-report.md",
+};
 
 /**
  * One end of a route: a place name, "lat, lon", or { lat, lon }.
