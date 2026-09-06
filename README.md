@@ -2,7 +2,19 @@
 
 # Amanat
 
-**Verified weather intelligence that a contract acts on by itself.**
+**Signed weather intelligence that a contract acts on by itself.**
+
+*Signed*, not "verified": the network's own `verified: true` cannot be checked
+from outside ([bug report](docs/bug-report.md#a-signal-commitment-that-cannot-be-re-derived)),
+so every answer here carries an Ed25519 signature over the fields a contract
+settles on, and anyone can check it with Node and nothing else:
+
+```sh
+node -e 'const c=require("node:crypto");fetch("https://amanat-miner.vercel.app/forecast?lat=10.32&lon=123.89&hours=6").then(r=>r.json()).then(({attestation:a})=>console.log(c.verify(null,Buffer.from(a.canonical),c.createPublicKey({key:Buffer.from(a.public_key,"base64"),format:"der",type:"spki"}),Buffer.from(a.signature,"base64"))))'
+```
+
+The key it checks against is the one published at
+[`/.well-known/amanat.json`](https://amanat-miner.vercel.app/.well-known/amanat.json).
 
 An *amanat* is a message entrusted to be carried — and, in the language of the
 old telegraph offices, the dispatch itself. That is the whole shape of this

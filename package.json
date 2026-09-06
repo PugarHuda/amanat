@@ -8,7 +8,7 @@
     "storm": "app/storm.mjs",
     "amanat-mcp": "mcp/server.mjs"
   },
-  "description": "Verified weather intelligence that a contract acts on: a Telegraph miner, a scoring module, and an on-chain agent.",
+  "description": "Signed weather intelligence that a contract acts on: a Telegraph miner, a scoring module, and an on-chain agent.",
   "engines": {
     "node": ">=20"
   },

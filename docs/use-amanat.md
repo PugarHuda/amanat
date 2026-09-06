@@ -1,7 +1,7 @@
 # Calling Amanat from your own agent
 
-Four ways in, cheapest first. Pick the one that matches how much you need to
-trust the answer.
+Cheapest first. Pick the one that matches how much you need to trust the
+answer.
 
 | Route | Cost | Verified by validators | Wallet needed |
 |---|---|---|---|

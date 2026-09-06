@@ -183,7 +183,7 @@ export const server = createServer(async (req, res) => {
       return res.end(PAGE);
     }
 
-    // The four ways in, on their own plate. It is the one section written for a
+    // The five ways in, on their own plate. It is the one section written for a
     // builder rather than a judge, and the front page has to prove the loop
     // closes inside a minute — so this is the section that can afford a click.
     if (pathname === "/use" || pathname === "/use.html") {

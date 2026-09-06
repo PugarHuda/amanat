@@ -1,6 +1,6 @@
 # Amanat
 
-> Verified weather and storm-risk readings a contract can act on. A Telegraph Protocol miner, a scoring module, and a parametric cover contract on Base Sepolia.
+> Signed weather and storm-risk readings a contract can act on. A Telegraph Protocol miner, a scoring module, and a parametric cover contract on Base Sepolia.
 
 Every answer is a weather report plus the scalars behind it: temperature, wind, gusts, precipitation, sea state, the nearest named cyclone, and a storm risk in [0,1] with the payout trigger at 0.75. The risk comes with an ensemble band (ECMWF, 51 members) and an Ed25519 attestation over the fields a contract settles on.
 
@@ -14,7 +14,7 @@ Every answer is a weather report plus the scalars behind it: temperature, wind, 
 
 ## Read it
 
-- [Four ways in](https://amanat-miner.vercel.app/use): plain HTTP, MCP, the Engine, or an on-chain job — cheapest first
+- [Five ways in](https://amanat-miner.vercel.app/use): this project's MCP server, plain HTTP, Telegraph's own MCP server, the Engine, or an on-chain job — cheapest first
 - [OpenAPI](https://amanat-miner.vercel.app/openapi.json): every route and schema
 - [Signing key](https://amanat-miner.vercel.app/.well-known/amanat.json): verify an answer with Node's crypto.verify and nothing else
 - [Source](https://github.com/PugarHuda/amanat): miner, scorer, contract, agent

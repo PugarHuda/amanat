@@ -17,7 +17,7 @@ Secondary, not confirmed as a design target: other Telegraph miners reading the 
 
 ## Product Purpose
 
-Amanat is verified weather intelligence that a contract acts on by itself. One codebase, three entries: a miner that answers in two shapes at once (a report a text scorer can grade, and the scalars a contract settles on); a `no_std` WASM scoring module that grades answers as measurements; and a parametric weather-cover contract on Base Sepolia that buys a storm reading from whichever miner the network ranks best and pays the claim itself when the reading crosses 0.75. Success is a judge or builder seeing, within a minute, that the loop closes on-chain and that every number on the page is checkable.
+Amanat is signed weather intelligence that a contract acts on by itself. One codebase, three entries: a miner that answers in two shapes at once (a report a text scorer can grade, and the scalars a contract settles on); a `no_std` WASM scoring module that grades answers as measurements; and a parametric weather-cover contract on Base Sepolia that buys a storm reading from whichever miner the network ranks best and pays the claim itself when the reading crosses 0.75. Success is a judge or builder seeing, within a minute, that the loop closes on-chain and that every number on the page is checkable.
 
 ## Positioning
 
