@@ -6,7 +6,7 @@ Every answer is a weather report plus the scalars behind it: temperature, wind, 
 
 ## Call it
 
-- POST https://amanat-miner.vercel.app/forecast with `{"question": "Storm risk for Cebu in the next 6 hours?"}` or `{"lat": 10.32, "lon": 123.89, "hours": 6}`
+- POST https://amanat-miner.vercel.app/forecast with `{"question": "Storm risk for Cebu in the next 6 hours?"}` or `{"place": "Cebu", "hours": 6}` or `{"lat": 10.32, "lon": 123.89, "hours": 6}`. the place may be named under any of: question, q, query, prompt, text, input, place, location, city — whichever your caller already uses.
 - GET  https://amanat-miner.vercel.app/api/route?from=Cebu&to=Manila&speed=37 — risk along a route, each leg at the hour the vehicle reaches it
 - GET  https://amanat-miner.vercel.app/api/backtest?lat=10.32&lon=123.89&start=2021-12-15&end=2021-12-18 — would the trigger have fired? Typhoon Rai, Cebu: yes, 1.000 at 13:00 UTC on 16 December
 - GET  https://amanat-miner.vercel.app/api/jobable — which intents an on-chain ERC-8183 job cannot survive, and who on each one can receive one. most intents whose leader can be audited are closed; the rest have leaders whose registration YAML is published at 127.0.0.1 and cannot be checked, which is a different fact and is reported separately.

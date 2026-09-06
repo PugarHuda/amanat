@@ -12,7 +12,7 @@ import { assess, range } from "./lib/backtest.mjs";
 import { band } from "./lib/ensemble.mjs";
 import { attest, verify, canonical, SIGNED_FIELDS } from "./lib/sign.mjs";
 import { note, watched, report } from "./lib/upstream.mjs";
-import { server, intentVerdict } from "./server.mjs";
+import { server, intentVerdict, QUESTION_FIELDS } from "./server.mjs";
 
 // risk: each driver alone can reach the ceiling, and the worst one wins.
 assert.equal(riskScore({ wind_kmh: 0, gust_kmh: 0, precip_mm: 0 }), 0);
@@ -1008,3 +1008,25 @@ console.log("a bulletin question is answered as a bulletin, a current one is not
   assert.deepEqual(none.jobable_miners, []);
 }
 console.log("one intent's on-chain verdict, and 'cannot check' never reads as 'no'");
+
+// The published spec has to describe the server that exists. /forecast accepts
+// a place under nine different field names and openapi.json documented one of
+// them, so an agent wiring itself up from the spec would geocode by hand rather
+// than pass `place` — which is the field our own docs tell people to use.
+{
+  const { readFileSync } = await import("node:fs");
+  const spec = JSON.parse(readFileSync(new URL("public/openapi.json", import.meta.url), "utf8"));
+  const forecast = spec.paths["/forecast"];
+  const documented = new Set((forecast.get ?? forecast.post).parameters.map((p) => p.name));
+
+  for (const field of QUESTION_FIELDS) {
+    assert.ok(documented.has(field), `/forecast accepts "${field}" but openapi.json does not document it`);
+  }
+  for (const required of ["lat", "lon", "hours"]) {
+    assert.ok(documented.has(required), `openapi.json must document ${required}`);
+  }
+  // llms.txt is the other published contract, and it is what a model reads.
+  const llms = readFileSync(new URL("public/llms.txt", import.meta.url), "utf8");
+  assert.ok(llms.includes("place"), "llms.txt should name the ergonomic field a caller will reach for");
+}
+console.log("the published spec documents every field the server actually accepts");

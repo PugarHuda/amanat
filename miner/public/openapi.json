@@ -97,7 +97,72 @@
             "in": "query",
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "A question naming a place, or just the place name. The place is geocoded and the window is read from the wording, so \"Storm risk for Cebu in the next 6 hours?\" needs no coordinates. Accepted under any of these names, whichever your caller already uses: question, q, query, prompt, text, input, place, location, city. Use lat+lon instead when you have coordinates — that path takes hours as an exact hour rather than a window."
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Alias for `question`."
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Alias for `question`."
+          },
+          {
+            "name": "prompt",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Alias for `question`."
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Alias for `question`."
+          },
+          {
+            "name": "input",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Alias for `question`."
+          },
+          {
+            "name": "place",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Alias for `question`."
+          },
+          {
+            "name": "location",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Alias for `question`."
+          },
+          {
+            "name": "city",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Alias for `question`."
           }
         ],
         "responses": {

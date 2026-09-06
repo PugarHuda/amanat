@@ -85,7 +85,11 @@ const JOBABLE_URL = process.env.AMANAT_JOBABLE_URL
 // Callers name the question field differently and the protocol does not fix
 // one. Accepting the whole set costs a lookup and turns "unsupported request"
 // into an answer.
-const QUESTION_FIELDS = ["question", "q", "query", "prompt", "text", "input", "place", "location", "city"];
+// Exported so the self-check can assert openapi.json documents every one of
+// them. It documented `question` alone for weeks while the server accepted all
+// nine — and `place` is the one our own docs tell people to use, so a caller
+// wiring itself up from the spec was being sent the long way round.
+export const QUESTION_FIELDS = ["question", "q", "query", "prompt", "text", "input", "place", "location", "city"];
 
 /**
  * The last questions this miner was asked, newest first.
