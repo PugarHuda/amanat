@@ -32,6 +32,9 @@ on:
       legs:
         description: "Waypoints per lane (2-12)"
         default: "3"
+      paid:
+        description: "Buy real Engine answers (default false: free rail, spends nothing)"
+        default: "false"
 
 concurrency:
   # Two runs screening the same lanes would double the spend and race on the
@@ -90,9 +93,22 @@ jobs:
           USDC: "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
           AMANAT_MINER_URL: https://amanat-miner.vercel.app
         run: |
+          # Scheduled runs read the free rail and buy nothing.
+          #
+          # On 6 September the protocol's co-founder asked in Discord that people
+          # stop their scripted, automated calls — they were taking the payment
+          # facilitator down — and said plainly that scripted calls will not be
+          # counted in judging, only organic ones. A schedule that keeps paying
+          # after that spends real USDC for a number nobody will score, against
+          # an explicit request from the people running the node.
+          #
+          # The board is the product and keeps its six-hour cadence; it just
+          # stops buying. A human can still run a paid sweep from the Actions
+          # tab with paid=true when there is a reason to.
           node agent/board.mjs \
             --legs "${{ inputs.legs || '3' }}" \
-            --budget "${{ inputs.budget || '1.00' }}"
+            --budget "${{ inputs.budget || '1.00' }}" \
+            ${{ inputs.paid == 'true' && ' ' || '--dry' }}
 
       - name: Survey the scoring board
         # Public reads only, so this costs nothing and rides the board's

@@ -110,6 +110,45 @@ function recordAsk({ field, question, lat, lon, hours, ua }) {
 }
 
 /**
+ * One intent's answer out of the full on-chain audit.
+ *
+ * The audit is 58 KB describing every registered miner. A builder deciding
+ * whether to put their own contract on this rail has one question — can a job
+ * on MY intent be answered — and making them parse the rest to find it is how
+ * a useful finding goes unread.
+ *
+ * Four states, not two: an intent we could not check and an intent that is
+ * closed are different facts, and so is one carrying no score at all. Only
+ * `open` sets `can_receive_a_job` true; the two we cannot answer return null
+ * rather than false, because "we do not know" must never read as "no".
+ */
+export function intentVerdict(audit, want) {
+  const intent = String(want).toUpperCase();
+  const hit = ["closed", "unknown", "open"].flatMap((k) =>
+    (audit[k] ?? []).filter((r) => r.intent === intent).map((r) => ({ ...r, state: k })),
+  )[0];
+  const absent = (audit.no_leader_in_this_read ?? []).some((r) => r.intent === intent);
+  return {
+    read_at: audit.read_at,
+    intent,
+    state: hit?.state ?? (absent ? "no_leader_in_this_read" : "not_scored"),
+    // Only a fetched YAML is evidence. `unknown` means the leader's
+    // registration is published at 127.0.0.1 and nobody outside the node can
+    // read it — that is null, not false.
+    can_receive_a_job: hit ? { open: true, closed: false, unknown: null }[hit.state] : null,
+    rank1: hit?.rank1 ?? null,
+    evidence: hit?.evidence
+      ?? (absent
+        ? "the scoreboard returned no rank-1 row for this intent on this read"
+        : "this intent carries no score on the live board, so it has no rank-1 miner to audit"),
+    // Who could receive a job on it whatever the leader does — the follow-up
+    // question, answered in the same call.
+    jobable_miners: audit.jobable_by_intent?.[intent] ?? [],
+    full_audit: "https://amanat-miner.vercel.app/api/jobable",
+  };
+}
+
+/**
  * One end of a route: a place name, "lat, lon", or { lat, lon }.
  *
  * Named so the error says which end failed. "no place found" is a much worse
@@ -441,6 +480,18 @@ export const server = createServer(async (req, res) => {
       }
       if (!upstream.ok) throw new Error(`jobable ${upstream.status}`);
       const audit = await upstream.json();
+
+      // `?intent=STORM_ALERT` answers the one question a builder actually has.
+      // The full audit is 58 KB of every miner's YAML state; someone deciding
+      // whether to put their own contract on this rail wants a yes or a no
+      // about their own intent, and making them parse the rest to find it is
+      // how a useful finding goes unread.
+      const want = searchParams.get("intent");
+      if (want) {
+        res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "public, max-age=1800" });
+        return res.end(JSON.stringify(intentVerdict(audit, want)));
+      }
+
       res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "public, max-age=1800" });
       return res.end(JSON.stringify(audit));
     }

@@ -12,7 +12,7 @@ import { assess, range } from "./lib/backtest.mjs";
 import { band } from "./lib/ensemble.mjs";
 import { attest, verify, canonical, SIGNED_FIELDS } from "./lib/sign.mjs";
 import { note, watched, report } from "./lib/upstream.mjs";
-import { server } from "./server.mjs";
+import { server, intentVerdict } from "./server.mjs";
 
 // risk: each driver alone can reach the ceiling, and the worst one wins.
 assert.equal(riskScore({ wind_kmh: 0, gust_kmh: 0, precip_mm: 0 }), 0);
@@ -968,3 +968,43 @@ console.log("sea state and named cyclones drive risk, and say so");
   assert.match(breached, /The 0\.75 payout threshold is crossed\./);
 }
 console.log("a bulletin question is answered as a bulletin, a current one is not");
+
+// /api/jobable?intent=X answers one builder's one question. The trap is that
+// "we could not check this intent" and "a job on it will not be answered" are
+// different facts — returning false for both is how someone ships a contract
+// onto a rail nobody actually verified.
+{
+  const audit = {
+    read_at: "2026-09-06T15:22:14.385Z",
+    closed: [{ intent: "STORM_ALERT", rank1: "livecert", evidence: "declares no on_chain.request block" }],
+    unknown: [{ intent: "NEWS_SEARCH", rank1: "tavily", evidence: "YAML could not be fetched" }],
+    open: [{ intent: "WEB_SEARCH", rank1: "telegraph-ai-miner-node", evidence: "declares an on_chain.request block" }],
+    no_leader_in_this_read: [{ intent: "TASK_COMPLETION" }],
+    jobable_by_intent: { STORM_ALERT: ["skywire-storm-alert", "amanat-weather-risk"], WEB_SEARCH: [] },
+  };
+
+  const closed = intentVerdict(audit, "STORM_ALERT");
+  assert.equal(closed.state, "closed");
+  assert.equal(closed.can_receive_a_job, false);
+  assert.equal(closed.rank1, "livecert");
+  // The follow-up question is answered in the same call: the leader cannot take
+  // a job, but these two miners could.
+  assert.deepEqual(closed.jobable_miners, ["skywire-storm-alert", "amanat-weather-risk"]);
+
+  assert.equal(intentVerdict(audit, "WEB_SEARCH").can_receive_a_job, true);
+
+  // Neither of these may answer false. Both are "we do not know".
+  assert.equal(intentVerdict(audit, "NEWS_SEARCH").can_receive_a_job, null);
+  assert.equal(intentVerdict(audit, "NEWS_SEARCH").state, "unknown");
+  assert.equal(intentVerdict(audit, "TASK_COMPLETION").can_receive_a_job, null);
+  assert.equal(intentVerdict(audit, "TASK_COMPLETION").state, "no_leader_in_this_read");
+
+  // An intent nobody scores is not a closure either, and lowercase is a normal
+  // way to type an intent into a URL bar.
+  const none = intentVerdict(audit, "crypto_price");
+  assert.equal(none.intent, "CRYPTO_PRICE");
+  assert.equal(none.state, "not_scored");
+  assert.equal(none.can_receive_a_job, null);
+  assert.deepEqual(none.jobable_miners, []);
+}
+console.log("one intent's on-chain verdict, and 'cannot check' never reads as 'no'");

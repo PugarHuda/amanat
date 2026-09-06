@@ -294,11 +294,24 @@ thing that can act on a reading.**
   { "mcpServers": { "amanat": { "command": "npx", "args": ["-y", "amanat-mcp"] } } }
   ```
 
-- The storm board — ten shipping lanes screened through the Telegraph Engine
-  every six hours, about 30 paid calls a run, published to a branch and served
-  at `/api/board`. Most of those calls are routed by the node to whichever miner
-  it ranks best, which is usually not this one: the run of 4 September sent all
-  thirty legs to `ChainSight`, and the board publishes that tally per run.
+- The storm board — ten shipping lanes screened every six hours, published to a
+  branch and served at `/api/board`. Between 26 August and 6 September the
+  scheduled run bought its readings through the Telegraph Engine, 30 to 86 paid
+  calls a run, routed by the node to whichever miner it ranked best — usually
+  not this one, and the board published that tally per run.
+
+  **It stopped buying on 6 September.** The protocol's co-founder asked in
+  Discord that people stop their scripted automated calls, which were taking the
+  payment facilitator down, and said scripted calls would not be counted in
+  judging — only organic ones. Scheduled runs now read the free rail, which is
+  this miner's own `/forecast`, so the schedule puts no load on the node and buys
+  nothing. `rail` in `board.json` says which one produced a given run, and
+  `telegraph` is `null` when nothing was bought. A paid sweep is still one click
+  from the Actions tab with `paid=true`.
+
+  The contract is unaffected: when a policy is checked on chain it buys its own
+  reading through the Engine, because that is a real request from a real
+  obligation rather than a schedule inflating a counter.
 
 ### Why we only use name-hashed intents
 
