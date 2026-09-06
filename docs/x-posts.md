@@ -8,6 +8,11 @@ Each post stands alone: someone landing on post 7 should understand it without
 having read post 1. Every claim is checkable — a registration id, a
 transaction, a number from `/api/wasm`, or a page that loads.
 
+**280 characters unless the account is on Premium.** Most of this queue is
+longer than that and was written without checking, so measure before posting: a
+link counts as 23 characters however long it is. The four newest posts carry a
+short form underneath for exactly this reason.
+
 A claim that was true in August and is not true today is worse than no post.
 Anything below that quotes a rank, a score or a slot is anchored to the epoch or
 the date it was read, because all three move.
@@ -554,6 +559,14 @@ of it landing on our own copy, which is a stronger post than the finding was.
 >
 > @Telegraphprotoc
 
+**Short form, 260 characters**, if the account is not on Premium:
+
+> My README said "verified weather intelligence" for two weeks.
+>
+> I'm the one who proved @Telegraphprotoc's `verified: true` cannot be re-derived from what it returns. So the word was mine to drop.
+>
+> It says "signed" now. Ed25519, checkable with node crypto alone.
+
 **39 — someone found the ground truth**
 
 Read from `node agent/standing.mjs` at **epoch 311, 6 September 2026** — anchor
@@ -568,6 +581,14 @@ nobody else has published it.
 > Epoch 311: livecert is at a flat 1.0000 and everyone else is still at 0.0004.
 >
 > Someone worked out what the canonical script is actually grading.
+
+**Short form, 262 characters:**
+
+> For three weeks every miner on @Telegraphprotoc's WEATHER_FORECAST scored inside the same 0.0004 band. The order was noise.
+>
+> Epoch 311: livecert sits at a flat 1.0000 and everyone else is still at 0.0004.
+>
+> Someone worked out what the canonical script is grading.
 
 ---
 
@@ -587,6 +608,16 @@ it did *not* pay.
 >
 > sepolia.basescan.org/tx/0xb1f0975ae9a50cde434a0eac4213fcc817bfb47d47f53d5bad471999a8e8f685
 
+**Short form, 261 characters:**
+
+> My storm contract asked @Telegraphprotoc for the risk at Naha, typhoon 95 km offshore.
+>
+> The answer came back from a block explorer: "no transaction hash was supplied."
+>
+> It found no risk in that and declined. The contract does not guess.
+>
+> https://sepolia.basescan.org/tx/0xb1f0975ae9a50cde434a0eac4213fcc817bfb47d47f53d5bad471999a8e8f685
+
 **41 — thirty legs bought, three usable**
 
 The measurement nobody else is publishing, and the reason to publish it is that
@@ -601,6 +632,14 @@ date; the ratio moves.
 >
 > Reading a confidence as a risk is how a contract pays a claim nobody reported.
 > So the board pays for answers and refuses them.
+
+**Short form, 268 characters:**
+
+> My storm board bought 86 answers from @Telegraphprotoc this morning and could use 3.
+>
+> Not because the miners are wrong. SkyWire answered 42, and its `risk` field is a confidence by its own schema.
+>
+> Reading that as a risk is how a contract pays a claim nobody reported.
 
 ---
 
