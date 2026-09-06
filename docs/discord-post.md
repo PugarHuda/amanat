@@ -39,10 +39,10 @@ before adding a word.**
 >
 > And it is not one intent. Crossing the public YAMLs against the live scoreboard, this read: **5 of the 6 intents whose rank-1 miner I can read are closed.** On 8 of the other 9 nobody outside the node can check — 32 of 130 miners publish their YAML at http://127.0.0.1:8099/.
 >
-> Your own intent, one call, no wallet:
-> `curl -s 'https://amanat-miner.vercel.app/api/jobable?intent=STORM_ALERT'`
+> One call, no wallet:
+> `curl -s https://amanat-miner.vercel.app/api/jobable`
 >
-> `can_receive_a_job` is true, false, or null where nobody can check from outside. Null is never a no.
+> `closed` names them with the evidence. `jobable_by_intent` is who can actually receive one — on STORM_ALERT that is skywire-storm-alert and us.
 >
 > Miners: add an `on_chain.request` block to your YAML. Protocol side: route on-chain jobs only among miners that declare one.
 >
