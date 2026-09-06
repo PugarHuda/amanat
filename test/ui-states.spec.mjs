@@ -145,12 +145,11 @@ test.describe("navigation and entry points @ui", () => {
     const section = page.locator("#route");
     await expect(section).toBeVisible();
 
-    // In view, not merely present in the document.
-    const onScreen = await section.evaluate((el) => {
-      const r = el.getBoundingClientRect();
-      return r.top < window.innerHeight && r.bottom > 0;
-    });
-    expect(onScreen, "#route must actually be scrolled into view").toBe(true);
+    // In view, not merely present in the document. Playwright's own matcher
+    // rather than one measurement of getBoundingClientRect: the fragment scroll
+    // and the board fetch settle at different times, and on a CI runner the
+    // single reading lands mid-layout and fails a page that is fine.
+    await expect(section).toBeInViewport();
   });
 
   test("the back button returns to where it came from", async ({ page }) => {
