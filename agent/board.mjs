@@ -97,7 +97,7 @@ export function readPaid(signer, ledger, { engine = ask, direct = askDirect } = 
         { signer },
       );
     } catch (e) {
-      return { why: `routing failed: ${e.message.slice(0, 80)}` };
+      return { why: `routing failed: ${e.message.slice(0, 80)}`, routingFailed: true };
     }
     ledger.calls++;
     ledger.spent += Number(answer.cost_usd ?? 0.01);
@@ -130,17 +130,30 @@ export function readPaid(signer, ledger, { engine = ask, direct = askDirect } = 
   return async ({ lat, lon, hours }) => {
     const when = hours === 0 ? "right now" : `in ${hours} hours`;
 
-    // Two attempts at the Engine before paying our own miner, because routing
-    // is probabilistic and the spread is not subtle: one run sent all thirty
-    // legs to ChainSight and every answer read, the next sent them somewhere
-    // the risk could not be read at all. A second ask costs exactly what the
-    // fallback below costs, and unlike the fallback it is a routed call — the
-    // network sees it, and it is not this board paying itself.
+    // A second ask, but only when the first one never reached a miner.
+    //
+    // The retry was added on 4 September because routing is probabilistic: one
+    // run sent all thirty legs to ChainSight and every answer read, the next
+    // sent them somewhere the risk could not be read at all. Measured since, it
+    // does not pay for itself when a miner *did* answer — the 6 September run
+    // bought 86 calls, and 3 of 60 routed asks came back readable. The Engine
+    // sends these questions to SkyWire almost every time, and this board
+    // refuses SkyWire’s `risk` on purpose because SkyWire’s own schema calls
+    // that field a confidence. Asking again buys another one of those.
+    //
+    // It also cost a whole run. At 10:27 the facilitator answered
+    // `insufficient_credits` and every one of the thirty legs went unpaid and
+    // unread; a single call by hand minutes later settled normally, so the
+    // limit is on the rate, not the wallet. Three calls a leg is what reaches
+    // it, and a run that buys nothing is worse than a run that buys less.
+    //
+    // So: a routing failure is worth a second ask, an unreadable answer is not.
     let why;
     for (let attempt = 0; attempt < 2; attempt++) {
       const out = await askEngine({ lat, lon, when });
       if (out.reading) return out.reading;
       why = out.why;
+      if (!out.routingFailed) break;
     }
 
     if (ledger.spent + 0.01 > ledger.budget) throw new Error("run budget reached");

@@ -323,27 +323,47 @@ console.log("impact separates the epochs our module scored from the ones it did 
     assert.deepEqual([ledger.calls, ledger.routed, ledger.unreadable, ledger.direct], [1, 1, 0, 0]);
   }
 
-  // The retry is the point: an unreadable first answer asks the Engine again
-  // rather than paying our own miner, and the second one lands. Two routed
-  // calls, no schema fallback — this is the case that used to cost the same
-  // money and buy a direct call the network never sees.
+  // A routing failure is worth a second ask, because nothing reached a miner:
+  // the next attempt may land somewhere that answers. One billed call, because
+  // the failed one never got far enough to charge for.
   {
     const ledger = fresh();
     let n = 0;
-    const engine = async () => (++n === 1
-      ? { miner_name: "SkyWire", result: unreadable, cost_usd: 0.01 }
-      : { miner_name: "ChainSight", result: readable, cost_usd: 0.01 });
+    const engine = async () => {
+      if (++n === 1) throw new Error("socket hang up");
+      return { miner_name: "ChainSight", result: readable, cost_usd: 0.01 };
+    };
     const out = await readPaid(null, ledger, { engine, direct: never })({ lat: 1, lon: 103, hours: 6 });
     assert.equal(out.risk, 0.42);
-    assert.deepEqual([ledger.calls, ledger.routed, ledger.unreadable, ledger.direct], [2, 1, 1, 0]);
-    // Both miners are named, including the one whose answer could not be used.
-    // Recording only the readable path is what published `answered_by: {}` on a
-    // run where thirty answers were bought and paid for.
-    assert.deepEqual(ledger.answered, { SkyWire: 1, ChainSight: 1 });
+    assert.deepEqual([ledger.calls, ledger.routed, ledger.unreadable, ledger.direct], [1, 1, 0, 0]);
+    assert.deepEqual(ledger.answered, { ChainSight: 1 });
   }
 
-  // Two unreadable answers, then the schema miner. Three calls, and the reason
-  // the fallback happened is carried into the miner label rather than lost.
+  // An unreadable answer is not worth a second ask. A miner answered and this
+  // board cannot use what it said; asking again buys another of the same. The
+  // 6 September run measured it: 86 calls, 3 of 60 routed asks readable, and
+  // the run after it was refused outright by the facilitator for asking too
+  // often. One ask, then the schema miner.
+  {
+    const ledger = fresh();
+    let asks = 0;
+    const engine = async () => {
+      asks++;
+      return { miner_name: "SkyWire", result: unreadable, cost_usd: 0.01 };
+    };
+    const direct = async () => ({ result: { risk: 0.1 }, cost_usd: 0.01 });
+    const out = await readPaid(null, ledger, { engine, direct })({ lat: 1, lon: 103, hours: 6 });
+    assert.equal(asks, 1, "an answered-but-unreadable leg must not ask twice");
+    assert.equal(out.risk, 0.1);
+    assert.deepEqual([ledger.calls, ledger.routed, ledger.unreadable, ledger.direct], [2, 0, 1, 1]);
+    // The miner whose answer could not be used is still named. Recording only
+    // the readable path is what published `answered_by: {}` on a run where
+    // thirty answers were bought and paid for.
+    assert.deepEqual(ledger.answered, { SkyWire: 1 });
+  }
+
+  // The reason the fallback happened is carried into the miner label rather
+  // than lost, so the board can say who took the money and why it paid twice.
   {
     const ledger = fresh();
     const direct = async () => ({ result: { risk: 0.1 }, cost_usd: 0.01 });
@@ -351,7 +371,7 @@ console.log("impact separates the epochs our module scored from the ones it did 
     const out = await read({ lat: 1, lon: 103, hours: 6 });
     assert.equal(out.risk, 0.1);
     assert.match(out.miner, /^schema fallback \(SkyWire stated no readable risk\)$/);
-    assert.deepEqual([ledger.calls, ledger.routed, ledger.unreadable, ledger.direct], [3, 0, 2, 1]);
+    assert.deepEqual([ledger.calls, ledger.routed, ledger.unreadable, ledger.direct], [2, 0, 1, 1]);
   }
 
   // An Engine that throws is a routing failure, not an unreadable answer, and
@@ -376,7 +396,7 @@ console.log("impact separates the epochs our module scored from the ones it did 
     assert.ok(ledger.spent <= ledger.budget, `spent ${ledger.spent} over budget ${ledger.budget}`);
   }
 }
-console.log("the board retries the Engine before paying itself, and bills only what answered");
+console.log("the board asks twice only when nothing answered, and bills only what did");
 
 // Funding the book and funding the escrow are two different pots, and the only
 // way to get them wrong is arithmetic. The contract reverts with "would strand
