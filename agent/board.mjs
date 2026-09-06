@@ -309,11 +309,17 @@ async function main() {
 
   const board = {
     generated_at: new Date().toISOString(),
-    // A run that paid for nothing must not claim a verified paid rail. The
-    // board published `paid (Telegraph Engine, verified)` on a run of zero
-    // calls, which is the one thing a board like this cannot say.
-    rail: dry ? "free (miner HTTP, unverified)"
-      : ledger.calls ? "paid (Telegraph Engine, verified)"
+    // A run that paid for nothing must not claim a paid rail. The board
+    // published `paid (Telegraph Engine, verified)` on a run of zero calls,
+    // which is the one thing a board like this cannot say.
+    //
+    // "verified" is gone from the label for a second reason: the node's own
+    // `verified: true` cannot be re-derived from anything it returns
+    // (docs/bug-report.md, finding 10), so the word was ours to stop using.
+    // What is true of this rail is that it was paid and routed, and the count
+    // beside it says how much of it came back readable.
+    rail: dry ? "free (miner HTTP, unsigned)"
+      : ledger.calls ? "paid (Telegraph Engine, routed)"
       : "unpaid — every call failed this run",
     trigger: 0.75,
     lanes,

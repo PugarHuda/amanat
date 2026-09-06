@@ -221,7 +221,7 @@ test.describe("forms refuse what they cannot answer @ui", () => {
 test.describe("the board can go stale, and must say so @ui", () => {
   const lanes = (generated_at) => ({
     generated_at,
-    rail: "paid (Telegraph Engine, verified)",
+    rail: "paid (Telegraph Engine, routed)",
     trigger: 0.75,
     lanes: [
       { name: "Cebu → Manila", worst: { risk: 0.42, eta_hours: 15, lat: 14.6, lon: 121 }, legs: [], breach: false },

@@ -32,7 +32,7 @@ async function resolve(spec) {
   return { lat: body.lat, lon: body.lon, place: body.place ?? spec };
 }
 
-/** The free rail: the miner's HTTP endpoint, unpaid and unverified. */
+/** The free rail: the miner's HTTP endpoint, unpaid and unsigned. */
 const readFree = async ({ lat, lon, hours }) => {
   const res = await fetch(`${MINER}/forecast`, {
     method: "POST",
@@ -133,7 +133,7 @@ async function main() {
   }
 
   console.log(`\n${a.place}  →  ${b.place}`);
-  console.log(dry ? "rail       free (miner HTTP, unverified, costs nothing)" : "rail       paid (Telegraph Engine, verified)");
+  console.log(dry ? "rail       free (miner HTTP, unsigned, costs nothing)" : "rail       paid (Telegraph Engine, routed)");
 
   const route = await assessRoute({
     from: a, to: b, speedKmh, max: legs,
