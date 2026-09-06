@@ -3,7 +3,7 @@
   "info": {
     "title": "Amanat",
     "version": "1.0.0",
-    "summary": "Verified weather and storm-risk readings a contract can act on.",
+    "summary": "Signed weather and storm-risk readings a contract can act on.",
     "description": "Every answer carries a plain-language report and the scalars behind it, a storm risk in [0,1] with the payout trigger at 0.75, sea state and any named cyclone nearby, an ensemble band for the risk, and an Ed25519 attestation over the fields a contract settles on. Data: Open-Meteo (CC BY 4.0) and GDACS. Paid access is through the Telegraph Protocol Engine over x402; the routes here are what the node calls.",
     "license": {
       "name": "MIT",
