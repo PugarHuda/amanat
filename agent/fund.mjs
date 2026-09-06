@@ -20,10 +20,30 @@
 
 import { ethers } from "ethers";
 import { readFile } from "node:fs/promises";
+import { pathToFileURL } from "node:url";
 import { wallet, provider, diamond, usdc } from "./telegraph.mjs";
 import { flag, has, reject } from "./args.mjs";
 
 const ADDRESS = process.env.AMANAT_CONTRACT;
+
+/**
+ * What the two transfers leave behind, or why they must not be sent.
+ *
+ * Separated from the sending so it can be checked without a chain: the whole
+ * risk in this script is arithmetic, and the contract’s own revert
+ * ("would strand a policy") is the last line of defence rather than the first.
+ */
+export function plan({ walletUsdc, bookUsdc, outstanding, toBook, toEscrow }) {
+  const u = (x) => ethers.formatUnits(x, 6);
+  if (walletUsdc < toBook) throw new Error(`wallet holds ${u(walletUsdc)} USDC, cannot send ${u(toBook)}`);
+  const book = bookUsdc + toBook - toEscrow;
+  if (book < outstanding) {
+    throw new Error(
+      `escrowing ${u(toEscrow)} would leave ${u(book)} USDC against ${u(outstanding)} of live policies`,
+    );
+  }
+  return { book };
+}
 
 async function main() {
   const argv = process.argv.slice(2);
@@ -50,17 +70,9 @@ async function main() {
   console.log(`book       ${u(bookUsdc)} USDC held, ${u(outstanding)} backing live policies`);
   console.log(`escrow     ${u(escrow)} USDC on the Diamond\n`);
 
-  if (walletUsdc < toBook) throw new Error(`wallet holds ${u(walletUsdc)} USDC, cannot send ${u(toBook)}`);
-  // The contract enforces this too and reverts with "would strand a policy".
-  // Checking here costs nothing and says which number is wrong.
-  const afterBook = bookUsdc + toBook;
-  if (afterBook < outstanding + toEscrow) {
-    throw new Error(
-      `escrowing ${u(toEscrow)} would leave ${u(afterBook - toEscrow)} USDC against ${u(outstanding)} of live policies`,
-    );
-  }
+  const after = plan({ walletUsdc, bookUsdc, outstanding, toBook, toEscrow });
   console.log(`plan       send ${u(toBook)} to the book, then escrow ${u(toEscrow)} of it for jobs`);
-  console.log(`after      book ${u(afterBook - toEscrow)} USDC, escrow ${u(escrow + toEscrow)} USDC`);
+  console.log(`after      book ${u(after.book)} USDC, escrow ${u(escrow + toEscrow)} USDC`);
   if (dry) return console.log("\n--dry: nothing sent.");
 
   if (toBook > 0n) {
@@ -77,4 +89,8 @@ async function main() {
   console.log(`escrow     ${u(await diamond(p).escrowBalance(ADDRESS))} USDC`);
 }
 
-main().catch((e) => { console.error(e.shortMessage ?? e.message); process.exit(1); });
+// Importing this module must never move money: `plan` is imported by the tests,
+// and running main on import would send two transfers from whoever imported it.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((e) => { console.error(e.shortMessage ?? e.message); process.exit(1); });
+}

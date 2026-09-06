@@ -16,6 +16,7 @@ import { payloadFor } from "./crosscheck.mjs";
 import { rank } from "./survey.mjs";
 import { split } from "./impact.mjs";
 import { readPaid } from "./board.mjs";
+import { plan } from "./fund.mjs";
 
 const USDC = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
 const PAY_TO = "0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8";
@@ -376,3 +377,27 @@ console.log("impact separates the epochs our module scored from the ones it did 
   }
 }
 console.log("the board retries the Engine before paying itself, and bills only what answered");
+
+// Funding the book and funding the escrow are two different pots, and the only
+// way to get them wrong is arithmetic. The contract reverts with "would strand
+// a policy"; finding that out from a revert costs a transaction.
+{
+  const u = (n) => ethers.parseUnits(String(n), 6);
+
+  // The ordinary case: 4 in, 2 straight back out to the Diamond.
+  assert.equal(plan({ walletUsdc: u(15), bookUsdc: u(0), outstanding: u(0), toBook: u(4), toEscrow: u(2) }).book, u(2));
+
+  // Escrowing money that is backing a live policy is the mistake this catches.
+  assert.throws(
+    () => plan({ walletUsdc: u(15), bookUsdc: u(2), outstanding: u(2), toBook: u(0), toEscrow: u(1) }),
+    /would leave 1.0 USDC against 2.0/,
+  );
+
+  // Exactly covering the outstanding book is allowed; a cent less is not.
+  assert.equal(plan({ walletUsdc: u(15), bookUsdc: u(3), outstanding: u(1), toBook: u(0), toEscrow: u(2) }).book, u(1));
+  assert.throws(() => plan({ walletUsdc: u(15), bookUsdc: u(3), outstanding: u(1), toBook: u(0), toEscrow: u("2.01") }), /would leave/);
+
+  // A wallet that cannot cover the transfer fails before anything is sent.
+  assert.throws(() => plan({ walletUsdc: u("0.5"), bookUsdc: u(0), outstanding: u(0), toBook: u(4), toEscrow: u(0) }), /wallet holds 0.5/);
+}
+console.log("the funding split refuses to strand a policy");
