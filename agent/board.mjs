@@ -141,11 +141,14 @@ export function readPaid(signer, ledger, { engine = ask, direct = askDirect } = 
     // refuses SkyWire’s `risk` on purpose because SkyWire’s own schema calls
     // that field a confidence. Asking again buys another one of those.
     //
-    // It also cost a whole run. At 10:27 the facilitator answered
-    // `insufficient_credits` and every one of the thirty legs went unpaid and
-    // unread; a single call by hand minutes later settled normally, so the
-    // limit is on the rate, not the wallet. Three calls a leg is what reaches
-    // it, and a run that buys nothing is worse than a run that buys less.
+    // Separately, at 10:27 on 6 September the facilitator refused every one of
+    // the thirty legs with `insufficient_credits` and timed out on one, and the
+    // run published nothing. A single call by hand half an hour later settled
+    // normally with 11 USDC in the wallet, so the refusal was not the balance.
+    // Whether asking three times a leg contributed to it is unknown — the run
+    // that bought 86 an hour earlier went through — so this is recorded as an
+    // observation, not as the reason for the change above. The reason is the
+    // measured yield.
     //
     // So: a routing failure is worth a second ask, an unreadable answer is not.
     let why;

@@ -341,9 +341,8 @@ console.log("impact separates the epochs our module scored from the ones it did 
 
   // An unreadable answer is not worth a second ask. A miner answered and this
   // board cannot use what it said; asking again buys another of the same. The
-  // 6 September run measured it: 86 calls, 3 of 60 routed asks readable, and
-  // the run after it was refused outright by the facilitator for asking too
-  // often. One ask, then the schema miner.
+  // 6 September run measured it: 86 calls, 3 of 60 routed asks readable. One
+  // ask, then the schema miner.
   {
     const ledger = fresh();
     let asks = 0;
