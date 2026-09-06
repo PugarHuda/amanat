@@ -931,28 +931,37 @@ fault; the routing is.
 one intent:
 
 ```
-Intents whose rank-1 miner cannot receive an ERC-8183 job:
-  STORM_ALERT       rank 1 is livecert   (10 endpoints, no on_chain.request)
-  WEATHER_FORECAST  rank 1 is txlens     (15 endpoints, no on_chain.request)
-  WEATHER_CHECK     rank 1 is weatherapi ( 2 endpoints, no on_chain.request)
-  FACT_CHECK        rank 1 is tavily     ( 2 endpoints, no on_chain.request)
+Intents whose rank-1 miner cannot receive an ERC-8183 job — confirmed:
+  NEWS_SEARCH       rank 1 is verity-news-search      ( 1 endpoint,  no on_chain.request)
+  STORM_ALERT       rank 1 is livecert                (12 endpoints, no on_chain.request)
+  WEATHER_CHECK     rank 1 is verity-current-weather  ( 1 endpoint,  no on_chain.request)
+  WEATHER_FORECAST  rank 1 is livecert                (12 endpoints, no on_chain.request)
   …
-  4 confirmed closed, 10 unknown, of 15 scored name-hashed intents
+Open — the rank-1 miner declares on_chain.request and can receive a job:
+  CHAT_COMPLETION   rank 1 is groq-llama31-instant-miner
+  FACT_CHECK        rank 1 is qarinah-proofpack
+
+  6 confirmed closed, 7 unknown, 2 open, of 15 scored name-hashed intents
 ```
 
-**Correction, and it matters.** This section first said *fourteen of fifteen*.
-That was an overclaim, and the tool was making it: an intent counted as closed
-whenever the leader's YAML declared no `on_chain.request` block **or could not
-be fetched at all** — and those are not the same fact. Split properly it is
-**4 confirmed closed and 10 unknown**.
+**Corrected twice, and both corrections matter.** This section first said
+*fourteen of fifteen*. That was an overclaim, and the tool was making it: an
+intent counted as closed whenever the leader's YAML declared no
+`on_chain.request` block **or could not be fetched at all** — and those are not
+the same fact. Split apart, it then said every readable leader was closed. The
+tool never computed that either; it counted only the closures, so nothing
+contradicted the sentence when it stopped being true. It reports three buckets
+now, and two intents sit in the third.
 
-The reason so many are unknown is its own finding. **32 of the 128 registered
+The reason so many are unknown is its own finding. **32 of the 130 registered
 miners publish their registration YAML at `http://127.0.0.1:8099/`**, reachable
 only from the node's own host. Whether those miners can receive an on-chain job
 cannot be established by anyone outside it, including their own authors.
 
-So: on every intent where the leader's registration can actually be read, the
-rail is closed. On ten more, nobody can check.
+So: six of the eight intents whose leader can actually be read are closed, two
+are open, and on the remaining seven nobody can check. Which intent sits where
+moves between reads — leaders change rank, localhost YAMLs come and go — so the
+tool prints all three counts and `/api/jobable` serves the current ones.
 
 The uncomfortable part is that **rank causes it.** Rank is earned on the
 off-chain rail, where a generalist serving ten or fifteen intents does well.
@@ -1085,9 +1094,8 @@ That is not a cosmetic issue. A registration YAML declares which endpoints serve
 which intents and whether the miner accepts on-chain jobs at all — so for a
 quarter of the network, **no one outside the node can establish what those
 miners can do**, including their own authors. It is why the on-chain audit above
-reports 4 intents confirmed closed and 10 unknown rather than 14 closed: the
-difference between those two numbers is entirely miners whose registration
-cannot be fetched.
+separates confirmed closures from unknowns instead of reporting one number: the
+gap between them is entirely miners whose registration cannot be fetched.
 
 `node agent/audit-jobable.mjs` reports the split, and refuses to call an
 unreadable registration evidence of anything.

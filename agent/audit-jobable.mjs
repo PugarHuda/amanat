@@ -122,7 +122,7 @@ async function main() {
   if (process.argv.includes("--json")) {
     const summary = await deadIntents(rows, { quiet: true });
     await writeFile(OUT, JSON.stringify({ ...summary, miners: rows }, null, 2) + "\n");
-    console.log(`wrote      jobable.json — ${summary.closed.length} confirmed closed, ${summary.unknown.length} unknown, of ${summary.scored_name_hashed_intents}`);
+    console.log(`wrote      jobable.json — ${summary.closed.length} confirmed closed, ${summary.unknown.length} unknown, ${summary.open.length} open, of ${summary.scored_name_hashed_intents}`);
     return;
   }
 
@@ -206,6 +206,14 @@ async function deadIntents(rows, { quiet = false } = {}) {
   const unknown = Object.entries(top)
     .filter(([, t]) => !jobable.has(t.slug) && !reachable.get(t.slug))
     .sort();
+  // The third bucket, and the reason it is here: the prose around this tool
+  // twice said "on every intent whose leader I can read, the rail is closed".
+  // The tool never computed that — it only ever counted the closures — so
+  // nothing contradicted the sentence when it stopped being true. Reporting
+  // the open ones makes the overclaim impossible to write again.
+  const open = Object.entries(top)
+    .filter(([, t]) => jobable.has(t.slug))
+    .sort();
 
   const summary = {
     read_at: new Date().toISOString(),
@@ -223,6 +231,13 @@ async function deadIntents(rows, { quiet = false } = {}) {
       endpoints: t.endpoints,
       declares_on_chain_request: null,
       evidence: "registration YAML could not be fetched from outside the node host",
+    })),
+    open: open.map(([intent, t]) => ({
+      intent,
+      rank1: t.slug,
+      endpoints: t.endpoints,
+      declares_on_chain_request: true,
+      evidence: "registration YAML fetched; it declares an on_chain.request block",
     })),
     jobable_by_intent: Object.fromEntries(
       Object.keys(top).sort().map((i) => [
@@ -249,8 +264,15 @@ async function deadIntents(rows, { quiet = false } = {}) {
     console.log(`  the node can read. Their on-chain capability is not auditable.`);
   }
 
-  console.log(`\n  ${closed.length} confirmed closed, ${unknown.length} unknown, of ${Object.keys(top).length} scored`);
-  console.log(`  name-hashed intents. A job on a confirmed one is answered from the`);
+  if (open.length) {
+    console.log(`\nOpen — the rank-1 miner declares on_chain.request and can receive a job:`);
+    for (const [intent, t] of open) {
+      console.log(`  ${String(intent).padEnd(26)} rank 1 is ${t.slug}`);
+    }
+  }
+
+  console.log(`\n  ${closed.length} confirmed closed, ${unknown.length} unknown, ${open.length} open, of ${Object.keys(top).length}`);
+  console.log(`  scored name-hashed intents. A job on a confirmed one is answered from the`);
   console.log(`  leader's first endpoint with no parameters, whatever it asked for —`);
   console.log(`  measured on jobs 15–19, see docs/bug-report.md.`);
   return summary;

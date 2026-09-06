@@ -621,28 +621,28 @@ it did *not* pay.
 >
 > https://sepolia.basescan.org/tx/0xf25259c5c39d5c9cc9372c885a1869d5a87b704df6584cbf85c09ee959848cfb
 
-**41 — thirty legs bought, three usable**
+**41 — thirty legs routed, none readable**
 
 The measurement nobody else is publishing, and the reason to publish it is that
 it is unflattering to us before it is unflattering to anyone. Anchor to the run
 date; the ratio moves.
 
-> My storm board bought 86 answers from @Telegraphprotoc this morning and could
-> use 3.
+> My storm board bought 59 answers from @Telegraphprotoc this morning. Of the
+> 30 the network routed, not one carried a risk I could read.
 >
-> Not because the miners are wrong. SkyWire answered 42 of them, and its `risk`
-> field is a confidence by its own schema.
+> Verity answered 20 of them and SkyWire 10, and SkyWire's `risk` field is a
+> confidence by its own schema.
 >
 > Reading a confidence as a risk is how a contract pays a claim nobody reported.
 > So the board pays for answers and refuses them.
 
-**Short form, 268 characters:**
+**Short form, 278 characters:**
 
-> My storm board bought 86 answers from @Telegraphprotoc this morning and could use 3.
+> My storm board bought 59 answers from @Telegraphprotoc this morning. Of the 30 it routed, none carried a risk I could read.
 >
-> Not because the miners are wrong. SkyWire answered 42, and its `risk` field is a confidence by its own schema.
+> Verity answered 20, SkyWire 10; SkyWire's `risk` is a confidence by its own schema.
 >
-> Reading that as a risk is how a contract pays a claim nobody reported.
+> Reading that as risk is how a contract pays a claim nobody reported.
 
 ---
 

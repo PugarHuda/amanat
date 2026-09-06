@@ -37,7 +37,7 @@ before adding a word.**
 >
 > It is not a bug in the miner that answered, and not malformed params. Jobs are routed by rank, and nothing in that path checks whether the miner it lands on declares an `on_chain.request` mapping in its YAML. Without one there is nothing to map the parameters onto, so the call falls back to that miner's **first** endpoint with nothing in it.
 >
-> And it is not one intent. Crossing the public YAMLs against the live scoreboard: **all 4 of the 15 scored name-hashed intents whose rank-1 miner I can audit are closed.** The other 9 I cannot check, because 31 of 130 miners publish their YAML at http://127.0.0.1:8099/.
+> And it is not one intent. Crossing the public YAMLs against the live scoreboard, this read: **6 of the 15 scored name-hashed intents have a rank-1 miner confirmed closed, 2 are open, 7 unauditable** — 32 of 130 miners publish their YAML at http://127.0.0.1:8099/.
 >
 > One call, no wallet:
 > `curl -s https://amanat-miner.vercel.app/api/jobable`

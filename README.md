@@ -723,21 +723,27 @@ endpoints, two different complaints, one rule.
 `npm run audit` now measures how much of the network this closes:
 
 ```
-Intents whose rank-1 miner cannot receive an ERC-8183 job:
-  STORM_ALERT       rank 1 is livecert   (10 endpoints, no on_chain.request)
-  WEATHER_FORECAST  rank 1 is txlens     (15 endpoints, no on_chain.request)
-  WEATHER_CHECK     rank 1 is weatherapi ( 2 endpoints, no on_chain.request)
-  … 4 confirmed closed, 10 unknown, of 15 scored name-hashed intents
+Intents whose rank-1 miner cannot receive an ERC-8183 job — confirmed:
+  NEWS_SEARCH       rank 1 is verity-news-search      ( 1 endpoint,  no on_chain.request)
+  STORM_ALERT       rank 1 is livecert                (12 endpoints, no on_chain.request)
+  WEATHER_CHECK     rank 1 is verity-current-weather  ( 1 endpoint,  no on_chain.request)
+  WEATHER_FORECAST  rank 1 is livecert                (12 endpoints, no on_chain.request)
+  … 6 confirmed closed, 7 unknown, 2 open, of 15 scored name-hashed intents
 ```
 
-**On every intent where the leader's registration can be read, the rail is
-closed.** On ten more, nobody outside the node can check: **32 of the 128
+**Six of the eight intents whose leader can be read are closed. Two are not** —
+`CHAT_COMPLETION` and `FACT_CHECK` have a rank-1 miner that declares
+`on_chain.request`, and a job on those arrives carrying its parameters. On the
+other seven nobody outside the node can check at all: **32 of the 130
 registered miners publish their YAML at `http://127.0.0.1:8099/`**, so their
 on-chain capability is not auditable by anyone, including their own authors.
+Which intent sits in which bucket moves between reads, as leaders change rank
+and localhost YAMLs come and go, so read the counts rather than quote them.
 
-An earlier version of this said *fourteen of fifteen*, counting "YAML
-unreachable" as "cannot receive a job". Those are different facts and the tool
-now reports them separately.
+This section has been wrong twice, in the same direction. It said *fourteen of
+fifteen*, counting "YAML unreachable" as "cannot receive a job". Split apart, it
+then said every readable leader was closed — which the tool never computed, as
+it only ever counted the closures. It reports the open ones now too.
 
 Rank is what causes the closures it can see: rank is earned on the off-chain
 rail, where a generalist serving fifteen intents does well, and that same rank
