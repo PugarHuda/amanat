@@ -6,14 +6,14 @@
     "url": "https://github.com/PugarHuda/amanat",
     "source": "github"
   },
-  "version": "0.1.2",
+  "version": "0.1.3",
   "websiteUrl": "https://amanat-miner.vercel.app",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "amanat-mcp",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "transport": {
         "type": "stdio"
       },

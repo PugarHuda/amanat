@@ -136,6 +136,13 @@ console.log("mcp: handshake, tool list, and a notification answered with silence
   // confirmed and unknown, and the tool went on reading the old field and
   // returning undefined. Assert the fields it actually claims to return.
   assert.ok(jobable.jobable_by_intent, "who can receive a job, per intent");
+  // Summarising only the closures is what let the prose around this audit say
+  // three times that every auditable leader was closed — nothing in the payload
+  // could contradict it. An agent reading this tool would conclude the same, so
+  // the open ones and the ones with no leader are counted here too.
+  assert.equal(typeof jobable.open, "number", "open leaders are counted, not just closed ones");
+  assert.equal(typeof jobable.no_leader_in_this_read, "number", "intents whose leader we did not see are counted");
+  assert.equal(jobable.open, jobable.openable.length, "the open count must match the list");
 
   // A miner refusal has to arrive as a tool error the model can read and act
   // on, not as a dead session.
@@ -151,3 +158,24 @@ console.log("mcp: four tools answer from the live miner, and a refusal stays a r
   assert.equal(out.error.code, -32602, JSON.stringify(out));
 }
 console.log("mcp: an unknown tool is refused by name");
+
+// ── one intent, not the whole audit ─────────────────────────────────────────
+// The full audit is tens of kilobytes; a caller deciding whether to put their
+// contract on the rail has one question. The trap the HTTP endpoint already
+// walked into is answering `false` for an intent nobody can check.
+{
+  const [, verdict] = await session([
+    call(1, "storm_risk", { place: "0,0" }),
+    call(2, "telegraph_onchain_jobable", { intent: "storm_alert" }),
+  ]);
+  const v = JSON.parse(verdict.result.content[0].text);
+  assert.equal(v.intent, "STORM_ALERT", "the intent is normalised, so a lowercase argument works");
+  assert.ok(["closed", "open", "unknown", "no_leader_in_this_read", "not_scored"].includes(v.state), v.state);
+  if (v.state === "unknown" || v.state === "no_leader_in_this_read" || v.state === "not_scored") {
+    assert.equal(v.can_receive_a_job, null, "an intent nobody can check is null, never false");
+  } else {
+    assert.equal(v.can_receive_a_job, v.state === "open");
+  }
+  assert.ok(Array.isArray(v.jobable_miners), "who could receive one anyway");
+}
+console.log("mcp: one intent's verdict, and 'cannot check' never reads as 'no'");

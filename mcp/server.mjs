@@ -96,8 +96,18 @@ const TOOLS = [
       "one can actually receive a job. A job is routed by rank and nothing in that path checks " +
       "whether the miner it lands on declares an `on_chain.request` mapping — so on most intents " +
       "the job is answered from that miner's first endpoint with no parameters. Read this before " +
-      "putting a contract on the on-chain rail.",
-    inputSchema: { type: "object", properties: {} },
+      "putting a contract on the on-chain rail. Pass `intent` for a verdict on one intent alone: " +
+      "can_receive_a_job is true, false, or null where the leader's registration cannot be " +
+      "fetched from outside the node — null is never a no.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        intent: {
+          type: "string",
+          description: "One intent, e.g. STORM_ALERT. Omit for the whole audit.",
+        },
+      },
+    },
   },
 ];
 
@@ -173,7 +183,11 @@ const CALLS = {
     return get(`/api/backtest?${q}`);
   },
 
-  async telegraph_onchain_jobable() {
+  async telegraph_onchain_jobable({ intent } = {}) {
+    // One intent is the question a caller usually has, and the whole audit is
+    // tens of kilobytes of every miner's registration state to answer it with.
+    if (intent) return get(`/api/jobable?intent=${encodeURIComponent(intent)}`);
+
     const j = await get("/api/jobable");
     // `dead` was split into `closed` (the leader's registration was read and
     // declares no on_chain.request) and `unknown` (the registration is published
@@ -181,13 +195,21 @@ const CALLS = {
     // branch still serving the older shape, which is a real state during a
     // publish — this tool went out reading a field that no longer existed.
     const closed = j.closed ?? j.dead ?? [];
+    // `open` and `no_leader_in_this_read` are summarised too, and not because
+    // they are interesting. Reporting only the closures is exactly what let the
+    // prose around this audit claim three times that every auditable leader was
+    // closed: nothing in the payload could contradict it. An agent reading this
+    // tool would have drawn the same conclusion.
     return {
       read_at: j.read_at,
       scored_intents: j.scored_name_hashed_intents,
       confirmed_closed: closed.length,
       unknown: (j.unknown ?? []).length,
+      open: (j.open ?? []).length,
+      no_leader_in_this_read: (j.no_leader_in_this_read ?? []).length,
       closed,
       unauditable: j.unknown ?? [],
+      openable: j.open ?? [],
       jobable_by_intent: j.jobable_by_intent,
     };
   },
