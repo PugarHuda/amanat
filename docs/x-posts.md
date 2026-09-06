@@ -606,17 +606,20 @@ it did *not* pay.
 >
 > The contract read it, found no risk in it, and declined. It does not guess.
 >
+> I asked again an hour later. Same miner, same sentence, character for
+> character.
+>
 > sepolia.basescan.org/tx/0xb1f0975ae9a50cde434a0eac4213fcc817bfb47d47f53d5bad471999a8e8f685
 
 **Short form, 261 characters:**
 
 > My storm contract asked @Telegraphprotoc for the risk at Naha, typhoon 95 km offshore.
 >
-> The answer came back from a block explorer: "no transaction hash was supplied."
+> Twice, an hour apart. Both times a block explorer answered: "no transaction hash was supplied."
 >
-> It found no risk in that and declined. The contract does not guess.
+> No risk in that, so the contract declined. It does not guess.
 >
-> https://sepolia.basescan.org/tx/0xb1f0975ae9a50cde434a0eac4213fcc817bfb47d47f53d5bad471999a8e8f685
+> https://sepolia.basescan.org/tx/0xf25259c5c39d5c9cc9372c885a1869d5a87b704df6584cbf85c09ee959848cfb
 
 **41 — thirty legs bought, three usable**
 

@@ -780,6 +780,10 @@ this one, found no risk field it could interpret, and emitted
 [`Declined(3, "unreadable answer shape")`](https://sepolia.basescan.org/tx/0xb1f0975ae9a50cde434a0eac4213fcc817bfb47d47f53d5bad471999a8e8f685)
 without paying. The policy stayed open for a later check.
 
+An hour later, the earliest the contract's own retry window allows, job 36 asked
+again and came back **character for character the same**. Two jobs, one hour
+apart, one answer: on this intent the on-chain rail does not route around it.
+
 That is the design in one transaction: **the contract does not guess.** A payout
 would have been a storm claim settled on a block explorer's refusal to answer.
 The routing failure behind it is written up as

@@ -983,6 +983,16 @@ summary:I cannot look up this transaction because no transaction hash was
 Seventeen days after the first sample, on a fresh contract and a fresh job, the
 rail routes a storm question to a block explorer. That part is unchanged.
 
+**And it is not a coin toss.** `CHECK_RETRY_AFTER` is an hour, so the same
+policy was re-checked as soon as the contract allowed it. **Job 36** landed on
+the same miner and returned the same payload, character for character, and the
+contract declined it again
+([tx](https://sepolia.basescan.org/tx/0xf25259c5c39d5c9cc9372c885a1869d5a87b704df6584cbf85c09ee959848cfb)).
+Two jobs, one hour apart, one answer. On the off-chain rail the same question
+routes to a different miner almost every time; on this one it does not move. So
+`STORM_ALERT` is not intermittently unreachable on chain — it is closed, and
+paying for a third attempt would buy the same sentence a third time.
+
 **What is new is the other half of the transaction.** Every earlier job in this
 report sat in `Funded` and was released by `expire()`, so the contract's answer
 handling had never run against a real delivery. This one ran:
