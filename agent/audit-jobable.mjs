@@ -12,6 +12,7 @@
 // keys, not a document model. Swap in `yaml` if we ever need real parsing.
 
 import { writeFile } from "node:fs/promises";
+import { pathToFileURL } from "node:url";
 import { miners, NAME_HASHED_INTENTS } from "./telegraph.mjs";
 import { reject } from "./args.mjs";
 
@@ -122,7 +123,7 @@ async function main() {
   if (process.argv.includes("--json")) {
     const summary = await deadIntents(rows, { quiet: true });
     await writeFile(OUT, JSON.stringify({ ...summary, miners: rows }, null, 2) + "\n");
-    console.log(`wrote      jobable.json — ${summary.closed.length} confirmed closed, ${summary.unknown.length} unknown, ${summary.open.length} open, of ${summary.scored_name_hashed_intents}`);
+    console.log(`wrote      jobable.json — ${summary.closed.length} confirmed closed, ${summary.unknown.length} unknown, ${summary.open.length} open, ${summary.no_leader_in_this_read.length} without a leader, of ${summary.scored_name_hashed_intents}`);
     return;
   }
 
@@ -178,21 +179,41 @@ async function main() {
  * rank then routes on-chain jobs to a miner that cannot serve one. The better a
  * generalist ranks, the more completely the on-chain rail closes behind it.
  */
+/**
+ * The rank-1 miner per name-hashed intent — and only an actual rank 1.
+ *
+ * This used to take the lowest rank present in the response and call it the
+ * leader. `/api/miners` is not a stable snapshot: three reads minutes apart
+ * returned 15, 13 and 11 scored name-hashed intents off the same 130 miners.
+ * When the real leader is missing from a read, "lowest rank present" quietly
+ * promotes rank 2 — on one read that alone flipped STORM_ALERT from closed to
+ * open, because livecert was absent and skywire-storm-alert, which does declare
+ * `on_chain.request`, sat at rank 2. An intent whose leader we did not see is
+ * not evidence about that intent, exactly as an unreadable YAML is not evidence
+ * about a miner, so it is reported as its own state rather than answered.
+ *
+ * `seen` is every name-hashed intent carrying any score in this read; `top` is
+ * the ones we actually saw a rank 1 for; `noLeader` is the difference.
+ */
+export function leaders(catalogue) {
+  const top = {};
+  const seen = new Set();
+  for (const m of catalogue) {
+    for (const sc of m.scores ?? []) {
+      const intent = sc.intent_id ?? sc.intent;
+      if (!NAME_HASHED.has(intent)) continue;
+      seen.add(intent);
+      if (sc.rank === 1) top[intent] = { rank: 1, slug: m.slug, endpoints: (m.endpoints ?? []).length };
+    }
+  }
+  return { top, seen, noLeader: [...seen].filter((i) => !top[i]).sort() };
+}
+
 async function deadIntents(rows, { quiet = false } = {}) {
   const jobable = new Set(rows.filter((r) => r.has_request && r.routable_by_name).map((r) => r.slug));
   const all = await miners();
 
-  // rank 1 per intent, from the live scoreboard
-  const top = {};
-  for (const m of all) {
-    for (const sc of m.scores ?? []) {
-      const intent = sc.intent_id ?? sc.intent;
-      if (!NAME_HASHED.has(intent)) continue;
-      if (!top[intent] || sc.rank < top[intent].rank) {
-        top[intent] = { rank: sc.rank, slug: m.slug, endpoints: (m.endpoints ?? []).length };
-      }
-    }
-  }
+  const { top, seen, noLeader } = leaders(all);
 
   // Three states, not two. A YAML we cannot fetch is not evidence of anything,
   // and counting it as closed was an overclaim this tool published: 31 of the
@@ -217,7 +238,8 @@ async function deadIntents(rows, { quiet = false } = {}) {
 
   const summary = {
     read_at: new Date().toISOString(),
-    scored_name_hashed_intents: Object.keys(top).length,
+    scored_name_hashed_intents: seen.size,
+    leaders_seen: Object.keys(top).length,
     closed: closed.map(([intent, t]) => ({
       intent,
       rank1: t.slug,
@@ -239,8 +261,12 @@ async function deadIntents(rows, { quiet = false } = {}) {
       declares_on_chain_request: true,
       evidence: "registration YAML fetched; it declares an on_chain.request block",
     })),
+    no_leader_in_this_read: noLeader.map((intent) => ({
+      intent,
+      evidence: "the scoreboard returned no rank-1 row for this intent on this read",
+    })),
     jobable_by_intent: Object.fromEntries(
-      Object.keys(top).sort().map((i) => [
+      [...seen].sort().map((i) => [
         i,
         rows.filter((r) => r.has_request && r.routable_by_name && r.intents.includes(i)).map((r) => r.slug),
       ]),
@@ -271,11 +297,23 @@ async function deadIntents(rows, { quiet = false } = {}) {
     }
   }
 
-  console.log(`\n  ${closed.length} confirmed closed, ${unknown.length} unknown, ${open.length} open, of ${Object.keys(top).length}`);
+  if (noLeader.length) {
+    console.log(`\nNo leader in this read — the scoreboard returned no rank-1 row:`);
+    for (const intent of noLeader) console.log(`  ${intent}`);
+    console.log(`\n  Not a finding about those intents. /api/miners varies between reads,`);
+    console.log(`  and an intent whose rank 1 we did not see says nothing either way.`);
+  }
+
+  console.log(`\n  ${closed.length} confirmed closed, ${unknown.length} unknown, ${open.length} open,`);
+  console.log(`  ${noLeader.length} with no leader in this read, of ${seen.size}`);
   console.log(`  scored name-hashed intents. A job on a confirmed one is answered from the`);
   console.log(`  leader's first endpoint with no parameters, whatever it asked for —`);
   console.log(`  measured on jobs 15–19, see docs/bug-report.md.`);
   return summary;
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+// Only when run as the tool. `leaders` is imported by agent/test.mjs, and a
+// bare main() at module scope would fire a hundred network reads on import.
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((e) => { console.error(e); process.exit(1); });
+}

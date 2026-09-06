@@ -724,26 +724,32 @@ endpoints, two different complaints, one rule.
 
 ```
 Intents whose rank-1 miner cannot receive an ERC-8183 job — confirmed:
-  NEWS_SEARCH       rank 1 is verity-news-search      ( 1 endpoint,  no on_chain.request)
-  STORM_ALERT       rank 1 is livecert                (12 endpoints, no on_chain.request)
-  WEATHER_CHECK     rank 1 is verity-current-weather  ( 1 endpoint,  no on_chain.request)
-  WEATHER_FORECAST  rank 1 is livecert                (12 endpoints, no on_chain.request)
-  … 6 confirmed closed, 7 unknown, 2 open, of 15 scored name-hashed intents
+  AI_TEXT_DETECTION rank 1 is caliber-truthport-text-auth ( 3 endpoints, no on_chain.request)
+  FACT_CHECK        rank 1 is livecert                    (12 endpoints, no on_chain.request)
+  STORM_ALERT       rank 1 is livecert                    (12 endpoints, no on_chain.request)
+  WEATHER_CHECK     rank 1 is chainsight-oracle           (14 endpoints, no on_chain.request)
+  WEATHER_FORECAST  rank 1 is livecert                    (12 endpoints, no on_chain.request)
+  … 5 confirmed closed, 8 unknown, 1 open, 1 with no leader, of 15
 ```
 
-**Six of the eight intents whose leader can be read are closed. Two are not** —
-`CHAT_COMPLETION` and `FACT_CHECK` have a rank-1 miner that declares
-`on_chain.request`, and a job on those arrives carrying its parameters. On the
-other seven nobody outside the node can check at all: **32 of the 130
-registered miners publish their YAML at `http://127.0.0.1:8099/`**, so their
-on-chain capability is not auditable by anyone, including their own authors.
-Which intent sits in which bucket moves between reads, as leaders change rank
-and localhost YAMLs come and go, so read the counts rather than quote them.
+**Five of the six intents whose leader can be read are closed. One is not** —
+`WEB_SEARCH`'s rank-1 miner declares `on_chain.request`, and a job on it arrives
+carrying its parameters. On eight more nobody outside the node can check at all:
+**32 of the 130 registered miners publish their YAML at
+`http://127.0.0.1:8099/`**, so their on-chain capability is not auditable by
+anyone, including their own authors. Which intent sits in which bucket moves
+between reads, so read the counts rather than quote them.
 
-This section has been wrong twice, in the same direction. It said *fourteen of
-fifteen*, counting "YAML unreachable" as "cannot receive a job". Split apart, it
-then said every readable leader was closed — which the tool never computed, as
-it only ever counted the closures. It reports the open ones now too.
+This section has been wrong three times, each time in the same direction, and
+each time because the tool published less than the prose claimed. It said
+*fourteen of fifteen*, counting "YAML unreachable" as "cannot receive a job".
+Split apart, it said every readable leader was closed — which the tool never
+computed, since it counted only the closures. And the numbers under that
+sentence came from treating the lowest rank present in `/api/miners` as rank 1:
+that response varies between reads, so a missing leader silently promoted rank 2
+and, on one read, flipped `STORM_ALERT` from closed to open. The tool now
+requires an actual rank 1, reports the open leaders, and names the intents whose
+leader it did not see rather than guessing one.
 
 Rank is what causes the closures it can see: rank is earned on the off-chain
 rail, where a generalist serving fifteen intents does well, and that same rank

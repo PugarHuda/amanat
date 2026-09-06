@@ -17,6 +17,7 @@ import { rank } from "./survey.mjs";
 import { split } from "./impact.mjs";
 import { readPaid } from "./board.mjs";
 import { plan } from "./fund.mjs";
+import { leaders } from "./audit-jobable.mjs";
 
 const USDC = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
 const PAY_TO = "0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8";
@@ -420,3 +421,35 @@ console.log("the board asks twice only when nothing answered, and bills only wha
   assert.throws(() => plan({ walletUsdc: u("0.5"), bookUsdc: u(0), outstanding: u(0), toBook: u(4), toEscrow: u(0) }), /wallet holds 0.5/);
 }
 console.log("the funding split refuses to strand a policy");
+
+// A leader is a rank 1, not "the best rank in this response". /api/miners does
+// not return the same score rows twice — three reads minutes apart gave 15, 13
+// and 11 scored name-hashed intents — and taking the minimum rank present made
+// the audit publish rank 2 as the leader whenever rank 1 was missing from a
+// read. That is how STORM_ALERT briefly read as open: livecert absent,
+// skywire-storm-alert at rank 2, and it does declare on_chain.request.
+{
+  const miner = (slug, scores) => ({ slug, endpoints: ["/a"], scores });
+
+  // Both present: the rank 1 wins, and rank 2 never appears.
+  const full = leaders([
+    miner("livecert", [{ intent_id: "STORM_ALERT", rank: 1 }]),
+    miner("skywire-storm-alert", [{ intent_id: "STORM_ALERT", rank: 2 }]),
+  ]);
+  assert.equal(full.top.STORM_ALERT.slug, "livecert");
+  assert.deepEqual(full.noLeader, []);
+
+  // The leader missing from the read: rank 2 must NOT be promoted into its
+  // place. The intent is reported as unanswered, not as skywire's.
+  const partial = leaders([miner("skywire-storm-alert", [{ intent_id: "STORM_ALERT", rank: 2 }])]);
+  assert.equal(partial.top.STORM_ALERT, undefined);
+  assert.deepEqual(partial.noLeader, ["STORM_ALERT"]);
+  assert.ok(partial.seen.has("STORM_ALERT"), "the intent is still scored, just not answered");
+
+  // Intents the on-chain rail cannot address by name are not the audit's
+  // subject and must not enter any bucket.
+  const other = leaders([miner("x", [{ intent_id: "NOT_A_NAME_HASHED_INTENT", rank: 1 }])]);
+  assert.equal(other.seen.size, 0);
+  assert.deepEqual(other.noLeader, []);
+}
+console.log("a leader is a rank 1, never the best rank that happened to be returned");

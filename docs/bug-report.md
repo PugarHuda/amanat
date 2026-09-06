@@ -932,36 +932,43 @@ one intent:
 
 ```
 Intents whose rank-1 miner cannot receive an ERC-8183 job — confirmed:
-  NEWS_SEARCH       rank 1 is verity-news-search      ( 1 endpoint,  no on_chain.request)
-  STORM_ALERT       rank 1 is livecert                (12 endpoints, no on_chain.request)
-  WEATHER_CHECK     rank 1 is verity-current-weather  ( 1 endpoint,  no on_chain.request)
-  WEATHER_FORECAST  rank 1 is livecert                (12 endpoints, no on_chain.request)
-  …
-Open — the rank-1 miner declares on_chain.request and can receive a job:
-  CHAT_COMPLETION   rank 1 is groq-llama31-instant-miner
-  FACT_CHECK        rank 1 is qarinah-proofpack
+  AI_TEXT_DETECTION rank 1 is caliber-truthport-text-auth ( 3 endpoints, no on_chain.request)
+  FACT_CHECK        rank 1 is livecert                    (12 endpoints, no on_chain.request)
+  STORM_ALERT       rank 1 is livecert                    (12 endpoints, no on_chain.request)
+  WEATHER_CHECK     rank 1 is chainsight-oracle           (14 endpoints, no on_chain.request)
+  WEATHER_FORECAST  rank 1 is livecert                    (12 endpoints, no on_chain.request)
 
-  6 confirmed closed, 7 unknown, 2 open, of 15 scored name-hashed intents
+Open — the rank-1 miner declares on_chain.request and can receive a job:
+  WEB_SEARCH        rank 1 is telegraph-ai-miner-node
+
+No leader in this read — the scoreboard returned no rank-1 row:
+  TASK_COMPLETION
+
+  5 confirmed closed, 8 unknown, 1 open, 1 with no leader, of 15
 ```
 
-**Corrected twice, and both corrections matter.** This section first said
-*fourteen of fifteen*. That was an overclaim, and the tool was making it: an
-intent counted as closed whenever the leader's YAML declared no
+**Corrected three times, and every correction ran the same way.** This section
+first said *fourteen of fifteen*. That was an overclaim, and the tool was making
+it: an intent counted as closed whenever the leader's YAML declared no
 `on_chain.request` block **or could not be fetched at all** — and those are not
 the same fact. Split apart, it then said every readable leader was closed. The
 tool never computed that either; it counted only the closures, so nothing
-contradicted the sentence when it stopped being true. It reports three buckets
-now, and two intents sit in the third.
+contradicted the sentence when it stopped being true. And the numbers under that
+sentence were themselves wrong: the tool took the lowest rank present in
+`/api/miners` as rank 1, and that response varies between reads — a leader
+missing from one read promoted rank 2 in its place, which on a read taken while
+writing this flipped `STORM_ALERT` from closed to open. It now requires an
+actual rank 1 and names the intents whose leader it did not see.
 
 The reason so many are unknown is its own finding. **32 of the 130 registered
 miners publish their registration YAML at `http://127.0.0.1:8099/`**, reachable
 only from the node's own host. Whether those miners can receive an on-chain job
 cannot be established by anyone outside it, including their own authors.
 
-So: six of the eight intents whose leader can actually be read are closed, two
-are open, and on the remaining seven nobody can check. Which intent sits where
-moves between reads — leaders change rank, localhost YAMLs come and go — so the
-tool prints all three counts and `/api/jobable` serves the current ones.
+So: five of the six intents whose leader can actually be read are closed, one is
+open, and on the remaining nine nobody can check. Which intent sits where moves
+between reads, so the tool prints every count and `/api/jobable` serves the
+current ones.
 
 The uncomfortable part is that **rank causes it.** Rank is earned on the
 off-chain rail, where a generalist serving ten or fifteen intents does well.
