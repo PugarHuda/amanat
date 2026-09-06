@@ -83,13 +83,26 @@ console.log("mcp: handshake, tool list, and a notification answered with silence
   // rather than going red on it — the same stance playwright.config.mjs takes:
   // what is tolerated is the third party, not the miner. Anything else that
   // arrives as an error still fails, because that would be ours.
+  //
+  // `timeout` as well as `timed out`: Node's own AbortSignal.timeout says "The
+  // operation was aborted due to timeout", which this pattern did not match. The
+  // result was worse than a red build — the reading below was parsed as JSON and
+  // the suite died on a SyntaxError naming neither the tool nor the upstream.
+  const text = (r) => r.result?.content?.[0]?.text ?? "";
   const upstreamDown = (r) =>
-    r.result?.isError && /[45]\d\d|timed out|fetch failed|upstream/i.test(r.result.content?.[0]?.text ?? "");
+    r.result?.isError === true && /[45]\d\d|timed out|timeout|aborted|fetch failed|upstream/i.test(text(r));
+
+  // An isError result is never a reading, so it must never reach JSON.parse.
+  // One that is not an upstream refusal is ours, and says so with the text.
+  const readingOf = (r, what) => {
+    if (r.result?.isError) assert.fail(`${what} came back as an error: ${text(r)}`);
+    return JSON.parse(text(r));
+  };
 
   if (upstreamDown(risk)) {
     console.log(`mcp: skipped the reading — upstream is down (${risk.result.content[0].text.slice(0, 60)})`);
   } else {
-    const reading = JSON.parse(risk.result.content[0].text);
+    const reading = readingOf(risk, "storm_risk");
     assert.ok(reading.risk >= 0 && reading.risk <= 1, `risk out of range: ${reading.risk}`);
     assert.equal(reading.trigger, 0.75);
     assert.equal(reading.breach, reading.risk >= 0.75, "breach must agree with the trigger");
@@ -99,7 +112,7 @@ console.log("mcp: handshake, tool list, and a notification answered with silence
   if (upstreamDown(route)) {
     console.log("mcp: skipped the route — upstream is down");
   } else {
-    const legs = JSON.parse(route.result.content[0].text);
+    const legs = readingOf(route, "route_risk");
     assert.ok(legs.legs.length >= 2, "a route is at least two legs");
     // `worst` is null when no leg could be read, which is what an upstream
     // outage looks like through a 200. The invariant is not "there is always a
@@ -114,7 +127,7 @@ console.log("mcp: handshake, tool list, and a notification answered with silence
     }
   }
 
-  const jobable = JSON.parse(audit.result.content[0].text);
+  const jobable = readingOf(audit, "telegraph_onchain_jobable");
   assert.ok(Array.isArray(jobable.closed), "closed[] is a list");
   assert.ok(Array.isArray(jobable.unauditable), "unauditable[] is a list");
   assert.equal(jobable.confirmed_closed, jobable.closed.length, "the count must match the list");
