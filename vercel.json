@@ -1,0 +1,6 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    { "source": "/(.*)", "destination": "https://amanat-miner.vercel.app/$1", "permanent": false }
+  ]
+}
