@@ -771,6 +771,20 @@ The failure the timeout was written for had not happened before 26 August;
 when it did, the book was not held hostage. The Diamond's escrow, by contrast,
 still has no exit.
 
+**And on 6 September the other half of the rail ran for the first time.** Policy
+3 was opened at Naha with tropical cyclone KROVANH-26 95 km offshore, and job 35
+came back — not from a weather miner, but from a block explorer asking for a
+transaction hash. Every earlier job had sat in `Funded` until it was expired, so
+until this one the contract had never actually read a delivered answer. It read
+this one, found no risk field it could interpret, and emitted
+[`Declined(3, "unreadable answer shape")`](https://sepolia.basescan.org/tx/0xb1f0975ae9a50cde434a0eac4213fcc817bfb47d47f53d5bad471999a8e8f685)
+without paying. The policy stayed open for a later check.
+
+That is the design in one transaction: **the contract does not guess.** A payout
+would have been a storm claim settled on a block explorer's refusal to answer.
+The routing failure behind it is written up as
+[an on-chain job reaches the right miner and the wrong endpoint](docs/bug-report.md#an-on-chain-job-reaches-the-right-miner-and-the-wrong-endpoint).
+
 What is not working is as much of the result as what is. The on-chain rail
 settled five jobs and then stopped, and from outside a job record says only
 `Funded` and never why — until you decode the callback yourself, which is how the

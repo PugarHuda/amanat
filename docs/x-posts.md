@@ -571,6 +571,39 @@ nobody else has published it.
 
 ---
 
+**40 — the contract refused to guess**
+
+The strongest single post in this queue, and every line of it is a transaction
+someone can open. Read 6 September. Do not soften the ending: the point is that
+it did *not* pay.
+
+> My parametric storm contract asked @Telegraphprotoc for the risk at Naha, with
+> a typhoon 95 km offshore.
+>
+> The job came back from a block explorer: "I cannot look up this transaction
+> because no transaction hash was supplied."
+>
+> The contract read it, found no risk in it, and declined. It does not guess.
+>
+> sepolia.basescan.org/tx/0xb1f0975ae9a50cde434a0eac4213fcc817bfb47d47f53d5bad471999a8e8f685
+
+**41 — thirty legs bought, three usable**
+
+The measurement nobody else is publishing, and the reason to publish it is that
+it is unflattering to us before it is unflattering to anyone. Anchor to the run
+date; the ratio moves.
+
+> My storm board bought 86 answers from @Telegraphprotoc this morning and could
+> use 3.
+>
+> Not because the miners are wrong. SkyWire answered 42 of them, and its `risk`
+> field is a confidence by its own schema.
+>
+> Reading a confidence as a risk is how a contract pays a claim nobody reported.
+> So the board pays for answers and refuses them.
+
+---
+
 ## Hold these until the numbers land
 
 - The board of live shipping lanes, once the schedule has run long enough to show a storm move across it.

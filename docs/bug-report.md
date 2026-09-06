@@ -966,6 +966,39 @@ registration declares `on_chain.request`. That set is already computable from
 the public YAMLs — this audit computes it in one pass — and on `STORM_ALERT` it
 is two miners rather than seven.
 
+### Update, 6 September: still open, and the contract's own defence held
+
+Policy 3 was opened at Naha (26.21, 127.68) while tropical cyclone KROVANH-26
+sat 95 km offshore, and `requestCheck` opened **job 35** against `STORM_ALERT`.
+The job reached `Terminal`, the protocol delivered the answer, and it was the
+same wrong-endpoint reply as job 19 — a transaction lookup, for a weather job
+carrying a latitude and a longitude:
+
+```
+status:invalid_input
+summary:I cannot look up this transaction because no transaction hash was
+        supplied. A transaction hash is 66 characters long …
+```
+
+Seventeen days after the first sample, on a fresh contract and a fresh job, the
+rail routes a storm question to a block explorer. That part is unchanged.
+
+**What is new is the other half of the transaction.** Every earlier job in this
+report sat in `Funded` and was released by `expire()`, so the contract's answer
+handling had never run against a real delivery. This one ran:
+`subnetMessage` arrived with `success: true`, `_readRisk` found no risk field it
+could interpret, and the contract emitted
+[`Declined(3, "unreadable answer shape")`](https://sepolia.basescan.org/tx/0xb1f0975ae9a50cde434a0eac4213fcc817bfb47d47f53d5bad471999a8e8f685)
+and paid nothing. The policy stays `Active` for a later check rather than
+settling on a payload it cannot read.
+
+A contract that guessed at that payload would have found a number in it and
+settled a storm claim on a block explorer's refusal. The whole trail is on
+Base Sepolia:
+[policy opened](https://sepolia.basescan.org/tx/0x844a716566652cd04f50f4f68671f483f98398d54e7c3457a54c4ddd82a0a7d9)
+· [check requested](https://sepolia.basescan.org/tx/0x5599cbe118080ea059fe8cfcc519627d7658e985b94602db132ff3a7e1683a19)
+· [declined](https://sepolia.basescan.org/tx/0xb1f0975ae9a50cde434a0eac4213fcc817bfb47d47f53d5bad471999a8e8f685).
+
 ### Reproducing
 
 ```bash
