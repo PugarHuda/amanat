@@ -32,9 +32,10 @@ listed in the official MCP registry as `io.github.PugarHuda/amanat`.
 
 **In three minutes:** [the deck](https://amanat-miner.vercel.app/slides) ·
 [the film](media/amanat-demo.mp4) (84 s, cut from live sessions — no mockups) ·
-[`/api/jobable`](https://amanat-miner.vercel.app/api/jobable), which measures why
-every intent whose leader can be audited is closed to on-chain jobs — and most
-of the rest cannot be audited at all.
+[`/api/jobable`](https://amanat-miner.vercel.app/api/jobable), which measures how
+many intents are closed to on-chain jobs, how many are open, and how many cannot
+be audited at all because their leader publishes its registration at
+`127.0.0.1`. Add `?intent=STORM_ALERT` for a verdict on your own.
 
 | Track | What | Where |
 |---|---|---|
@@ -733,21 +734,30 @@ the first being `/check-tx` — and came back "I cannot look up this transaction
 because no transaction hash was supplied." Two miners, two different first
 endpoints, two different complaints, one rule.
 
-`npm run audit` now measures how much of the network this closes:
+`npm run audit` now measures how much of the network this closes. This is one
+read, taken 2026-09-06T20:07Z — a capture, not a standing claim, because which
+intent sits in which bucket changes between reads:
 
 ```
 Intents whose rank-1 miner cannot receive an ERC-8183 job — confirmed:
-  AI_TEXT_DETECTION rank 1 is caliber-truthport-text-auth ( 3 endpoints, no on_chain.request)
-  FACT_CHECK        rank 1 is livecert                    (12 endpoints, no on_chain.request)
-  STORM_ALERT       rank 1 is livecert                    (12 endpoints, no on_chain.request)
-  WEATHER_CHECK     rank 1 is chainsight-oracle           (14 endpoints, no on_chain.request)
-  WEATHER_FORECAST  rank 1 is livecert                    (12 endpoints, no on_chain.request)
-  … 5 confirmed closed, 8 unknown, 1 open, 1 with no leader, of 15
+  FACT_CHECK        rank 1 is livecert           (12 endpoints, no on_chain.request)
+  STORM_ALERT       rank 1 is livecert           (12 endpoints, no on_chain.request)
+  WEATHER_CHECK     rank 1 is chainsight-oracle  (14 endpoints, no on_chain.request)
+  WEATHER_FORECAST  rank 1 is livecert           (12 endpoints, no on_chain.request)
+
+Open — the rank-1 miner declares on_chain.request and can receive a job:
+  WEB_SEARCH        rank 1 is telegraph-ai-miner-node
+
+No leader in this read — the scoreboard returned no rank-1 row:
+  TASK_COMPLETION
+
+  4 confirmed closed, 9 unknown, 1 open, 1 with no leader, of 15
 ```
 
-**Five of the six intents whose leader can be read are closed. One is not** —
-`WEB_SEARCH`'s rank-1 miner declares `on_chain.request`, and a job on it arrives
-carrying its parameters. On eight more nobody outside the node can check at all:
+On that read, **four of the five intents whose leader can be read are closed,
+and one is not** — `WEB_SEARCH`'s rank-1 miner declares `on_chain.request`, and
+a job on it arrives carrying its parameters. On nine more nobody outside the
+node can check at all:
 **32 of the 130 registered miners publish their YAML at
 `http://127.0.0.1:8099/`**, so their on-chain capability is not auditable by
 anyone, including their own authors. Which intent sits in which bucket moves

@@ -932,11 +932,10 @@ one intent:
 
 ```
 Intents whose rank-1 miner cannot receive an ERC-8183 job — confirmed:
-  AI_TEXT_DETECTION rank 1 is caliber-truthport-text-auth ( 3 endpoints, no on_chain.request)
-  FACT_CHECK        rank 1 is livecert                    (12 endpoints, no on_chain.request)
-  STORM_ALERT       rank 1 is livecert                    (12 endpoints, no on_chain.request)
-  WEATHER_CHECK     rank 1 is chainsight-oracle           (14 endpoints, no on_chain.request)
-  WEATHER_FORECAST  rank 1 is livecert                    (12 endpoints, no on_chain.request)
+  FACT_CHECK        rank 1 is livecert           (12 endpoints, no on_chain.request)
+  STORM_ALERT       rank 1 is livecert           (12 endpoints, no on_chain.request)
+  WEATHER_CHECK     rank 1 is chainsight-oracle  (14 endpoints, no on_chain.request)
+  WEATHER_FORECAST  rank 1 is livecert           (12 endpoints, no on_chain.request)
 
 Open — the rank-1 miner declares on_chain.request and can receive a job:
   WEB_SEARCH        rank 1 is telegraph-ai-miner-node
@@ -944,7 +943,7 @@ Open — the rank-1 miner declares on_chain.request and can receive a job:
 No leader in this read — the scoreboard returned no rank-1 row:
   TASK_COMPLETION
 
-  5 confirmed closed, 8 unknown, 1 open, 1 with no leader, of 15
+  4 confirmed closed, 9 unknown, 1 open, 1 with no leader, of 15
 ```
 
 **Corrected three times, and every correction ran the same way.** This section
@@ -965,10 +964,11 @@ miners publish their registration YAML at `http://127.0.0.1:8099/`**, reachable
 only from the node's own host. Whether those miners can receive an on-chain job
 cannot be established by anyone outside it, including their own authors.
 
-So: five of the six intents whose leader can actually be read are closed, one is
-open, and on the remaining nine nobody can check. Which intent sits where moves
-between reads, so the tool prints every count and `/api/jobable` serves the
-current ones.
+So on that read: four of the five intents whose leader can actually be read are
+closed, one is open, and on the remaining ten nobody can check. Which intent
+sits where moves between reads — this capture is dated for that reason — so the
+tool prints every count and `/api/jobable` serves the current ones.
+`/api/jobable?intent=STORM_ALERT` answers for one intent alone.
 
 The uncomfortable part is that **rank causes it.** Rank is earned on the
 off-chain rail, where a generalist serving ten or fifteen intents does well.

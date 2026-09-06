@@ -37,12 +37,12 @@ before adding a word.**
 >
 > It is not a bug in the miner that answered, and not malformed params. Jobs are routed by rank, and nothing in that path checks whether the miner it lands on declares an `on_chain.request` mapping in its YAML. Without one there is nothing to map the parameters onto, so the call falls back to that miner's **first** endpoint with nothing in it.
 >
-> And it is not one intent. Crossing the public YAMLs against the live scoreboard, this read: **5 of the 6 intents whose rank-1 miner I can read are closed.** On 8 of the other 9 nobody outside the node can check — 32 of 130 miners publish their YAML at http://127.0.0.1:8099/.
+> And it is not one intent. Crossing the public YAMLs against the live scoreboard, this read: **4 of the 5 intents whose rank-1 miner I can read are closed.** On 9 of the other 10 nobody outside the node can check — 31 of 130 miners publish their YAML at http://127.0.0.1:8099/.
 >
-> One call, no wallet:
-> `curl -s https://amanat-miner.vercel.app/api/jobable`
+> Your own intent, one call, no wallet:
+> `curl -s 'https://amanat-miner.vercel.app/api/jobable?intent=STORM_ALERT'`
 >
-> `closed` names them with the evidence. `jobable_by_intent` is who can actually receive one — on STORM_ALERT that is skywire-storm-alert and us.
+> `can_receive_a_job` is true, false, or null where nobody can check from outside. Null is never a no.
 >
 > Miners: add an `on_chain.request` block to your YAML. Protocol side: route on-chain jobs only among miners that declare one.
 >
