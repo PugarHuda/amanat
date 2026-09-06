@@ -539,6 +539,38 @@ the honest version of a number we would otherwise be quoting wrong.
 
 ---
 
+**38 — the word I had to take off my own headline**
+
+Read 6 September. The bug report is post 23's finding; this is the consequence
+of it landing on our own copy, which is a stronger post than the finding was.
+
+> My README said "verified weather intelligence" for two weeks.
+>
+> I'm the one who proved the network's `verified: true` can't be re-derived from
+> anything it returns. So the word was mine to drop.
+>
+> It says "signed" now: Ed25519 over the twelve fields a contract settles on,
+> checkable with node crypto and no call back to me.
+>
+> @Telegraphprotoc
+
+**39 — someone found the ground truth**
+
+Read from `node agent/standing.mjs` at **epoch 311, 6 September 2026** — anchor
+it to that, because the next epoch can undo it. This is the first time any
+weather intent has had a real leader rather than an ordering of noise, and
+nobody else has published it.
+
+> For three weeks every miner on @Telegraphprotoc's WEATHER_FORECAST scored in
+> the 0.0004 band. Ranks were noise; the order changed between epochs on
+> identical code.
+>
+> Epoch 311: livecert is at a flat 1.0000 and everyone else is still at 0.0004.
+>
+> Someone worked out what the canonical script is actually grading.
+
+---
+
 ## Hold these until the numbers land
 
 - The board of live shipping lanes, once the schedule has run long enough to show a storm move across it.

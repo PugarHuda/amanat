@@ -50,7 +50,7 @@ Amanat is signed weather intelligence that a contract acts on by itself. One cod
 ## Evidence on Hand
 
 - On-chain: contract `0x0700c9300D5cfD8A4b2C7fBbaB2703087AB0590c`, jobs 7–14, expire/sweep transactions, registration 256 — all linked from README.md.
-- Live figures: 553 requests served (2nd of 129 miners), epoch ranks per intent, the survey, the board.
+- Live figures: 675 requests served (3rd of 130 miners), epoch ranks per intent, the survey, the board.
 - Backtest: Typhoon Rai over five ports, from the archive, live on the page.
 - `docs/bug-report.md`: fourteen measured findings against the network.
 - `docs/x-posts.md`: the post thread.

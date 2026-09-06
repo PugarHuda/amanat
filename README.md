@@ -528,16 +528,21 @@ at the addresses given.
 
 **Track 1 — miner.** Registration 280, `amanat-weather-risk`, id `20260821`,
 active on `WEATHER_FORECAST`, `WEATHER_CHECK` and `STORM_ALERT`, served from
-https://amanat-miner.vercel.app. **553 requests served, 2nd of 129 registered
-miners** — `DegenLens` passed us on 3 September and serves 1,346. At epoch 306:
-**5 of 11** on `WEATHER_CHECK` at 0.014321, **2 of 14** on `WEATHER_FORECAST` at
-0.000529, **4 of 7** on `STORM_ALERT` at 0.003607. Normalized, that is 0.912,
-0.891 and 0.314 — a total of **2.118, 9th of 129**, or 0.706 as an average,
-**3rd of 21** among miners on three or more intents.
+https://amanat-miner.vercel.app. **675 requests served, 3rd of 130 registered
+miners** — `DegenLens` passed us on 3 September and serves 2,789. At epoch 311:
+**7 of 11** on `WEATHER_CHECK` at 0.014653, **6 of 14** on `WEATHER_FORECAST` at
+0.000424, **3 of 7** on `STORM_ALERT` at 0.015969. Normalized, that is 0.948,
+0.000 and 0.943 — a total of **1.891, 12th of 130**, or 0.630 as an average,
+**4th of 21** among miners on three or more intents. The zero is the news:
+`livecert` cleared `WEATHER_FORECAST` at a flat **1.0000** while the rest of the
+intent sits in the 0.0004 noise band, so one miner has found a ground truth
+nobody else is answering. Every figure here is reproducible with
+`node agent/standing.mjs`, which is why they move.
 
-Read that ordering as noise, not standing: no miner on any of the three has
-cleared the scoring band, so the ranks move between epochs on identical code.
-`node agent/standing.mjs` reprints all of it from public reads.
+Read the two weather-check orderings as noise, not standing: on
+`WEATHER_CHECK` and `STORM_ALERT` no miner has cleared the scoring band, so the
+ranks move between epochs on identical code. `WEATHER_FORECAST` is no longer
+like that, and that is what changed on 6 September.
 
 Where it started, at epoch 285: 3 of 4 on `STORM_ALERT` and 9 of 11 on
 `WEATHER_FORECAST`. The field on every weather intent has roughly tripled since,
