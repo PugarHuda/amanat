@@ -1,8 +1,16 @@
 # X posts
 
-Single posts, in the order they happened. One a day, not all at once — the
-criterion is consistency, and a burst reads like a dump. Tag
-`@Telegraphprotoc` in every one.
+Single posts, in the order they happened. Tag `@Telegraphprotoc` in every one —
+one of these went weeks without it.
+
+**This file is the reasoning; it is not what you paste.** The paste-ready text
+lives in `POSTS.md` at the project root, and the two differ deliberately: **X
+renders no Markdown**, so the backticks and asterisks that are correct here show
+up as literal characters there. Copying a post straight out of this file puts
+`risk` on the timeline with the quotes visible.
+
+"One a day" was the plan while there were days. Submissions close 7 September
+23:59 UTC; a post made after that is one the judges do not score.
 
 Each post stands alone: someone landing on post 7 should understand it without
 having read post 1. Every claim is checkable — a registration id, a
@@ -621,28 +629,33 @@ it did *not* pay.
 >
 > https://sepolia.basescan.org/tx/0xf25259c5c39d5c9cc9372c885a1869d5a87b704df6584cbf85c09ee959848cfb
 
-**41 — thirty legs routed, none readable**
+**41 — the board stopped buying**
 
-The measurement nobody else is publishing, and the reason to publish it is that
-it is unflattering to us before it is unflattering to anyone. Anchor to the run
-date; the ratio moves.
+**This entry used to be a different post, and the replacement is the point.** It
+said "my storm board bought 59 answers this morning; of the 30 it routed, none
+carried a risk I could read" — a measurement unflattering to us before it was
+unflattering to anyone, which is why it was worth publishing.
 
-> My storm board bought 59 answers from @Telegraphprotoc this morning. Of the
-> 30 the network routed, not one carried a risk I could read.
->
-> Verity answered 20 of them and SkyWire 10, and SkyWire's `risk` field is a
-> confidence by its own schema.
->
-> Reading a confidence as a risk is how a contract pays a claim nobody reported.
-> So the board pays for answers and refuses them.
+Then on 6 September the protocol's co-founder asked in Discord that people stop
+their scripted automated calls, and said plainly that scripted calls would not
+be counted in judging — only organic ones. Our board was exactly that shape: 38
+scheduled runs since 26 August at 30 to 86 paid calls each. A post quoting that
+volume after that sentence is an own goal, so the schedule was switched to the
+free rail the same day and the post became about stopping rather than spending.
 
-**Short form, 278 characters:**
+The old draft is left described rather than quoted, because a draft that brags
+about scripted volume is not something to leave lying in a repo a judge reads.
 
-> My storm board bought 59 answers from @Telegraphprotoc this morning. Of the 30 it routed, none carried a risk I could read.
+> @Telegraphprotoc asked builders to stop scripted automated calls. Only organic
+> requests count.
 >
-> Verity answered 20, SkyWire 10; SkyWire's `risk` is a confidence by its own schema.
+> My storm board had bought 30-86 Engine answers every six hours since 26
+> August. Today its scheduled runs buy nothing — they read the free rail
+> instead.
 >
-> Reading that as risk is how a contract pays a claim nobody reported.
+> The number was never the product.
+>
+> #TelegraphHackathon Track 3 — Amanat
 
 ---
 
