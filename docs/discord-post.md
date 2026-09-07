@@ -1,7 +1,10 @@
 # What to post in the Hackathon Discord
 
-**Updated 6 September with jobs 35 and 36, and measured again: 1 990 of
-Discord's 2 000. There is no room left.**
+**This file is the reasoning. `POSTS.md` at the project root is what you paste,
+and the two differ on purpose.** The pasted version carries no colons and no em
+dashes outside URLs and the quoted machine output, so the wording here and there
+will not match line for line. It measured 1 972 of Discord's 2 000 on
+7 September. Re-measure before adding a word.
 
 Rule 06 makes joining mandatory and says staying active is expected. It is also
 10% of the Track 2 score outright — "Community Engagement & Adoption: mentions,
