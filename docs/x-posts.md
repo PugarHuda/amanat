@@ -611,7 +611,7 @@ it did *not* pay.
 >
 > sepolia.basescan.org/tx/0xb1f0975ae9a50cde434a0eac4213fcc817bfb47d47f53d5bad471999a8e8f685
 
-**Short form, 261 characters:**
+**Short form, 280 characters** — `POSTS.md` carries a 270-character trim of it:
 
 > On 6 Sep my storm contract asked @Telegraphprotoc for the risk at Naha, typhoon 95 km offshore.
 >
