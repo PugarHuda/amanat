@@ -613,7 +613,7 @@ it did *not* pay.
 
 **Short form, 261 characters:**
 
-> My storm contract asked @Telegraphprotoc for the risk at Naha, typhoon 95 km offshore.
+> On 6 Sep my storm contract asked @Telegraphprotoc for the risk at Naha, typhoon 95 km offshore.
 >
 > Twice, an hour apart. Both times a block explorer answered: "no transaction hash was supplied."
 >
