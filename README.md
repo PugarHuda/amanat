@@ -537,13 +537,15 @@ to spend a registration until it answers 200; deployment protection is off and
 
 ## Status
 
-Read from the chain and the node on 31 August; every figure below is checkable
+Read from the chain and the node on 7 September; every figure below is checkable
 at the addresses given.
 
 **Track 1 — miner.** Registration 280, `amanat-weather-risk`, id `20260821`,
 active on `WEATHER_FORECAST`, `WEATHER_CHECK` and `STORM_ALERT`, served from
-https://amanat-miner.vercel.app. **675 requests served, 3rd of 130 registered
-miners** — `DegenLens` passed us on 3 September and serves 2,789. At epoch 311:
+https://amanat-miner.vercel.app. **822 requests served, 6th of 132 registered
+miners** on 7 September — but four miners sit inside twenty-four requests of
+each other (846, 834, 827, us at 822), so the position moves overnight without
+our traffic changing. `DegenLens` leads with 3,049. At epoch 311:
 **7 of 11** on `WEATHER_CHECK` at 0.014653, **6 of 14** on `WEATHER_FORECAST` at
 0.000424, **3 of 7** on `STORM_ALERT` at 0.015969. Normalized, that is 0.948,
 0.000 and 0.943 — a total of **1.891, 12th of 130**, or 0.630 as an average,
