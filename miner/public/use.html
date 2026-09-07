@@ -198,6 +198,7 @@ button:disabled{background:var(--ink-3); border-color:var(--ink-3); cursor:wait}
 .summary{margin-top:14px; font-size:1rem; color:var(--ink-2); max-width:78ch}
 .figures{display:flex; gap:10px 26px; flex-wrap:wrap; margin-top:16px; padding-top:14px; border-top:1px solid var(--key-2)}
 .figures div{font-size:.82rem; color:var(--ink-3)}
+pre.fix{margin-top:14px; padding:14px; background:var(--plate-2); border:2px solid var(--ink); font-family:var(--mono); font-size:.86rem; line-height:1.45; color:var(--ink); overflow-x:auto}
 .figures b{display:block; font-family:var(--display); font-weight:700; font-size:1.25rem; color:var(--ink); margin-top:2px; letter-spacing:.01em}
 .err{color:var(--trigger); font-weight:500}
 
@@ -347,6 +348,29 @@ footer a{color:var(--on-sea)}
     </div>
   </section>
 
+  <section class="plate" id="rail" aria-labelledby="rail-title">
+    <div class="sheet">
+      <div class="plate-no">Plate VIII · the rail</div>
+      <h2 id="rail-title">Before you put a contract on the on-chain rail.</h2>
+      <p>An ERC-8183 job is routed by rank, and nothing in that path checks whether the miner it lands on can receive one. Where the highest-ranked miner declares no <code>on_chain.request</code> mapping, every job for that intent is answered from that miner&rsquo;s first endpoint with nothing in it. It cost us six jobs to find. It costs you a GET.</p>
+      <p>And it moves. Yesterday evening four of the five intents whose leader can be read were shut, <code>STORM_ALERT</code> among them; this morning that one is open again because a different miner ranks first. Nobody fixed anything. Try both buttons below.</p>
+      <form id="railform">
+        <input id="intent" value="WEATHER_FORECAST" aria-label="A Telegraph intent" placeholder="WEATHER_FORECAST">
+        <button type="submit" id="railgo">Check the rail</button>
+      </form>
+      <div class="presets" id="railpresets">
+        <button type="button" data-intent="WEATHER_FORECAST">WEATHER_FORECAST</button>
+        <button type="button" data-intent="STORM_ALERT">STORM_ALERT</button>
+        <button type="button" data-intent="WEATHER_CHECK">WEATHER_CHECK</button>
+        <button type="button" data-intent="WEB_SEARCH">WEB_SEARCH</button>
+        <button type="button" data-intent="NEWS_SEARCH">NEWS_SEARCH</button>
+        <button type="button" data-intent="CVE_LOOKUP">CVE_LOOKUP</button>
+      </div>
+      <div class="result" id="railresult" aria-live="polite"></div>
+      <p style="margin-top:20px">The same answer without a browser: <code>curl -s &#39;https://amanat-miner.vercel.app/api/jobable?intent=STORM_ALERT&#39;</code>, or drop the query for every intent at once. <a href="https://github.com/PugarHuda/amanat/blob/main/docs/bug-report.md">How we found it</a>.</p>
+    </div>
+  </section>
+
   <footer>
     <span>Amanat: a miner, a scoring module and a contract on Telegraph Protocol, settled on Base Sepolia.</span>
     <span>
@@ -358,6 +382,80 @@ footer a{color:var(--on-sea)}
   </footer>
 
 </main>
+
+<script>
+// One intent, one call, no wallet. The endpoint returns four states and only an
+// open one sets can_receive_a_job true; unknown and no-leader come back null,
+// because "nobody outside the node can check" is not the same fact as "no".
+const $ = (id) => document.getElementById(id);
+const el = (tag, props = {}) => Object.assign(document.createElement(tag), props);
+
+const VERDICT = {
+  closed: ["Closed", "A job on this intent will not be answered. The highest-ranked miner declares no on_chain.request mapping, so the node calls its first endpoint with no parameters."],
+  open: ["Open", "A job on this intent arrives carrying its parameters. The highest-ranked miner declares an on_chain.request mapping."],
+  unknown: ["Cannot be checked", "The highest-ranked miner publishes its registration where nobody outside the node can read it, so its on-chain capability is not auditable by anyone, including its own author."],
+  no_leader_in_this_read: ["No leader in this read", "The scoreboard returned no rank-1 row for this intent just now. That is a gap in the read, not a finding about the intent."],
+  not_scored: ["Not scored", "This intent carries no score on the live board, so it has no rank-1 miner to audit."],
+};
+
+async function checkRail(intent) {
+  const res = await fetch("/api/jobable?intent=" + encodeURIComponent(intent));
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || "the audit could not be read");
+  return body;
+}
+
+function showRail(v) {
+  const panel = $("railresult");
+  const [label, prose] = VERDICT[v.state] || ["Unknown state", "The endpoint returned a state this page does not know about."];
+
+  const head = el("div", { className: "verdict" });
+  head.append(el("span", { className: "num", textContent: v.can_receive_a_job === true ? "✓" : v.can_receive_a_job === false ? "✕" : "?" }));
+  head.append(el("span", { textContent: v.intent + " — " + label }));
+
+  const figures = el("div", { className: "figures" });
+  if (v.rank1) figures.append(el("div", { textContent: "Rank 1 is " + v.rank1 }));
+  figures.append(el("div", {
+    textContent: v.jobable_miners && v.jobable_miners.length
+      ? "Could receive one anyway: " + v.jobable_miners.join(", ")
+      : "No miner on this intent declares the mapping",
+  }));
+  figures.append(el("div", { textContent: "Read at " + v.read_at }));
+
+  const kids = [head, el("p", { className: "summary", textContent: prose }), figures];
+  if (v.fix) {
+    kids.push(el("p", { className: "summary", textContent: "The fix is eight lines in that miner’s registration YAML." }));
+    kids.push(el("pre", { className: "fix", textContent: v.fix.add_to_your_yaml }));
+  }
+  // Red only where the rail is shut, which is the one place this palette spends it.
+  panel.className = v.can_receive_a_job === false ? "result breach shown" : "result shown";
+  panel.replaceChildren(...kids);
+}
+
+$("railform").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const go = $("railgo");
+  go.disabled = true;
+  go.textContent = "Checking…";
+  try {
+    showRail(await checkRail($("intent").value.trim()));
+  } catch (err) {
+    const panel = $("railresult");
+    panel.className = "result shown";
+    panel.replaceChildren(el("p", { className: "err", textContent: err.message }));
+  } finally {
+    go.disabled = false;
+    go.textContent = "Check the rail";
+  }
+});
+
+$("railpresets").addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  $("intent").value = b.dataset.intent;
+  $("railform").requestSubmit();
+});
+</script>
 
 </body>
 </html>
