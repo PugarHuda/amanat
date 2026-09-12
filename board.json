@@ -1,0 +1,519 @@
+{
+  "generated_at": "2026-09-12T20:17:52.954Z",
+  "rail": "free (miner HTTP, unsigned)",
+  "trigger": 0.75,
+  "lanes": [
+    {
+      "name": "Singapore → Jakarta",
+      "from": "Singapore, Singapore",
+      "to": "Jakarta, Jakarta Special Capital Region, Indonesia",
+      "distance_km": 898,
+      "duration_hours": 24,
+      "worst": {
+        "risk": 0.436,
+        "eta_hours": 12,
+        "lat": -2.4633,
+        "lon": 105.3434
+      },
+      "breach": false,
+      "verdict": "Low: worst leg is 0.436 at -2.4633, 105.3434 at hour 12.",
+      "unread": 0,
+      "legs": [
+        {
+          "km_from_start": 0,
+          "eta_hours": 0,
+          "lat": 1.2897,
+          "lon": 103.8501,
+          "risk": 0.132,
+          "condition": "Partly cloudy",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        },
+        {
+          "km_from_start": 449,
+          "eta_hours": 12,
+          "lat": -2.4633,
+          "lon": 105.3434,
+          "risk": 0.436,
+          "condition": "Overcast",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        },
+        {
+          "km_from_start": 898,
+          "eta_hours": 24,
+          "lat": -6.2146,
+          "lon": 106.8451,
+          "risk": 0.072,
+          "condition": "Partly cloudy",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "Cebu → Manila",
+      "from": "Cebu, Central Visayas, Philippines",
+      "to": "Manila, National Capital Region, Philippines",
+      "distance_km": 562,
+      "duration_hours": 15,
+      "worst": {
+        "risk": 0.444,
+        "eta_hours": 8,
+        "lat": 12.4723,
+        "lon": 122.3775
+      },
+      "breach": false,
+      "verdict": "Low: worst leg is 0.444 at 12.4723, 122.3775 at hour 8.",
+      "unread": 0,
+      "legs": [
+        {
+          "km_from_start": 0,
+          "eta_hours": 0,
+          "lat": 10.3333,
+          "lon": 123.75,
+          "risk": 0.156,
+          "condition": "Overcast",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        },
+        {
+          "km_from_start": 281,
+          "eta_hours": 8,
+          "lat": 12.4723,
+          "lon": 122.3775,
+          "risk": 0.444,
+          "condition": "Light drizzle",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        },
+        {
+          "km_from_start": 562,
+          "eta_hours": 15,
+          "lat": 14.6042,
+          "lon": 120.9822,
+          "risk": 0.216,
+          "condition": "Overcast",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "Hong Kong → Kaohsiung",
+      "from": "Hong Kong",
+      "to": "Kaohsiung City, Kaohsiung, Taiwan",
+      "distance_km": 632,
+      "duration_hours": 17,
+      "worst": {
+        "risk": 0.576,
+        "eta_hours": 0,
+        "lat": 22.2783,
+        "lon": 114.1747
+      },
+      "breach": false,
+      "verdict": "Elevated: risk 0.576 at 22.2783, 114.1747 at hour 0. Worth covering, below the trigger.",
+      "unread": 0,
+      "legs": [
+        {
+          "km_from_start": 0,
+          "eta_hours": 0,
+          "lat": 22.2783,
+          "lon": 114.1747,
+          "risk": 0.576,
+          "condition": "Slight rain showers",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        },
+        {
+          "km_from_start": 316,
+          "eta_hours": 9,
+          "lat": 22.4763,
+          "lon": 117.2403,
+          "risk": 0.304,
+          "condition": "Slight rain showers",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        },
+        {
+          "km_from_start": 632,
+          "eta_hours": 17,
+          "lat": 22.6163,
+          "lon": 120.3133,
+          "risk": 0.144,
+          "condition": "Light drizzle",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "Surabaya → Makassar",
+      "from": "Surabaya, East Java, Indonesia",
+      "to": "Makassar, South Sulawesi, Indonesia",
+      "distance_km": 775,
+      "duration_hours": 21,
+      "worst": {
+        "risk": 0.56,
+        "eta_hours": 10,
+        "lat": -6.2094,
+        "lon": 116.098
+      },
+      "breach": false,
+      "verdict": "Elevated: risk 0.560 at -6.2094, 116.098 at hour 10. Worth covering, below the trigger.",
+      "unread": 0,
+      "legs": [
+        {
+          "km_from_start": 0,
+          "eta_hours": 0,
+          "lat": -7.2492,
+          "lon": 112.7508,
+          "risk": 0.424,
+          "condition": "Mainly clear",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        },
+        {
+          "km_from_start": 387,
+          "eta_hours": 10,
+          "lat": -6.2094,
+          "lon": 116.098,
+          "risk": 0.56,
+          "condition": "Clear sky",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        },
+        {
+          "km_from_start": 775,
+          "eta_hours": 21,
+          "lat": -5.1486,
+          "lon": 119.4319,
+          "risk": 0.148,
+          "condition": "Clear sky",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "Ho Chi Minh City → Manila",
+      "from": "Ho Chi Minh City, Ho Chi Minh City (HCMC), Vietnam",
+      "to": "Manila, National Capital Region, Philippines",
+      "distance_km": 1612,
+      "duration_hours": 44,
+      "worst": {
+        "risk": 0.24,
+        "eta_hours": 22,
+        "lat": 12.8107,
+        "lon": 113.7522
+      },
+      "breach": false,
+      "verdict": "Low: worst leg is 0.240 at 12.8107, 113.7522 at hour 22.",
+      "unread": 0,
+      "legs": [
+        {
+          "km_from_start": 0,
+          "eta_hours": 0,
+          "lat": 10.823,
+          "lon": 106.6297,
+          "risk": 0.108,
+          "condition": "Overcast",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        },
+        {
+          "km_from_start": 806,
+          "eta_hours": 22,
+          "lat": 12.8107,
+          "lon": 113.7522,
+          "risk": 0.24,
+          "condition": "Overcast",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        },
+        {
+          "km_from_start": 1612,
+          "eta_hours": 44,
+          "lat": 14.6042,
+          "lon": 120.9822,
+          "risk": 0.06,
+          "condition": "Overcast",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "Manila → Kaohsiung",
+      "from": "Manila, National Capital Region, Philippines",
+      "to": "Kaohsiung City, Kaohsiung, Taiwan",
+      "distance_km": 894,
+      "duration_hours": 24,
+      "worst": {
+        "risk": 0.484,
+        "eta_hours": 12,
+        "lat": 18.6105,
+        "lon": 120.6557
+      },
+      "breach": false,
+      "verdict": "Elevated: risk 0.484 at 18.6105, 120.6557 at hour 12. Worth covering, below the trigger.",
+      "unread": 0,
+      "legs": [
+        {
+          "km_from_start": 0,
+          "eta_hours": 0,
+          "lat": 14.6042,
+          "lon": 120.9822,
+          "risk": 0.312,
+          "condition": "Overcast",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        },
+        {
+          "km_from_start": 447,
+          "eta_hours": 12,
+          "lat": 18.6105,
+          "lon": 120.6557,
+          "risk": 0.484,
+          "condition": "Mainly clear",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        },
+        {
+          "km_from_start": 894,
+          "eta_hours": 24,
+          "lat": 22.6163,
+          "lon": 120.3133,
+          "risk": 0.172,
+          "condition": "Light drizzle",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "Shanghai → Busan",
+      "from": "Shanghai, Shanghai Municipality, China",
+      "to": "Busan, Busan, South Korea",
+      "distance_km": 826,
+      "duration_hours": 22,
+      "worst": {
+        "risk": 0.239,
+        "eta_hours": 11,
+        "lat": 33.2193,
+        "lon": 125.1601
+      },
+      "breach": false,
+      "verdict": "Low: worst leg is 0.239 at 33.2193, 125.1601 at hour 11.",
+      "unread": 0,
+      "legs": [
+        {
+          "km_from_start": 0,
+          "eta_hours": 0,
+          "lat": 31.2222,
+          "lon": 121.4581,
+          "risk": 0.088,
+          "condition": "Clear sky",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        },
+        {
+          "km_from_start": 413,
+          "eta_hours": 11,
+          "lat": 33.2193,
+          "lon": 125.1601,
+          "risk": 0.239,
+          "condition": "Clear sky",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        },
+        {
+          "km_from_start": 826,
+          "eta_hours": 22,
+          "lat": 35.1017,
+          "lon": 129.03,
+          "risk": 0.135,
+          "condition": "Partly cloudy",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "Port Klang → Singapore",
+      "from": "Port Klang, Selangor, Malaysia",
+      "to": "Singapore, Singapore",
+      "distance_km": 333,
+      "duration_hours": 12,
+      "worst": {
+        "risk": 0.52,
+        "eta_hours": 12,
+        "lat": 1.2897,
+        "lon": 103.8501
+      },
+      "breach": false,
+      "verdict": "Elevated: risk 0.520 at 1.2897, 103.8501 at hour 12. Worth covering, below the trigger.",
+      "unread": 0,
+      "legs": [
+        {
+          "km_from_start": 0,
+          "eta_hours": 0,
+          "lat": 2.9996,
+          "lon": 101.3929,
+          "risk": 0.052,
+          "condition": "Overcast",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        },
+        {
+          "km_from_start": 166,
+          "eta_hours": 6,
+          "lat": 2.1451,
+          "lon": 102.6222,
+          "risk": 0.22,
+          "condition": "Mainly clear",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        },
+        {
+          "km_from_start": 333,
+          "eta_hours": 12,
+          "lat": 1.2897,
+          "lon": 103.8501,
+          "risk": 0.52,
+          "condition": "Drizzle",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "Da Nang → Hong Kong",
+      "from": "Da Nang, Da Nang City, Vietnam",
+      "to": "Hong Kong",
+      "distance_km": 931,
+      "duration_hours": 25,
+      "worst": {
+        "risk": 0.473,
+        "eta_hours": 13,
+        "lat": 19.1971,
+        "lon": 111.1416
+      },
+      "breach": false,
+      "verdict": "Elevated: risk 0.473 at 19.1971, 111.1416 at hour 13. Worth covering, below the trigger.",
+      "unread": 0,
+      "legs": [
+        {
+          "km_from_start": 0,
+          "eta_hours": 0,
+          "lat": 16.0678,
+          "lon": 108.2208,
+          "risk": 0.325,
+          "condition": "Drizzle",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        },
+        {
+          "km_from_start": 466,
+          "eta_hours": 13,
+          "lat": 19.1971,
+          "lon": 111.1416,
+          "risk": 0.473,
+          "condition": "Thunderstorm",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        },
+        {
+          "km_from_start": 931,
+          "eta_hours": 25,
+          "lat": 22.2783,
+          "lon": 114.1747,
+          "risk": 0.192,
+          "condition": "Mainly clear",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "Naha → Kaohsiung",
+      "from": "Naha, Okinawa, Japan",
+      "to": "Kaohsiung City, Kaohsiung, Taiwan",
+      "distance_km": 846,
+      "duration_hours": 23,
+      "worst": {
+        "risk": 0.556,
+        "eta_hours": 11,
+        "lat": 24.4592,
+        "lon": 123.9434
+      },
+      "breach": false,
+      "verdict": "Elevated: risk 0.556 at 24.4592, 123.9434 at hour 11. Worth covering, below the trigger.",
+      "unread": 0,
+      "legs": [
+        {
+          "km_from_start": 0,
+          "eta_hours": 0,
+          "lat": 26.213,
+          "lon": 127.6785,
+          "risk": 0.308,
+          "condition": "Clear sky",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        },
+        {
+          "km_from_start": 423,
+          "eta_hours": 11,
+          "lat": 24.4592,
+          "lon": 123.9434,
+          "risk": 0.556,
+          "condition": "Light drizzle",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        },
+        {
+          "km_from_start": 846,
+          "eta_hours": 23,
+          "lat": 22.6163,
+          "lon": 120.3133,
+          "risk": 0.16,
+          "condition": "Partly cloudy",
+          "signal_hash": null,
+          "miner": null,
+          "error": null
+        }
+      ]
+    }
+  ],
+  "disruption": null,
+  "telegraph": null
+}
