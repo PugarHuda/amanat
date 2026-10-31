@@ -1,0 +1,111 @@
+{
+  "read_at": "2026-10-31T11:58:24.530Z",
+  "node": "https://devnode.telegraphprotocol.com",
+  "registrations": 24,
+  "held": [
+    [
+      "0xfc0e8f7ae34ffc02e47d63ed14a149631b526f15",
+      5
+    ]
+  ],
+  "rows": [
+    {
+      "intent": "THREAT_INTELLIGENCE",
+      "champion": {
+        "eval": 0.7,
+        "bar": null,
+        "barAt": null,
+        "attempts": 3,
+        "registration": 23,
+        "author": "0xfc0e8f7ae34ffc02e47d63ed14a149631b526f15"
+      },
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "TASK_EXECUTION_QUALITY",
+      "champion": {
+        "eval": 0.8333333,
+        "bar": null,
+        "barAt": null,
+        "attempts": 3,
+        "registration": 22,
+        "author": "0xfc0e8f7ae34ffc02e47d63ed14a149631b526f15"
+      },
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "CONTRACT_OBLIGATION_AUDIT",
+      "champion": {
+        "eval": 0.89285713,
+        "bar": null,
+        "barAt": null,
+        "attempts": 4,
+        "registration": 19,
+        "author": "0xfc0e8f7ae34ffc02e47d63ed14a149631b526f15"
+      },
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "CUSTOMER_TICKET_RESOLUTION",
+      "champion": {
+        "eval": 0.89285713,
+        "bar": null,
+        "barAt": null,
+        "attempts": 4,
+        "registration": 24,
+        "author": "0xfc0e8f7ae34ffc02e47d63ed14a149631b526f15"
+      },
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "LLM_OUTPUT_EVALUATION",
+      "champion": {
+        "eval": 1,
+        "bar": null,
+        "barAt": null,
+        "attempts": 3,
+        "registration": 21,
+        "author": "0xfc0e8f7ae34ffc02e47d63ed14a149631b526f15"
+      },
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "CODE_REVIEW",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "FX_NOW",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    }
+  ]
+}
