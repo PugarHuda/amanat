@@ -1,0 +1,750 @@
+{
+  "read_at": "2026-11-28T07:10:23.616Z",
+  "node": "https://devnode.telegraphprotocol.com",
+  "registrations": 308,
+  "held": [
+    [
+      "0xb3fb14fecac09efbd0c74fc07d50d7ed1eef2b53",
+      6
+    ],
+    [
+      "0x71ca4df7a1931609c9060058b899ffdf79f384d0",
+      1
+    ]
+  ],
+  "rows": [
+    {
+      "intent": "CRYPTO_PRICE",
+      "champion": {
+        "eval": 1,
+        "bar": null,
+        "barAt": null,
+        "attempts": 7,
+        "registration": 146,
+        "author": "0xb3fb14fecac09efbd0c74fc07d50d7ed1eef2b53"
+      },
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "CURRENCY_EXCHANGE",
+      "champion": {
+        "eval": 1,
+        "bar": null,
+        "barAt": null,
+        "attempts": 7,
+        "registration": 147,
+        "author": "0xb3fb14fecac09efbd0c74fc07d50d7ed1eef2b53"
+      },
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "FX_NOW",
+      "champion": {
+        "eval": 1,
+        "bar": null,
+        "barAt": null,
+        "attempts": 8,
+        "registration": 148,
+        "author": "0xb3fb14fecac09efbd0c74fc07d50d7ed1eef2b53"
+      },
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "SSL_VERIFICATION",
+      "champion": {
+        "eval": 1,
+        "bar": null,
+        "barAt": null,
+        "attempts": 7,
+        "registration": 145,
+        "author": "0xb3fb14fecac09efbd0c74fc07d50d7ed1eef2b53"
+      },
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "STOCK_PRICE",
+      "champion": {
+        "eval": 1,
+        "bar": null,
+        "barAt": null,
+        "attempts": 7,
+        "registration": 149,
+        "author": "0xb3fb14fecac09efbd0c74fc07d50d7ed1eef2b53"
+      },
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "WEATHER_CHECK",
+      "champion": {
+        "eval": 1,
+        "bar": null,
+        "barAt": null,
+        "attempts": 8,
+        "registration": 150,
+        "author": "0xb3fb14fecac09efbd0c74fc07d50d7ed1eef2b53"
+      },
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "ACADEMIC_SEARCH",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "AI_TEXT_DETECTION",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "API_HEALTH_CHECK",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "ASSET_RESERVE_ATTESTATION",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "CODE_PATCH_VERIFY",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "CODE_REVIEW",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "CONTENT_MODERATION",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "CONTRACT_OBLIGATION_AUDIT",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "CORPORATE_REGISTRY_LOOKUP",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "CRYPTO_TRANSFER_VERIFY",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "CRYPTO_YIELD_RATE",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "CUSTOMER_TICKET_RESOLUTION",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "CVE_LOOKUP",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "DNS_RECORD_LOOKUP",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "DOCUMENT_AUTHENTICITY",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "EMAIL_SECURITY",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "EVENT_OUTCOME_RESOLUTION",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "EVENT_OUTCOME_RESOLUTION_GENERAL",
+      "champion": null,
+      "live": {
+        "scored": 35,
+        "nonzero": 16,
+        "best": 0.34255
+      }
+    },
+    {
+      "intent": "FACT_CHECK",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "FINANCIAL_DATA",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "FRAUD_RISK",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "GAME_RESULT",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "GAS_PRICE",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "GENERIC",
+      "champion": {
+        "eval": null,
+        "bar": null,
+        "barAt": null,
+        "attempts": 2,
+        "registration": 900112,
+        "author": "0x71ca4df7a1931609c9060058b899ffdf79f384d0"
+      },
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "GRID_POWER_PRICE",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "INVOICE_LEDGER_RECONCILE",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "KEYWORD_EXTRACTION",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "LANGUAGE_TRANSLATION",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "LIQUIDITY_DEPTH_VERIFY",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "LIVE_SHELF_PRICE",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "LLM_OUTPUT_EVALUATION",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "LOAN_INTEREST_RATE_QUOTE",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "MACRO_ECONOMIC_INDICATOR",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "MINING_HASHPRICE_VERIFY",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "ONCHAIN_METRIC_VERIFY",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "ONCHAIN_TX_LOOKUP",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "OPTIMAL_EXECUTION_ROUTE",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "PACKAGE_STATUS",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "PAYMENT_METHOD_VERIFY",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "PORT_SCAN_AUDIT",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "PRODUCT_AUTHENTICITY",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "QUESTION_ANSWERING",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "REGULATORY_FILING_MONITOR",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "RESEARCH_QUERY",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "SANCTIONS_SCREENING_MATCH",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "SECURITY_REVIEW",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "SENSOR_TELEMETRY_VERIFY",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "SENTIMENT_ANALYSIS",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "SERVER_UPTIME_MONITOR",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "SMART_CONTRACT_AUDIT",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "SPORTS_SCORE",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "TASK_EXECUTION_QUALITY",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "TEXT_SUMMARIZATION",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "THREAT_INTELLIGENCE",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "THREAT_IP_REPUTATION",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "TOKEN_HOLDER_COUNT",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "TOKEN_TOTAL_SUPPLY_VERIFY",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "TRAVEL_DISRUPTION",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "TVL_LOOKUP",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "URL_SAFE",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "URL_SCAN",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "VALIDATOR_PERFORMANCE_VERIFY",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "VENDOR_VERIFY",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "VENDOR_VERIFY_GENERAL",
+      "champion": null,
+      "live": {
+        "scored": 18,
+        "nonzero": 10,
+        "best": 0.3669
+      }
+    },
+    {
+      "intent": "VULNERABILITY_TRIAGE",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "WALLET_BALANCE_CHECK",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "WASH_TRADING_DETECTION",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "WEATHER_FORECAST",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "WEATHER_FORECAST_VERIFY",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    },
+    {
+      "intent": "WEB_SEARCH",
+      "champion": null,
+      "live": {
+        "scored": 0,
+        "nonzero": 0,
+        "best": null
+      }
+    }
+  ]
+}
